@@ -42,6 +42,49 @@ export const StreamView: Component = () => {
       : streamSpurts();
   });
 
+// --- DotsFeelView Math Engine ---
+  const dotData = createMemo(() => {
+    const spurts = displayedSpurts();
+    if (spurts.length === 0) return { dots: [], height: 0 };
+
+    // 1. Calculate rates and find the max boundary
+    const rawData = spurts.map(spurt => {
+      const tSpanSec = spurt!.tSpan / 1000;
+      const rate = tSpanSec > 0 ? spurt!.spurTents.length / tSpanSec : 0;
+      return { spurt: spurt!, rate };
+    });
+
+    const maxRate = Math.max(...rawData.map(d => d.rate), 1); // fallback to 1 to avoid divide-by-zero
+
+    // 2. Map coordinates and sizes
+    const rowSpacing = 40;
+    const dots = rawData.map((d, index) => {
+      // pX: Percentage of max width (using 90% and 5% padding so dots don't clip the edges)
+      const pxPercentage = (d.rate / maxRate) * 90 + 5; 
+      
+      // pY: Simple vertical stack
+      const pyPixels = (index * rowSpacing) + 30; 
+      
+      // rD: Square root of length, scaled slightly, clamped to a reasonable min/max
+      const radius = Math.max(4, Math.min(24, Math.sqrt(d.spurt.spurTents.length) * 1.5));
+
+      return {
+        id: d.spurt.id,
+        spurt: d.spurt,
+        rate: d.rate,
+        px: pxPercentage,
+        py: pyPixels,
+        r: radius
+      };
+    });
+
+    // 3. Return the mapped dots and the total canvas height needed
+    return {
+      dots,
+      height: Math.max(200, dots.length * rowSpacing + 60)
+    };
+  });
+
   // --- Helper Math & Aggregates ---
   const getWordCount = (text: string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
 
@@ -182,7 +225,7 @@ export const StreamView: Component = () => {
                   const keyRate = tSpanSec > 0 ? (keys / tSpanSec).toFixed(2) : "0";
 
                   return (
-                    <div style={{ border: '1px solid #ddd', "border-radius": '4px', overflow: 'hidden' }}>
+                    <div style={{ border: '1px solid #ddd', "border-radius": '4px' }}>
                       {/* Spurt Header */}
                       <div style={{ 
                         "background-color": '#eee', padding: '8px', "font-size": '11px', 
@@ -264,10 +307,60 @@ export const StreamView: Component = () => {
               </For>
             </div>
           </Show>
-          {/* 3. SpurtDotsFeelView (Placeholder for now) */}
+
+          {/* 3. SpurtDotsFeelView */}
           <Show when={viewMode() === 'SpurtDotsFeelView'}>
-            <div style={{ "text-align": 'center', padding: '40px', color: '#999', "font-style": 'italic' }}>
-              SpurtDotsFeelView generation pending...
+            <div style={{ 
+              position: 'relative', 
+              width: '100%', 
+              height: `${dotData().height}px`, 
+              border: '1px solid #eee', 
+              "border-radius": '4px',
+              "background-color": '#fafbfc',
+              overflow: 'hidden' // Keeps the SVG contained
+            }}>
+              
+              {/* The Vector Canvas */}
+              <svg width="100%" height="100%">
+                <For each={dotData().dots}>
+                  {(dot) => (
+                    <circle
+                      cx={`${dot.px}%`}
+                      cy={dot.py}
+                      r={dot.r}
+                      fill={activeSpurtMenuId() === dot.id ? '#d32f2f' : '#607d8b'}
+                      opacity="0.8"
+                      style={{ cursor: 'pointer', transition: 'fill 0.2s ease, r 0.2s ease' }}
+                      onClick={() => setActiveSpurtMenuId(prev => prev === dot.id ? null : dot.id)}
+                    >
+                      {/* Native SVG tooltip on hover */}
+                      <title>{`Rate: ${dot.rate.toFixed(2)} keys/s | Keys: ${dot.spurt.spurTents.length}`}</title>
+                    </circle>
+                  )}
+                </For>
+              </svg>
+
+              {/* The HTML Interactive Overlay */}
+              <For each={dotData().dots}>
+                {(dot) => (
+                  <Show when={activeSpurtMenuId() === dot.id}>
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: `${dot.px}%`, 
+                      top: `${dot.py + dot.r + 5}px`, 
+                      "z-index": 10 
+                    }}>
+                      <OptionsFrame 
+                        options={[
+                          { label: "Delete", onClick: () => deleteSpurt(dot.id) },
+                          { label: "Pop", onClick: () => console.log(`Pop ${dot.id}`) }
+                        ]}
+                        onClose={() => setActiveSpurtMenuId(null)}
+                      />
+                    </div>
+                  </Show>
+                )}
+              </For>
             </div>
           </Show>
 

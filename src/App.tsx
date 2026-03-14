@@ -6,6 +6,7 @@ import { Spurtgatory } from './components/Spurtgatory';
 import { StreamView } from './components/Stream';
 import { setAllStreamsDB, setCurrentTargetStreamId, setCurrentViewedStreamId } from './store';
 import { StreamSelector } from './components/StreamSelector';
+import { AnimationOverlay } from './components/AnimationOverlay';
 
 const App: Component = () => {
 
@@ -24,8 +25,9 @@ const App: Component = () => {
   });
 
   return (
+
     <div style={{ "min-height": '100vh', display: 'flex', "flex-direction": 'column', padding: '20px' }}>
-      
+    <AnimationOverlay />
       {/* Top Section: 3-Column Grid */}
       <div style={{ 
         display: 'grid', 

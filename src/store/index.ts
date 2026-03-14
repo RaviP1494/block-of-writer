@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import { type Particle } from '../workers/animWorker';
 
 // ==========================================
 // 1. TYPES & INTERFACES
@@ -37,6 +38,17 @@ export const [currentViewedStreamId, setCurrentViewedStreamId] = createSignal<nu
 export const [currentTargetStreamId, setCurrentTargetStreamId] = createSignal<number | null>(null); // null = LooseLake
 export const [currentSpurtgatoryHolder, setCurrentSpurtgatoryHolder] = createSignal<Spurt | null>(null);
 
+export const [activeParticles, setActiveParticles] = createSignal<Particle[]>([]);
+
+export const animWorker = new Worker(new URL('../workers/animWorker.ts', import.meta.url), { type: 'module' });
+
+animWorker.onmessage = (e) => {
+  if (e.data.type === 'tick') {
+    // SolidJS will batch these updates and efficiently update the SVG
+    setActiveParticles(e.data.particles);
+  }
+};
+
 // ==========================================
 // 3. GLOBAL STORES (Persistent Databases)
 // ==========================================
@@ -56,6 +68,14 @@ let nextStreamId = 2; // Starting at 2 because App.tsx creates Stream 1 on mount
 // Action to clear Spurtgatory (tied to the button you requested)
 export const clearSpurtgatory = () => {
   setCurrentSpurtgatoryHolder(null);
+};
+
+export const flushSpurtgatoryToStream = () => {
+  const existingSpurt = currentSpurtgatoryHolder();
+  if (existingSpurt) {
+    pushSpurtToTarget(existingSpurt);
+    setCurrentSpurtgatoryHolder(null);
+  }
 };
 
 // Add these counters outside your functions to persist during the session
@@ -107,14 +127,6 @@ export const deleteSpurt = (spurtId: number) => {
     'contentIds',
     prevIds => prevIds.filter(id => id !== spurtId)
   );
-};
-
-export const flushSpurtgatoryToStream = () => {
-  const existingSpurt = currentSpurtgatoryHolder();
-  if (existingSpurt) {
-    pushSpurtToTarget(existingSpurt);
-    setCurrentSpurtgatoryHolder(null);
-  }
 };
 
 export const createNewStream = () => {

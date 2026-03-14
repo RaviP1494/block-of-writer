@@ -7,6 +7,7 @@ import {
   setCurrentSpurtgatoryHolder,
   processNewSpurt, flushSpurtgatoryToStream, type Spurt
 } from '../store';
+import { animWorker } from '../store';
 
 export const WritersBlock: Component = () => {
   let textareaRef: HTMLTextAreaElement | undefined;
@@ -98,6 +99,8 @@ export const WritersBlock: Component = () => {
       type: 'reset', 
       delay: tSpurtDelay() * 1000 // Send delay in milliseconds
     });
+
+    animWorker.postMessage({ type: 'spawn' });
   };
 
   return (
