@@ -4,7 +4,7 @@ import {
   tSpurtDelay, setTSpurtDelay, 
   delayTDelta, setDelayTDelta,
   spurtgatoryEnabled, setSpurtgatoryEnabled,
-  isWritersBlockEmpty
+  isWritersBlockEmpty, createNewStream
 } from '../store';
 
 export const WriterSettings: Component = () => {
@@ -53,8 +53,12 @@ export const WriterSettings: Component = () => {
         Spurtgatory
       </label>
 
-      {/* New Stream Button (Logic to be implemented in Stage 2) */}
-      <button onClick={() => alert("New Stream logic coming soon!")}>New Stream</button>
+      <button 
+      onClick={createNewStream} 
+      style={{"margin-left": "10px"}}
+      >
+      New Stream
+      </button>
       
     </div>
   );

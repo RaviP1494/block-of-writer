@@ -1,52 +1,277 @@
 // src/components/Stream.tsx
-import { createMemo, Show, For, type Component } from 'solid-js';
-import { allStreamsDB, allSpurtsDB, currentTargetStreamId } from '../store';
+import { createMemo, Show, For, createSignal, createEffect, type Component } from 'solid-js';
+import { allStreamsDB, allSpurtsDB, currentViewedStreamId, updateStreamTitle, deleteSpurt } from '../store';
+import { EditTitle } from './EditTitle';
+import { OptionsFrame } from './OptionsFrame';
+
+type ViewMode = 'SpurtFullInfoView' | 'SpurtTextReadView' | 'SpurtDotsFeelView';
 
 export const StreamView: Component = () => {
-  // Reactively find the current active stream
+  const [isEditingTitle, setIsEditingTitle] = createSignal(false);
+  const [activeSpurtMenuId, setActiveSpurtMenuId] = createSignal<number | null>(null);
+  const [viewMode, setViewMode] = createSignal<ViewMode>('SpurtFullInfoView');
+  const [useLineBreaks, setUseLineBreaks] = createSignal(false); 
+  const [isContentReverseOrd, setIsContentReverseOrd] = createSignal(false);
+
+  
   const currentStream = createMemo(() => 
-    allStreamsDB.find(s => s.id === currentTargetStreamId())
+    allStreamsDB.find(s => s.id === currentViewedStreamId())
   );
 
-  // Reactively fetch the actual Spurt objects based on the stream's contentIds
   const streamSpurts = createMemo(() => {
     const stream = currentStream();
     if (!stream) return [];
     
     return stream.contentIds
       .map(id => allSpurtsDB.find(spurt => spurt.id === id))
-      .filter(spurt => spurt !== undefined); // Filter out undefined if not found
+      .filter(spurt => spurt !== undefined);
+  });
+
+  // --- Reversal Logic ---
+  // Watchdog: Auto-disable reversal if in TextReadMode without line breaks
+  createEffect(() => {
+    if (viewMode() === 'SpurtTextReadView' && !useLineBreaks()) {
+      setIsContentReverseOrd(false);
+    }
+  });
+
+  // Derived State: The actual array rendered to the screen
+  const displayedSpurts = createMemo(() => {
+    return isContentReverseOrd() 
+      ? [...streamSpurts()].reverse() 
+      : streamSpurts();
+  });
+
+  // --- Helper Math & Aggregates ---
+  const getWordCount = (text: string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+  const totalTime = createMemo(() => streamSpurts().reduce((acc, s) => acc + s!.tSpan, 0));
+  const totalKeys = createMemo(() => streamSpurts().reduce((acc, s) => acc + s!.spurTents.length, 0));
+  const totalWords = createMemo(() => streamSpurts().reduce((acc, s) => acc + getWordCount(s!.spurTents), 0));
+  
+  // Averages (Calculated per second)
+  const avgKeysRate = createMemo(() => totalTime() > 0 ? (totalKeys() / (totalTime() / 1000)).toFixed(2) : "0");
+  const maxKeysRate = createMemo(() => {
+    const rates = streamSpurts().map(s => s!.tSpan > 0 ? s!.spurTents.length / (s!.tSpan / 1000) : 0);
+    return rates.length > 0 ? Math.max(...rates).toFixed(2) : "0";
   });
 
   return (
     <div style={{ width: '54ch', margin: '0 auto', padding: '20px 0' }}>
-      <Show when={currentStream()} fallback={<p style={{ color: '#aaa', "text-align": 'center' }}>No active stream selected.</p>}>
+      <Show when={currentStream()} fallback={<p style={{ color: '#aaa', "text-align": 'center' }}>No stream open.</p>}>
         
-        {/* Stream Header */}
+        {/* === STREAM HEADER === */}
         <div style={{ "border-bottom": '2px solid #ccc', "margin-bottom": '20px', "padding-bottom": '10px' }}>
-          <h2 style={{ margin: '0 0 10px 0', cursor: 'pointer' }} title="Click to rename (Coming soon)">
-            {currentStream()?.title}
-          </h2>
-          <div style={{ "font-size": '12px', color: '#666', display: 'flex', gap: '15px' }}>
-            <span>Spurts: {streamSpurts().length}</span>
-            <span>Created: {new Date(currentStream()!.createDT).toLocaleTimeString()}</span>
-          </div>
-        </div>
+          
+          {/* Top Row: Title & Dropdown */}
+          <div style={{ display: 'flex', "justify-content": 'space-between', "align-items": 'center', "margin-bottom": '12px' }}>
+            <Show 
+              when={isEditingTitle()} 
+              fallback={
+                <h2 
+                  style={{ margin: 0, cursor: 'pointer' }} 
+                  title="Click to edit title"
+                  onClick={() => setIsEditingTitle(true)}
+                >
+                  {currentStream()?.title}
+                </h2>
+              }
+            >
+              <EditTitle 
+                initialValue={currentStream()!.title}
+                onSave={(newTitle: string) => {
+                  updateStreamTitle(currentStream()!.id, newTitle);
+                  setIsEditingTitle(false);
+                }}
+                onCancel={() => setIsEditingTitle(false)}
+              />
+            </Show>
 
-        {/* Stream Contents (TextReadMode without line breaks format) */}
-        <div style={{ "font-family": 'monospace', "font-size": '16px', "line-height": '1.6' }}>
-          <For each={streamSpurts()}>
-            {(spurt) => (
-              <span 
-                class="spurt-highlight" // We will style this with CSS in App.tsx
-                title={`Created: ${new Date(spurt!.createDT).toLocaleTimeString()} | tSpan: ${spurt!.tSpan}ms`}
+            {/* View Mode & Specific Options */}
+            <div style={{ display: 'flex', gap: '10px', "align-items": 'center' }}>
+              
+              {/* Reverse Order Checkbox */}
+              <label style={{ 
+                "font-size": '12px', 
+                "font-family": 'monospace', 
+                display: 'flex', 
+                "align-items": 'center', 
+                gap: '4px',
+                cursor: (viewMode() === 'SpurtTextReadView' && !useLineBreaks()) ? 'not-allowed' : 'pointer',
+                opacity: (viewMode() === 'SpurtTextReadView' && !useLineBreaks()) ? 0.5 : 1
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={isContentReverseOrd()} 
+                  onChange={(e) => setIsContentReverseOrd(e.target.checked)} 
+                  disabled={viewMode() === 'SpurtTextReadView' && !useLineBreaks()}
+                />
+                Reverse Ord
+              </label>
+
+              {/* Line Breaks Checkbox */}
+              <Show when={viewMode() === 'SpurtTextReadView'}>
+                <label style={{ "font-size": '12px', "font-family": 'monospace', cursor: 'pointer', display: 'flex', "align-items": 'center', gap: '4px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={useLineBreaks()} 
+                    onChange={(e) => setUseLineBreaks(e.target.checked)} 
+                  />
+                  Line Breaks
+                </label>
+              </Show>
+
+              <select 
+                value={viewMode()} 
+                onChange={(e) => setViewMode(e.currentTarget.value as ViewMode)}
+                style={{
+                  padding: '4px 8px',
+                  "font-family": 'monospace',
+                  "font-size": '14px',
+                  border: '1px solid #ccc',
+                  "border-radius": '4px',
+                  cursor: 'pointer',
+                  "background-color": '#fafafa'
+                }}
               >
-                {spurt!.spurTents}{" "}
-              </span>
-            )}
-          </For>
+                <option value="SpurtFullInfoView">*Spurt Info*</option>
+                <option value="SpurtTextReadView">*Spurt Read*</option>
+                <option value="SpurtDotsFeelView">*Spurt Dots*</option>
+              </select>            </div>
+          </div>
+
+          {/* Dynamic Stream Stats */}
+          <Show 
+            when={viewMode() === 'SpurtFullInfoView'} 
+            fallback={
+              <div style={{ "font-size": '12px', color: '#666', display: 'flex', gap: '15px' }}>
+                <span>Spurts: {streamSpurts().length}</span>
+                <span>Created: {new Date(currentStream()!.createDT).toLocaleTimeString()}</span>
+              </div>
+            }
+          >
+            {/* Expanded Header for SpurtFullInfoView */}
+            <div style={{ 
+              display: 'grid', "grid-template-columns": '1fr 1fr', gap: '6px', 
+              "font-size": '12px', color: '#444', "background-color": '#f5f5f5', 
+              padding: '12px', "border-radius": '4px', border: '1px solid #e0e0e0' 
+            }}>
+              <div><strong>Title:</strong> {currentStream()?.title}</div>
+              <div><strong>Created:</strong> @{new Date(currentStream()!.createDT).toLocaleString()}</div>
+              <div><strong>Total Time:</strong> {totalTime()}ms</div>
+              <div><strong>Total Keys:</strong> {totalKeys()}</div>
+              <div><strong>Total Words:</strong> {totalWords()}</div>
+              <div><strong>Average Rate:</strong> {avgKeysRate()} keys/sec</div>
+              <div><strong>Max KeysWrRate:</strong> {maxKeysRate()} keys/sec</div>
+            </div>
+          </Show>
         </div>
 
+        {/* === STREAM CONTENTS === */}
+        <div style={{ "font-family": 'monospace', "font-size": '16px', "line-height": '1.6' }}>
+          
+          {/* 1. SpurtFullInfoView */}
+          <Show when={viewMode() === 'SpurtFullInfoView'}>
+            <div style={{ display: 'flex', "flex-direction": 'column', gap: '20px' }}>
+              <For each={displayedSpurts()}>
+                {(spurt) => {
+                  const words = getWordCount(spurt!.spurTents);
+                  const keys = spurt!.spurTents.length;
+                  const tSpanSec = spurt!.tSpan / 1000;
+                  const wordRate = tSpanSec > 0 ? (words / tSpanSec).toFixed(2) : "0";
+                  const keyRate = tSpanSec > 0 ? (keys / tSpanSec).toFixed(2) : "0";
+
+                  return (
+                    <div style={{ border: '1px solid #ddd', "border-radius": '4px', overflow: 'hidden' }}>
+                      {/* Spurt Header */}
+                      <div style={{ 
+                        "background-color": '#eee', padding: '8px', "font-size": '11px', 
+                        display: 'grid', "grid-template-columns": '1fr 1fr', gap: '4px', 
+                        "border-bottom": '1px solid #ddd', color: '#555' 
+                      }}>
+                        <span><strong>Written:</strong> @{new Date(spurt!.createDT).toLocaleTimeString()}</span>
+                        <span><strong>TimeWriting:</strong> {spurt!.tSpan}ms</span>
+                        <span><strong>Word Count:</strong> {words}</span>
+                        <span><strong>Keys Count:</strong> {keys}</span>
+                        <span><strong>WordWrRate:</strong> {wordRate}/s</span>
+                        <span><strong>KeysWrRate:</strong> {keyRate}/s</span>
+                        <span><strong>DelayUsed:</strong> {spurt!.delayTSpan}ms</span>
+                      </div>
+                      
+                      {/* Spurt Body */}
+                      <div style={{ padding: '12px', position: 'relative' }}>
+                        <span 
+                          onClick={() => setActiveSpurtMenuId(prev => prev === spurt!.id ? null : spurt!.id)}
+                          style={{ cursor: 'pointer', display: 'inline-block', width: '100%' }}
+                        >
+                          {spurt!.spurTents}
+                        </span>
+                        
+                        <Show when={activeSpurtMenuId() === spurt!.id}>
+                          <OptionsFrame 
+                            options={[
+                              { label: "Delete", onClick: () => deleteSpurt(spurt!.id) },
+                              { label: "Pop", onClick: () => console.log(`Pop ${spurt!.id}`) }
+                            ]}
+                            onClose={() => setActiveSpurtMenuId(null)}
+                          />
+                        </Show>
+                      </div>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
+
+          {/* 2. SpurtTextReadView (Our previous default view) */}
+          {/* 2. SpurtTextReadView */}
+          <Show when={viewMode() === 'SpurtTextReadView'}>
+            <div style={{ 
+              display: useLineBreaks() ? 'flex' : 'block', 
+              "flex-direction": 'column', 
+              gap: useLineBreaks() ? '12px' : '0' 
+            }}>
+              <For each={displayedSpurts()}>
+                {(spurt) => (
+                  <div style={{ 
+                    position: 'relative', 
+                    display: useLineBreaks() ? 'block' : 'inline' // Block for line breaks, inline for continuous flow
+                  }}>
+                    <span 
+                      class="spurt-highlight" 
+                      title={`Created: ${new Date(spurt!.createDT).toLocaleTimeString()} | tSpan: ${spurt!.tSpan}ms`}
+                      onClick={() => setActiveSpurtMenuId(prev => prev === spurt!.id ? null : spurt!.id)}
+                      style={{ 
+                        display: useLineBreaks() ? 'inline-block' : 'inline',
+                        "margin-right": useLineBreaks() ? '0' : '8px' // Space between inline spurts
+                      }}
+                    >
+                      {spurt!.spurTents}
+                    </span>
+
+                    <Show when={activeSpurtMenuId() === spurt!.id}>
+                      <OptionsFrame 
+                        options={[
+                          { label: "Delete", onClick: () => deleteSpurt(spurt!.id) },
+                          { label: "Pop", onClick: () => console.log(`Pop ${spurt!.id}`) }
+                        ]}
+                        onClose={() => setActiveSpurtMenuId(null)}
+                      />
+                    </Show>
+                  </div>
+                )}
+              </For>
+            </div>
+          </Show>
+          {/* 3. SpurtDotsFeelView (Placeholder for now) */}
+          <Show when={viewMode() === 'SpurtDotsFeelView'}>
+            <div style={{ "text-align": 'center', padding: '40px', color: '#999', "font-style": 'italic' }}>
+              SpurtDotsFeelView generation pending...
+            </div>
+          </Show>
+
+        </div>
       </Show>
     </div>
   );

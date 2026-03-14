@@ -4,7 +4,7 @@ import {
   tSpurtDelay, 
   setIsWritersBlockEmpty,
   typingStartTime, setTypingStartTime,
-  spurtgatoryEnabled, setCurrentSpurtgatoryHolder,
+  setCurrentSpurtgatoryHolder,
   processNewSpurt, flushSpurtgatoryToStream, type Spurt
 } from '../store';
 
@@ -44,7 +44,7 @@ export const WritersBlock: Component = () => {
     const start = typingStartTime() || now;
     
     const newSpurt: Spurt = {
-      id: Math.floor(Math.random() * 1000000), // Temp ID generation
+      id: 0, // Temp ID generation
       createDT: now,
       spurTents: text,
       tSpan: now - start,

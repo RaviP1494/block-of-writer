@@ -1,5 +1,3 @@
-// src/workers/timerWorker.ts
-
 let timerId: ReturnType<typeof setTimeout> | null = null;
 
 self.onmessage = (e: MessageEvent) => {

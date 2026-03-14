@@ -4,7 +4,8 @@ import { WriterSettings } from './components/WriterSettings';
 import { WritersBlock } from './components/WritersBlock';
 import { Spurtgatory } from './components/Spurtgatory';
 import { StreamView } from './components/Stream';
-import { setAllStreamsDB, setCurrentTargetStreamId } from './store';
+import { setAllStreamsDB, setCurrentTargetStreamId, setCurrentViewedStreamId } from './store';
+import { StreamSelector } from './components/StreamSelector';
 
 const App: Component = () => {
 
@@ -19,6 +20,7 @@ const App: Component = () => {
       contentIds: [] 
     }]);
     setCurrentTargetStreamId(initStreamId);
+    setCurrentViewedStreamId(initStreamId);
   });
 
   return (
@@ -50,6 +52,7 @@ const App: Component = () => {
 
       {/* Bottom Section: Stream Output */}
       <div style={{ "margin-top": '40px' }}>
+        <StreamSelector />
         <StreamView />
       </div>
 
