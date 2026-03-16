@@ -2,10 +2,11 @@
 import { createEffect, onCleanup, createSignal, type Component } from 'solid-js';
 import { 
   tSpurtDelay, 
+  tBurstDelay, burstModeEnabled,
   setIsWritersBlockEmpty,
   typingStartTime, setTypingStartTime,
   setCurrentSpurtgatoryHolder,
-  backspaceEnabled,
+  backspaceDisabled,
   processNewSpurt, flushSpurtgatoryToStream, type Spurt
 } from '../store';
 import { animWorker } from '../store';
@@ -21,6 +22,8 @@ export const WritersBlock: Component = () => {
   worker.onmessage = (e) => {
     if (e.data.type === 'spurt_timeout') {
       commitSpurt();
+    } else if (e.data.type === 'burst_timeout') {
+      flushSpurtgatory();
     }
   };
 
@@ -71,7 +74,7 @@ export const WritersBlock: Component = () => {
     const text = currentText();
 
     // 1. Intercept Backspace
-    if (!backspaceEnabled() && e.key === 'Backspace') {
+    if (backspaceDisabled() && e.key === 'Backspace') {
       e.preventDefault();
       if (text.length > 0) commitSpurt();
       return;
@@ -98,9 +101,10 @@ export const WritersBlock: Component = () => {
     
     worker.postMessage({ 
       type: 'reset', 
-      delay: tSpurtDelay() * 1000 // Send delay in milliseconds
+      spurtDelay: tSpurtDelay() * 1000,
+      burstDelay: tBurstDelay() * 1000,
+      burstMode: burstModeEnabled() 
     });
-
     animWorker.postMessage({ type: 'spawn' });
   };
 
@@ -120,9 +124,9 @@ export const WritersBlock: Component = () => {
         placeholder="Start writing..."
         style={{
           width: '54ch', /* Exactly 54 character widths */
-          "min-height": '1.5em',
+          "min-height": '2ch',
           "font-family": 'monospace', /* Crucial for 'ch' unit accuracy */
-          "font-size": '16px',
+          "font-size": '14px',
           resize: 'none',
           overflow: 'hidden',
           outline: 'none',

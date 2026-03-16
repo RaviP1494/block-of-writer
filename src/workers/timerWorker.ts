@@ -1,20 +1,28 @@
-let timerId: ReturnType<typeof setTimeout> | null = null;
+let spurtTimerId: ReturnType<typeof setTimeout> | null = null;
+let burstTimerId: ReturnType<typeof setTimeout> | null = null;
 
 self.onmessage = (e: MessageEvent) => {
-  const { type, delay } = e.data;
+  const { type, spurtDelay, burstDelay, burstMode } = e.data;
 
-  // Clear existing timer on stop or reset
   if (type === 'stop' || type === 'reset') {
-    if (timerId) {
-      clearTimeout(timerId);
-      timerId = null;
+    if (spurtTimerId) clearTimeout(spurtTimerId);
+    if (burstTimerId) clearTimeout(burstTimerId);
+    spurtTimerId = null;
+    burstTimerId = null;
+  }
+
+  if (type === 'start' || type === 'reset') {
+    // 1. Always start the Spurt Timer
+    spurtTimerId = setTimeout(() => {
+      self.postMessage({ type: 'spurt_timeout' });
+    }, spurtDelay);
+
+    // 2. If Burst Mode is on, start the Burst Timer too
+    if (burstMode && burstDelay) {
+      burstTimerId = setTimeout(() => {
+        self.postMessage({ type: 'burst_timeout' });
+      }, burstDelay);
     }
   }
-
-  // Start a new timer on start or reset
-  if (type === 'start' || type === 'reset') {
-    timerId = setTimeout(() => {
-      self.postMessage({ type: 'spurt_timeout' });
-    }, delay);
-  }
 };
+

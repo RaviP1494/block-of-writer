@@ -7,6 +7,7 @@ import { StreamView } from './components/Stream';
 import { setAllStreamsDB, setCurrentTargetStreamId, setCurrentViewedStreamId } from './store';
 import { StreamSelector } from './components/StreamSelector';
 import { AnimationOverlay } from './components/AnimationOverlay';
+import { LooseLake } from './components/LooseLake';
 
 const App: Component = () => {
 
@@ -15,7 +16,7 @@ const App: Component = () => {
     const initStreamId = 1;
     setAllStreamsDB([{ 
       id: initStreamId, 
-      title: "My First Stream", 
+      title: "Start Up Stream", 
       createDT: Date.now(), 
       readMode: 'TextReadMode', 
       contentIds: [] 
@@ -37,7 +38,9 @@ const App: Component = () => {
       }}>
         
         {/* Left: Empty for now (ReferenceBlock goes here later) */}
-        <div></div>
+        <div>
+          <LooseLake />
+        </div>
 
         {/* Center: Engine */}
         <div style={{ display: 'flex', "flex-direction": 'column' }}>
