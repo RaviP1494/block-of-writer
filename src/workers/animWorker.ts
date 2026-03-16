@@ -4,6 +4,9 @@ export interface Particle {
   id: number;
   x: number;     // Percentage (0-100)
   y: number;     // Percentage (0-100)
+  cR: number;     //Red Coloring
+  cG: number;     //Green Coloring
+  cB: number;     //Blue Coloring
   speed: number; // Downward velocity
 }
 
@@ -42,6 +45,9 @@ self.onmessage = (e: MessageEvent) => {
       id: nextId++,
       x: Math.random() * 100,             // Random horizontal start (0% to 100%)
       y: -5,                              // Start slightly above the top of the screen
+      cR: Math.floor(Math.random() * 256),
+      cG: Math.floor(Math.random() * 256),
+      cB: Math.floor(Math.random() * 256),
       speed: 0.05 + Math.random() * 0.05  // Randomize falling speed
     });
 

@@ -41,50 +41,7 @@ export const StreamView: Component = () => {
       ? [...streamSpurts()].reverse() 
       : streamSpurts();
   });
-
-// --- DotsFeelView Math Engine ---
-  const dotData = createMemo(() => {
-    const spurts = displayedSpurts();
-    if (spurts.length === 0) return { dots: [], height: 0 };
-
-    // 1. Calculate rates and find the max boundary
-    const rawData = spurts.map(spurt => {
-      const tSpanSec = spurt!.tSpan / 1000;
-      const rate = tSpanSec > 0 ? spurt!.spurTents.length / tSpanSec : 0;
-      return { spurt: spurt!, rate };
-    });
-
-    const maxRate = Math.max(...rawData.map(d => d.rate), 1); // fallback to 1 to avoid divide-by-zero
-
-    // 2. Map coordinates and sizes
-    const rowSpacing = 40;
-    const dots = rawData.map((d, index) => {
-      // pX: Percentage of max width (using 90% and 5% padding so dots don't clip the edges)
-      const pxPercentage = (d.rate / maxRate) * 90 + 5; 
-      
-      // pY: Simple vertical stack
-      const pyPixels = (index * rowSpacing) + 30; 
-      
-      // rD: Square root of length, scaled slightly, clamped to a reasonable min/max
-      const radius = Math.max(4, Math.min(24, Math.sqrt(d.spurt.spurTents.length) * 1.5));
-
-      return {
-        id: d.spurt.id,
-        spurt: d.spurt,
-        rate: d.rate,
-        px: pxPercentage,
-        py: pyPixels,
-        r: radius
-      };
-    });
-
-    // 3. Return the mapped dots and the total canvas height needed
-    return {
-      dots,
-      height: Math.max(200, dots.length * rowSpacing + 60)
-    };
-  });
-
+  
   // --- Helper Math & Aggregates ---
   const getWordCount = (text: string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
 
@@ -97,6 +54,50 @@ export const StreamView: Component = () => {
   const maxKeysRate = createMemo(() => {
     const rates = streamSpurts().map(s => s!.tSpan > 0 ? s!.spurTents.length / (s!.tSpan / 1000) : 0);
     return rates.length > 0 ? Math.max(...rates).toFixed(2) : "0";
+  });
+
+  // --- DotsFeelView Math Engine ---
+  const dotData = createMemo(() => {
+    const spurts = displayedSpurts();
+    if (spurts.length === 0) return { dots: [], height: 0 };
+
+    // 1. Calculate rates (NOW USING WORDS) and find the max boundary
+    const rawData = spurts.map(spurt => {
+      const tSpanSec = spurt!.tSpan / 1000;
+      const words = getWordCount(spurt!.spurTents);
+      const rate = tSpanSec > 0 ? words / tSpanSec : 0; // Words per second
+      return { spurt: spurt!, rate };
+    });
+
+    // Fallback to 0.1 so we don't divide by zero if the first spurt is super slow
+    const maxRate = Math.max(...rawData.map(d => d.rate), 0.1); 
+
+    // 2. Map coordinates and sizes
+    const rowSpacing = 40;
+    const dots = rawData.map((d, index) => {
+      // pX: Percentage of max width
+      const pxPercentage = (d.rate / maxRate) * 90 + 5; 
+      
+      // pY: Simple vertical stack
+      const pyPixels = (index * rowSpacing) + 30; 
+      
+      // rD: Radius remains strictly dependent on characters (keys)
+      const radius = Math.max(4, Math.min(24, Math.sqrt(d.spurt.spurTents.length) * 1.5));
+
+      return {
+        id: d.spurt.id,
+        spurt: d.spurt,
+        rate: d.rate,
+        px: pxPercentage,
+        py: pyPixels,
+        r: radius
+      };
+    });
+
+    return {
+      dots,
+      height: Math.max(200, dots.length * rowSpacing + 60)
+    };
   });
 
   return (

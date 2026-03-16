@@ -21,7 +21,7 @@ export const AnimationOverlay: Component = () => {
             cx={`${p.x}%`} 
             cy={`${p.y}%`} 
             r="4" 
-            fill="#4a90e2" /* Fun blue color */
+            fill={`rgb(${p.cR}, ${p.cG}, ${p.cB})`} /* Fun blue color */
             opacity="0.6"
           />
         )}

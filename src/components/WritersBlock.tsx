@@ -5,6 +5,7 @@ import {
   setIsWritersBlockEmpty,
   typingStartTime, setTypingStartTime,
   setCurrentSpurtgatoryHolder,
+  backspaceEnabled,
   processNewSpurt, flushSpurtgatoryToStream, type Spurt
 } from '../store';
 import { animWorker } from '../store';
@@ -70,7 +71,7 @@ export const WritersBlock: Component = () => {
     const text = currentText();
 
     // 1. Intercept Backspace
-    if (e.key === 'Backspace') {
+    if (!backspaceEnabled() && e.key === 'Backspace') {
       e.preventDefault();
       if (text.length > 0) commitSpurt();
       return;

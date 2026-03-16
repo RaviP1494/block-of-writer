@@ -30,6 +30,7 @@ export interface Stream {
 export const [tSpurtDelay, setTSpurtDelay] = createSignal<number>(1); // Default 2 seconds
 export const [delayTDelta, setDelayTDelta] = createSignal<number>(0.25);  // Default 0.25 seconds
 export const [spurtgatoryEnabled, setSpurtgatoryEnabled] = createSignal<boolean>(true);
+export const [backspaceEnabled, setBackspaceEnabled] = createSignal<boolean>(true);
 //webworker
 export const [isWritersBlockEmpty, setIsWritersBlockEmpty] = createSignal<boolean>(true);
 export const [typingStartTime, setTypingStartTime] = createSignal<number | null>(null);

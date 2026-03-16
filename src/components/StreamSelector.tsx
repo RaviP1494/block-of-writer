@@ -8,7 +8,7 @@ import {
   setCurrentViewedStreamId 
 } from '../store';
 import { OptionsFrame } from './OptionsFrame';
-import './StreamSelector.css';
+import './styles/StreamSelector.css';
 
 export const StreamSelector: Component = () => {
   const [openOptionsId, setOpenOptionsId] = createSignal<number | null>(null);
