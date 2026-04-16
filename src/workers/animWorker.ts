@@ -1,5 +1,3 @@
-// src/workers/animWorker.ts
-
 export interface Particle {
   id: number;
   x: number;     // Percentage (0-100)
@@ -47,7 +45,7 @@ self.onmessage = (e: MessageEvent) => {
       y: -5,                              // Start slightly above the top of the screen
       cR: Math.floor(Math.random() * 256),
       cG: Math.floor(Math.random() * 256),
-      cB: Math.floor(Math.random() * 256),
+      cB: Math.floor(Math.random() * 100),
       speed: 0.05 + Math.random() * 0.05  // Randomize falling speed
     });
 

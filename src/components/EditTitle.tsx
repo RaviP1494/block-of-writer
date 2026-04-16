@@ -26,31 +26,33 @@ export const EditTitle: Component<EditTitleProps> = (props) => {
   };
 
   return (
-    <div style={{ 
-      display: 'inline-block', 
-      border: '2px solid #aaa', 
-      "border-radius": '4px', 
-      padding: '2px 4px',
-      "margin-bottom": '10px',
-      "background-color": '#fff'
-    }}>
-      <input
-        ref={inputRef}
-        type="text"
-        value={value()}
-        onInput={(e) => setValue(e.currentTarget.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => props.onSave(value())} // Save if they click outside the box
-        style={{
-          "font-family": 'monospace',
-          "font-size": '24px', // Matches standard h2 size
-          "font-weight": 'bold',
-          border: 'none',
-          outline: 'none',
-          width: '100%',
-          "background-color": 'transparent'
-        }}
-      />
-    </div>
+    <input
+      ref={inputRef}
+      type="text"
+      value={value()}
+      onInput={(e) => setValue(e.currentTarget.value)}
+      onKeyDown={handleKeyDown}
+      onBlur={() => props.onSave(value())} // Save if they click outside the box
+      style={{
+        // 1. Match the standard <h2> dimensions to prevent jumping
+        "font-size": '1.5em', 
+        "font-weight": 'bold',
+        margin: '0.83em 0', // This is the default browser margin for <h2>
+        padding: '0',
+        
+        // 2. Inherit colors and fonts from the StreamHeader container
+        "font-family": 'inherit',
+        color: 'inherit',
+        "text-shadow": 'inherit',
+        "text-align": "center",
+        "background-color": 'transparent',
+        
+        // 3. Strip native input styling
+        border: 'none',
+        "border-bottom": '2px dashed #90b0f0', // Subtle hint that it's an input
+        outline: 'none',
+        "box-sizing": 'border-box'
+      }}
+    />
   );
 };

@@ -1,67 +1,74 @@
-import { createSignal } from 'solid-js';
-import { createStore } from 'solid-js/store';
-import { type Particle } from '../workers/animWorker';
+import { type Particle } from '../workers/animWorker.ts';
+import AnimWorker from '../workers/animWorker?worker';
+import { createSignal, batch } from 'solid-js';
+import { createStore, unwrap } from 'solid-js/store';
 
 // ==========================================
 // 1. TYPES & INTERFACES
 // ==========================================
 
-export type EntityType = 'spurt' | 'burst' | 'stream';
+export type EntityType = 'flash' | 'flicker' | 'stream';
+export type RenderContext = 'ViewSpace' | 'FlickerView' | 'StreamView' | 'ReflectionHold';
+export type FocusMode = 'Write' | 'Read' | 'Float';
 
-export interface Spurt {
-  id: number; // Positive integer
-  createDT: number; // Storing as Unix timestamp (Date.now()) for easier sorting/math
-  spurTents: string;
-  tSpan: number; // in milliseconds
-  delayTSpan: number; // in milliseconds
+export interface Flash {
+  id: number; 
+  createDT: number; 
+  textContents: string;
+  tSpan: number; 
+  delayTSpan: number; 
 }
 
-export interface Burst {
+export interface Flicker {
   id: number; // Negative integer
   createDT: number;
-  contentIds: number[]; // Array of positive Spurt IDs
+  contentIDs: number[]; // Array of positive Spurt IDs
+  delayTSpan: number;
 }
 
 export interface Stream {
   id: number;
   title: string;
   createDT: number;
-  readMode: 'TextReadMode' | 'BlindMode' | 'DotMode';
-  contentIds: number[]; // Positive for Spurts, Negative for Bursts
+  contentIDs: number[]; // Positive for Spurts, Negative for Bursts
 }
 
-export interface LakeItem {
-  lakeId: number;     // Unique ID for the lake entry itself
+export interface MultEnt {
   entityType: EntityType;
-  refId: number;      // The ID of the actual object in its respective DB
-  droppedDT: number;  // Timestamp of when it was added to the lake
+  refID: number;
+}
+
+export interface ViewSpace {
+  id: number;
+  name: string;
+  tentsInSpace: MultEnt[];
 }
 
 // ==========================================
-// 2. GLOBAL SIGNALS (Ephemeral UI State)
+// 2. GLOBAL SIGNALS (Transient State)
 // ==========================================
 
-// Settings
-export const [tSpurtDelay, setTSpurtDelay] = createSignal<number>(2); // Default 2 seconds
-export const [delayTDelta, setDelayTDelta] = createSignal<number>(0.25);  // Default 0.25 seconds
+export const [userMode, setUserMode] = createSignal<string> ('FocusWrite');
+export const [flashDelayT, setFlashDelayT] = createSignal<number>(2);
 
-export const [burstModeEnabled, setBurstModeEnabled] = createSignal<boolean>(false);
-export const [tBurstDelay, setTBurstDelay] = createSignal<number>(5); // Default 5 seconds
+export const [flickerModeOn, setFlickerModeOn] = createSignal<boolean>(true);
+export const [flickerDelayT, setFlickerDelayT] = createSignal<number>(6); 
+export const [isFlickerOpen, setIsFlickerOpen] = createSignal<boolean>(false);
 
-export const [currentSpurtgatoryHolder, setCurrentSpurtgatoryHolder] = createSignal<Spurt | Burst | null>(null);
-export const [spurtgatoryEnabled, setSpurtgatoryEnabled] = createSignal<boolean>(false);
+export const [inflecTents, setInflecTents] = createSignal<Flash | Flicker | null>(null);
+export const [inflectionOn, setInflectionOn] = createSignal<boolean>(false);
 export const [backspaceDisabled, setBackspaceDisabled] = createSignal<boolean>(false);
-//
+
 //webworker
 export const [isWritersBlockEmpty, setIsWritersBlockEmpty] = createSignal<boolean>(true);
 export const [typingStartTime, setTypingStartTime] = createSignal<number | null>(null);
-// Active Routing / Holders
-export const [currentViewedStreamId, setCurrentViewedStreamId] = createSignal<number | null>(null);
-export const [currentTargetStreamId, setCurrentTargetStreamId] = createSignal<number | null>(null); 
 
+export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
+export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
 export const [activeParticles, setActiveParticles] = createSignal<Particle[]>([]);
 
-export const animWorker = new Worker(new URL('../workers/animWorker.ts', import.meta.url), { type: 'module' });
+export const animWorker = new AnimWorker();
+
 
 animWorker.onmessage = (e) => {
   if (e.data.type === 'tick') {
@@ -74,185 +81,531 @@ animWorker.onmessage = (e) => {
 // 3. GLOBAL STORES (Persistent Databases)
 // ==========================================
 
-// Using createStore for arrays/objects allows Solid to track deep mutations efficiently
-export const [allSpurtsDB, setAllSpurtsDB] = createStore<Spurt[]>([]);
-export const [allStreamsDB, setAllStreamsDB] = createStore<Stream[]>([]);
-export const [allBurstsDB, setAllBurstsDB] = createStore<Burst[]>([]);
-export const [looseLakeDB, setLooseLakeDB] = createSignal<LakeItem[]>([]);
 
+export const [allFlashes, setAllFlashes] = createStore<Flash[]>([]);
+export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
+export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
+export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
+export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
+  { id: 1, name: 'Space 1', tentsInSpace: [] }
+]);
 
 // ==========================================
 // 4. HELPER ACTIONS
 // ==========================================
 
-let nextSpurtId = 1;
-let nextStreamId = 2; // Starting at 2 because App.tsx creates Stream 1 on mount
-let nextBurstId = -1;
-let nextLakeId = 1;
+let nextFlashID = 1;
+let nextStreamID = 1;
+let nextFlickerID = -1;
+let nextViewSpaceID = 2;
 
-export const sendToLooseLake = (entityType: EntityType, refId: number) => {
-  setLooseLakeDB(prev => [...prev, {
-    lakeId: nextLakeId++,
+
+export const sendFlash = (flash: Flash) => {
+  const finalFlash = { ...flash, id: nextFlashID++ };
+  setAllFlashes(prev => [...prev, finalFlash]);
+
+  const holder = inflecTents();
+  const targetId = writerTargetID();
+
+  if (flickerModeOn()) {
+    if (isFlickerOpen() && holder && 'contentIDs' in holder) {
+      setAllFlickers(b => b.id === holder.id, 'contentIDs', prev => [...prev, finalFlash.id]);
+      setInflecTents(allFlickers.find(b => b.id === holder.id)!);
+    } else {
+      if (holder) flickFlash(); 
+      
+      const newFlicker: Flicker = { id: nextFlickerID--, delayTSpan: flickerDelayT(), createDT: Date.now(), contentIDs: [finalFlash.id] };
+      setAllFlickers(prev => [...prev, newFlicker]);
+      setInflecTents(newFlicker);
+      setIsFlickerOpen(true);
+
+      if (!inflectionOn() && targetId !== null) {
+        setAllStreams(s => s.id === targetId, 'contentIDs', prev => [...prev, newFlicker.id]);
+      }
+      else if (!inflectionOn() && targetId === null){
+        sendToViewSpace('flicker', newFlicker.id);
+      }
+    }
+  } 
+  else if (inflectionOn()) {
+    if (holder) flickFlash();
+    setInflecTents(finalFlash);
+  } 
+  else {
+    if (holder) flickFlash();
+    if (targetId !== null) {
+      setAllStreams(stream => stream.id === targetId, 'contentIDs', prev => [...prev, finalFlash.id]);
+    }
+    else {
+      sendToViewSpace('flash', finalFlash.id);
+    }
+  }
+};
+
+export const flickFlash = () => {
+  const holder = inflecTents();
+  if (!holder) return;
+
+  const targetID = writerTargetID();
+  
+  const isFlash = !('contentIDs' in holder);
+  const isSingleFlashFlicker = !isFlash && holder.contentIDs.length === 1;
+  const finalID = isSingleFlashFlicker ? holder.contentIDs[0] : holder.id;
+
+  if (inflectionOn()) {
+    if (targetID !== null) {
+      setAllStreams(s => s.id === targetID, 'contentIDs', prev => [...prev, finalID]);
+    } else{
+      sendToViewSpace(isFlash || isSingleFlashFlicker ? 'flash' : 'flicker', finalID); 
+    }
+  } else {
+    if (isSingleFlashFlicker) {
+      if (targetID !== null) {
+        setAllStreams(s => s.id === targetID, 'contentIDs', prev => 
+          prev.map(id => id === holder.id ? finalID : id)
+        );
+      } else {
+        setViewSpaces(vs => vs.id === activeViewSpaceID()! , 'tentsInSpace', prev => prev.map(item => 
+          (item.entityType === 'flicker' && item.refID === holder.id)
+            ? { ...item, entityType: 'flash', refId: finalID }
+            : item
+        ));
+        sendToViewSpace('flash',finalID);
+        setIsFlickerOpen(false);
+      }
+    }
+  }
+  if (isSingleFlashFlicker) {
+    setAllFlickers(prev => prev.filter(b => b.id !== holder.id));
+  }
+
+  setInflecTents(null);
+};
+
+export const makeStreamFrom = (entityType: EntityType, refID: number) => {
+  if( entityType === 'flash' ){
+    const flash = allFlashes.find(f => f.id === refID);
+    if (!flash) return;
+
+    const finalFlash = { ...flash, id: nextFlashID++ };
+    setAllFlashes(prev => [...prev, finalFlash ]);
+    const newStreamID = nextStreamID++;
+
+    const newStream: Stream = {
+      id: newStreamID,
+      title: `Stream ${newStreamID}`, 
+      createDT: Date.now(),
+      contentIDs: [finalFlash.id] // <-- The crucial link!
+    };
+    setAllStreams(prev => [...prev, newStream]);
+    sendToViewSpace('stream', newStreamID);
+  } else if( entityType === 'flicker' ){
+
+    const flicker = allFlickers.find(b => b.id === refID);
+    if (!flicker) return;
+    const clonedFlashIDs: number[] = [];
+    const clonedFlashes: Flash[] = [];
+
+    flicker.contentIDs.forEach(flashID => {
+      const originalFlash = allFlashes.find(f => f.id === flashID);
+      if (originalFlash) {
+        const newFlash = { ...originalFlash, id: nextFlashID++ };
+        clonedFlashes.push(newFlash);
+        clonedFlashIDs.push(newFlash.id);
+      }
+    });
+
+    if (clonedFlashes.length > 0) {
+      setAllFlashes(prev => [...prev, ...clonedFlashes]);
+    }
+
+    const newFlickerID = nextFlickerID--;
+    const newFlicker: Flicker = {
+      ...flicker,
+      id: newFlickerID,
+      contentIDs: clonedFlashIDs // <-- The crucial link for the Flicker!
+    };
+    
+    setAllFlickers(prev => [...prev, newFlicker]);
+
+    const newStreamID = nextStreamID++;
+    const newStream: Stream = {
+      id: newStreamID,
+      title: `Stream ${newStreamID}`, 
+      createDT: flicker.createDT,
+      contentIDs: [newFlicker.id] // <-- The crucial link for the Stream!
+    };
+
+    setAllStreams(prev => [...prev, newStream]);
+    sendToViewSpace('stream', newStreamID);
+    }
+    else if (entityType === 'stream'){
+      const stream = allStreams.find(s => s.id === refID);
+      if (!stream) return;
+      const newStreamID = nextStreamID++;
+      const newStream: Stream = {
+        id: newStreamID,
+        title: `Stream ${newStreamID}`, 
+        createDT: Date.now(),
+        contentIDs: []
+      };
+      const clonedFlashes: Flash[] = [];
+
+      stream.contentIDs.forEach((i) => {
+        if(i >= 0){
+          const originalFlash = allFlashes.find(f => f.id === i);
+          if (originalFlash) {
+            const newFlash = { ...originalFlash, id: nextFlashID++ };
+            clonedFlashes.push(newFlash);
+            newStream.contentIDs.push(newFlash.id);
+            setAllFlashes(prev => [...prev, newFlash]);
+          }
+        } else if(i < 0){
+          const originalFlicker = allFlickers.find(b => b.id === i);
+          if (originalFlicker) {
+            const flickerFlashIDs: number[] = [];
+            originalFlicker.contentIDs.forEach(flashID => {
+              const originalFlash = allFlashes.find(f => f.id === flashID);
+              if (originalFlash) {
+                const newFlash = { ...originalFlash, id: nextFlashID++ };
+                clonedFlashes.push(newFlash);
+                flickerFlashIDs.push(newFlash.id);
+              }
+            })
+            const newFlickerID = nextFlickerID--;
+            const newFlicker = { 
+              ...originalFlicker,
+              id: newFlickerID,
+              contentIDs: flickerFlashIDs 
+            }
+            newStream.contentIDs.push(newFlickerID);
+            setAllFlickers(prev => [...prev, newFlicker]);
+          }
+        }
+      })
+      setAllFlashes(prev => [...prev, ...clonedFlashes]);
+      setAllStreams(prev => [...prev, newStream]);
+      sendToViewSpace('stream', newStreamID);
+    };
+};
+
+export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
+  setSuspenBarTents(prev => [...prev, {
     entityType,
-    refId,
-    droppedDT: Date.now()
+    refID,
   }]);
 };
 
-// Action to clear Spurtgatory (tied to the button you requested)
-export const clearSpurtgatory = () => {
-  setCurrentSpurtgatoryHolder(null);
+export const sendToViewSpace = (entityType: EntityType, refID: number) => {
+    const activeID = activeViewSpaceID();
+    if (activeID !== null){
+      setViewSpaces(vs => vs.id === activeID, 
+                    'tentsInSpace', 
+                         prev => [...prev, {
+                         entityType,
+                         refID
+                     }]);
+    }
 };
 
-export const flushSpurtgatoryToStream = () => {
-  const holder = currentSpurtgatoryHolder();
-  if (!holder) return;
 
-  const targetId = currentTargetStreamId();
-  
-  // 1. Check if we need to unwrap a 1-spurt Burst
-  const isSingleSpurtBurst = 'contentIds' in holder && holder.contentIds.length === 1;
-  const finalId = isSingleSpurtBurst ? holder.contentIds[0] : holder.id;
+export const deleteFlash = (flashID: number) => {
+  setAllFlashes(prev => prev.filter(flash => flash.id !== flashID));
 
-  if (spurtgatoryEnabled()) {
-    // If Spurtgatory was ON, it was hiding. Push it to the stream now.
-    if (targetId !== null) {
-      setAllStreamsDB(s => s.id === targetId, 'contentIds', prev => [...prev, finalId]);
-    } else {
-      sendToLooseLake(isSingleSpurtBurst ? 'spurt' : 'burst', finalId); 
-    }
-  } else {
-    // If Spurtgatory was OFF, it's ALREADY in the stream or lake! 
-    // We just need to swap the ID to unwrap it ONLY if it was a single spurt.
-    if (isSingleSpurtBurst) {
-      if (targetId !== null) {
-        // Unwrap in the Stream
-        setAllStreamsDB(s => s.id === targetId, 'contentIds', prev => 
-          prev.map(id => id === holder.id ? finalId : id)
-        );
-      } else {
-        // Unwrap in LooseLake
-        setLooseLakeDB(prev => prev.map(item => 
-          (item.entityType === 'burst' && item.refId === holder.id)
-            ? { ...item, entityType: 'spurt', refId: finalId }
-            : item
-        ));
-      }
-    }
-    // If it's NOT a single spurt burst, we do nothing! It's already happily resting in the Lake.
-  }
-
-  // Garbage collection: Remove the useless Burst wrapper from the database
-  if (isSingleSpurtBurst) {
-    setAllBurstsDB(prev => prev.filter(b => b.id !== holder.id));
-  }
-
-  setCurrentSpurtgatoryHolder(null);
-};
-// Add these counters outside your functions to persist during the session
-// In a future stage with local storage, we will calculate these by finding the max ID in the DBs
-
-export const pushSpurtToTarget = (spurt: Spurt) => {
-  // Assign the permanent, incremental ID right before it hits the database
-  const finalSpurt = { ...spurt, id: nextSpurtId++ };
-
-  // 1. Save to the main database
-  setAllSpurtsDB((prev) => [...prev, finalSpurt]);
-  
-  // 2. Link it to the active stream
-  const targetId = currentTargetStreamId();
-  if (targetId !== null) {
-    setAllStreamsDB(
-      (stream) => stream.id === targetId,
-      'contentIds',
-      (prevIds) => [...prevIds, finalSpurt.id]
-    );
-  } else {
-    sendToLooseLake('spurt', finalSpurt.id);
-  }
-};
-
-export const processNewSpurt = (spurt: Spurt) => {
-  const finalSpurt = { ...spurt, id: nextSpurtId++ };
-  setAllSpurtsDB(prev => [...prev, finalSpurt]);
-
-  const holder = currentSpurtgatoryHolder();
-  const targetId = currentTargetStreamId();
-
-  // 1. Burst Mode takes absolute priority
-  if (burstModeEnabled()) {
-    if (holder && 'contentIds' in holder) {
-      // Append to active Burst (Stream will react automatically if it's already there)
-      setAllBurstsDB(b => b.id === holder.id, 'contentIds', prev => [...prev, finalSpurt.id]);
-      setCurrentSpurtgatoryHolder(allBurstsDB.find(b => b.id === holder.id)!);
-    } else {
-      // Start a new Burst
-      if (holder) flushSpurtgatoryToStream(); 
-      
-      const newBurst: Burst = { id: nextBurstId--, createDT: Date.now(), contentIds: [finalSpurt.id] };
-      setAllBurstsDB(prev => [...prev, newBurst]);
-      setCurrentSpurtgatoryHolder(newBurst);
-
-      // If Spurtgatory is OFF, push the Burst ID to the stream IMMEDIATELY
-      if (!spurtgatoryEnabled() && targetId !== null) {
-        setAllStreamsDB(s => s.id === targetId, 'contentIds', prev => [...prev, newBurst.id]);
-      }
-      else if (!spurtgatoryEnabled() && targetId === null){
-        sendToLooseLake('burst', newBurst.id);
-      }
-    }
-  } 
-  // 2. Standard Spurtgatory
-  else if (spurtgatoryEnabled()) {
-    if (holder) flushSpurtgatoryToStream();
-    setCurrentSpurtgatoryHolder(finalSpurt);
-  } 
-  // 3. No Bursts, No Spurtgatory -> Straight to Stream
-  else {
-    if (holder) flushSpurtgatoryToStream();
-    if (targetId !== null) {
-      setAllStreamsDB(stream => stream.id === targetId, 'contentIds', prev => [...prev, finalSpurt.id]);
-    }
-    else {
-      sendToLooseLake('spurt', finalSpurt.id);
-    }
-  }
-};
-
-export const deleteSpurt = (spurtId: number) => {
-  // 1. Remove from the main Spurt database
-  setAllSpurtsDB(prev => prev.filter(spurt => spurt.id !== spurtId));
-  
-  // 2. Efficiently remove the ID from the contentIds array of whichever stream holds it
-  setAllStreamsDB(
-    stream => stream.contentIds.includes(spurtId),
-    'contentIds',
-    prevIds => prevIds.filter(id => id !== spurtId)
+  setAllFlickers(
+    flicker => flicker.contentIDs.includes(flashID),
+    'contentIDs',
+    prevIds => prevIds.filter(id => id !== flashID)
   );
+  setAllStreams(
+    stream => stream.contentIDs.includes(flashID),
+    'contentIDs',
+    prevIds => prevIds.filter(id => id !== flashID)
+  );
+  setViewSpaces( vs => vs.tentsInSpace && vs.tentsInSpace.length > 0,
+                'tentsInSpace',
+                prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
+
+  setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
 };
 
-export const createNewStream = () => {
+export const deleteFlicker = (flickerID: number) => {
+  const flicker = allFlickers.find(b => b.id === flickerID);
+  if (!flicker) return;
+
+  const flashesToDelete = [...flicker.contentIDs];
+  flashesToDelete.forEach(flashID => deleteFlash(flashID));
+
+  setAllStreams(
+    stream => stream.contentIDs.includes(flickerID),
+    'contentIDs',
+    prevIds => prevIds.filter(id => id !== flickerID)
+  );
+
+  setViewSpaces(vs => vs.tentsInSpace && vs.tentsInSpace.length > 0, 
+                 'tentsInSpace', 
+                  prev => prev.filter(e => !(e.entityType === 'flicker' && e.refID === flickerID)));
+  setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flicker' && e.refID === flickerID)));
+
+  setAllFlickers(prev => prev.filter(b => b.id !== flickerID));
+};
+
+export const deleteStream = (streamID: number) => {
+  const stream = allStreams.find(s => s.id === streamID);
+  if (!stream) return;
+  const contentsToDelete = [...stream.contentIDs];
+  contentsToDelete.forEach(id => {
+    if (id > 0) {
+      deleteFlash(id); // Positive IDs are Flashes
+    } else {
+      deleteFlicker(id);  // Negative IDs are Flickers
+    }
+  });
+  setViewSpaces(vs => vs.tentsInSpace && vs.tentsInSpace.length > 0,
+                'tentsInSpace',
+                prev => prev.filter(e => !(e.entityType === 'stream' && e.refID === streamID)));
+  setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'stream' && e.refID === streamID)));
+
+  if (writerTargetID() === streamID) {
+    setWriterTargetID(null);
+  }
+  setAllStreams(prev => prev.filter(s => s.id !== streamID));
+};
+
+
+export const createNewStream = (name?:string) => {
+  const streamName = name && name?.length > 0 ? name : `Stream ${nextStreamID - 1}`
   const newStream: Stream = {
-    id: nextStreamId++,
-    title: `Stream ${nextStreamId - 1}`, // e.g., "Stream 2", "Stream 3"
+    id: nextStreamID++,
+    title: streamName, // e.g., "Stream 2", "Stream 3"
     createDT: Date.now(),
-    readMode: 'TextReadMode',
-    contentIds: []
+    contentIDs: []
   };
   
-  setAllStreamsDB((prev) => [...prev, newStream]);
-  setCurrentTargetStreamId(newStream.id); // Automatically switch to the new stream
-  setCurrentViewedStreamId(newStream.id); // Automatically switch to the new stream
+  setAllStreams((prev) => [...prev, newStream]);
+  const activeID = activeViewSpaceID();
+  setViewSpaces(vs => vs.id === activeID, 
+                'tentsInSpace',
+                  (prev) => [...prev, {
+                            entityType: 'stream',
+                            refID: newStream.id 
+                            } as MultEnt
+                  ]
+               );
+  setWriterTargetID(newStream.id); // Automatically switch to the new stream
 };
 
-export const updateStreamTitle = (streamId: number, newTitle: string) => {
-  // If the user submits an empty string, we can optionally prevent it or provide a default.
-  // Here we just accept valid strings.
+export const updateStreamTitle = (streamID: number, newTitle: string) => {
   if (newTitle.trim()) {
-    setAllStreamsDB(
-      (stream) => stream.id === streamId,
+    setAllStreams(
+      (stream) => stream.id === streamID,
       'title',
       newTitle.trim()
     );
   }
 };
+
+export const updateSpaceName = (spaceID: number, newName: string) => {
+  if (newName.trim()) {
+    setViewSpaces(
+      (space) => space.id === spaceID,
+      'name',
+      newName.trim()
+    );
+  }
+}
+
+export const getDateString = (createDT: number) => {
+      const d = new Date(createDT);
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const day = days[d.getDay()];
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      
+      const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+      return `@<${dateStr} ${day} ${timeStr}>`;
+  };
+
+
+export const streamFlashes = (streamID:number) => {
+    const stream = allStreams.find((s)=>s.id === streamID);
+    if (!stream) return [];
+    const flashes: Flash[] = [];
+    
+    stream.contentIDs.forEach(id => {
+      if (id > 0) {
+        const fls = allFlashes.find(f => f.id === id);
+        if (fls) flashes.push(fls);
+      } else {
+        const flk = allFlickers.find(f => f.id === id);
+        if (flk) {
+          flk.contentIDs.forEach(fid => {
+            const f = allFlashes.find(f => f.id === fid);
+            if (f) flashes.push(f);
+          });
+        }
+      }
+    });
+    return flashes;
+};
+
+export const streamWordCount = (streamID:number) => {
+  return streamFlashes(streamID).reduce((total, f) => {
+    return total + (f.textContents.trim().split(/\s+/).filter(w => w.length > 0).length);
+  }, 0);
+};
+
+export const flickerWordCount = (flickerID:number) => {
+  const flicker = allFlickers.find((f) => f.id === flickerID);
+  return flicker?.contentIDs?.reduce((total, id) => {
+    const f = allFlashes.find((flash) => flash.id === id);
+    if (!f) return total;
+    
+    const wordCount = f.textContents.trim().split(/\s+/).filter(w => w.length > 0).length;
+    return total + wordCount;
+  }, 0);
+};
+
+export const getStreamTSpan = (streamID:number) => {
+  const ms = streamFlashes(streamID).reduce((total, f) => total + f.tSpan, 0);
+  return Number((ms / 1000).toFixed(2));
+};
+
+export const getFlickerTSpan = (flickerID: number) => {
+  const flicker = allFlickers.find((b) => b.id === flickerID);
+  if (!flicker) return 0;
+  if (!flicker.contentIDs) {
+    deleteFlicker(flickerID);
+    return 0;
+  }
+  const endT = allFlashes.find((f)=> 
+                               f.id === flicker.contentIDs[flicker.contentIDs.length - 1])?.createDT || 0;
+  if (!endT || !flicker.createDT) return 0;
+  return (endT - flicker.createDT) / 1000;
+}
+
+
+// ==========================================
+// 5. LOCAL STORAGE (IndexedDB Snapshot)
+// ==========================================
+
+const DB_NAME = 'WritersBlockDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'SaveStates';
+const SAVE_KEY = 'manual_save';
+
+// Helper: Initialize and return the DB instance
+const initDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = (e.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// Helper: Write data to DB
+const saveToDB = async (key: string, data: any): Promise<void> => {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(data, key);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// Helper: Read data from DB
+const loadFromDB = async (key: string): Promise<any> => {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(key);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// Action: Package the current app state and save it
+export const manualSaveApp = async () => {
+  const snapshot = {
+    // Local module counters
+    nextFlashID,
+    nextStreamID,
+    nextFlickerID,
+    nextViewSpaceID,
+    
+    // Signals (executed to get current value)
+    activeViewSpaceID: activeViewSpaceID(),
+    flickerDelayT: flickerDelayT(),
+    flickerModeOn: flickerModeOn(),
+    flashDelayT: flashDelayT(),
+    
+    // Stores (unwrapped to remove proxies)
+    allFlashes: unwrap(allFlashes),
+    allStreams: unwrap(allStreams),
+    allFlickers: unwrap(allFlickers),
+    suspenBarTents: unwrap(suspenBarTents),
+    viewSpaces: unwrap(viewSpaces),
+  };
+
+  try {
+    await saveToDB(SAVE_KEY, snapshot);
+    console.log('App state successfully saved to IndexedDB!');
+  } catch (err) {
+    console.error('Failed to save app state:', err);
+  }
+};
+
+// Action: Load the snapshot and hydrate the app
+export const loadSavedApp = async () => {
+  try {
+    const data = await loadFromDB(SAVE_KEY);
+    if (!data) {
+      console.log('No saved state found. Starting fresh.');
+      return;
+    }
+
+    batch(() => {
+      // 1. Restore local module counters safely
+      nextFlashID = data.nextFlashID || 1;
+      nextStreamID = data.nextStreamID || 1;
+      nextFlickerID = data.nextFlickerID || -1;
+      nextViewSpaceID = data.nextViewSpaceID || 2;
+
+      // 2. Restore stores safely (ensuring backwards compatibility for layoutMode)
+      setAllFlashes(data.allFlashes || []);
+      setAllStreams(data.allStreams || []);
+      setAllFlickers(data.allFlickers || []);
+      setSuspenBarTents(data.suspenBarTents || []);
+      
+      const safeViewSpaces = (data.viewSpaces || []).map((vs: any) => ({
+        ...vs,
+        layoutMode: vs.layoutMode || 'spreadmixed'
+      }));
+      setViewSpaces(safeViewSpaces.length > 0 ? safeViewSpaces : [
+        { id: 1, name: 'Initial Space', tentsInSpace: [], layoutMode: 'spreadmixed' }
+      ]);
+      
+
+      // 3. Restore signals AFTER stores are prepped
+      setActiveViewSpaceID(data.activeViewSpaceID !== undefined ? data.activeViewSpaceID : 1);
+      setFlickerDelayT(data.FlickerDelayT !== undefined ? data.FlickerDelayT : 6);
+      setFlickerModeOn(data.FlickerModeOn || true);
+      setFlashDelayT(data.flashDelayT !== undefined ? data.flashDelayT : 2);
+    });
+
+    console.log('App state successfully loaded from IndexedDB!');
+  } catch (err) {
+    console.error('Failed to load app state:', err);
+  }
+};
+

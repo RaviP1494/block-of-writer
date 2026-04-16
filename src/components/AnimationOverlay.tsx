@@ -12,7 +12,6 @@ export const AnimationOverlay: Component = () => {
         width: '100vw', 
         height: '100vh', 
         "pointer-events": 'none', /* Crucial: lets clicks pass through */
-        "z-index": 9999           /* Always on top */
       }}
     >
       <For each={activeParticles()}>
@@ -21,8 +20,8 @@ export const AnimationOverlay: Component = () => {
             cx={`${p.x}%`} 
             cy={`${p.y}%`} 
             r="4" 
-            fill={`rgb(${p.cR}, ${p.cG}, ${p.cB})`} /* Fun blue color */
-            opacity="0.6"
+            fill={`rgb(${p.cR}, ${p.cR}, ${p.cB})`} 
+            opacity="0.9"
           />
         )}
       </For>

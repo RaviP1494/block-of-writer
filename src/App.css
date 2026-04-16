@@ -1,1 +1,216 @@
+.background-one{
+    box-sizing: border-box;
+    inset: 0;
+    margin: auto;
+    width: 100dvw;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
 
+.handbar {
+  margin: auto;
+  height: 200px;
+  max-width: 1000px;
+  display: grid;
+  grid-auto-columns: 300px;
+  border: 1px solid white;
+}
+
+.handbar div {
+  text-align: center;
+}
+
+.inactivated {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.hidden {
+  display: none;
+}
+
+.handbar .checktog {
+  box-sizing: border-box;
+  display: flex;
+}
+
+.handbar .mode-selection {
+  border: none;
+}
+
+.choice-fun {
+  box-sizing: border-box;
+  position: relative;
+}
+.choice-bringer {
+  position: absolute;
+  padding: 10px;
+  opacity: 1;
+}
+.choice {
+  padding: 10px;
+}
+.choices {
+  position: absolute;
+  display: flex;
+  opacity: 0;
+  transform: translateX(50dvw);
+  transition: transform 1.0s ease, opacity 1.0s ease;
+}
+.choice-fun:hover .choices,
+.choice-fun:focus-within .choices {
+  opacity: 1;
+  transform: translateX(0px);
+  transition: transform 1.0s ease, opacity 1.0s ease;
+}
+.choice-fun:hover .choice-bringer,
+.choice-fun:focus-within .choice-bringer {
+  display: none;
+}
+
+.delay-set-holder {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.delay-set {
+  min-width: 40%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-radius: 4px;
+  background-color: #ffff00;
+  color: #141414;
+}
+.delay-set button {
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.delay-set .minus{
+  background-color: #be1410;
+  color: #ffffff;
+}
+.delay-set .plus{
+  background-color: #008030;
+  color: #ffffff;
+}
+div.delay-set > span {
+  flex-grow: 1;
+}
+
+
+.focus-writer {
+  box-sizing: border-box;
+  height: 90dvh;
+  display: flex;
+  border: 1px solid white;
+}
+.focus-writer > div:not(.writersblock) {
+  flex: 1 1 0;
+}
+
+.writersblock {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 40dvw;
+  height: 100%;
+}
+.streamlist {
+  max-height: 200px;
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.streamlist > .streambtn {
+  flex: 1 1 14ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.clear-target {
+  width: 100%;
+  flex-shrink: 2;
+}
+.writersblock input {
+  flex-grow: 1;
+}
+.writersblock textarea {
+  background-image: url('./assets/blue_lined.jpg');
+  background-size: 100% 1.5em;
+  background-attachment: local;
+  background-repeat: repeat-y;
+  padding: 1dvw;
+  inset: 0;
+  margin: auto;
+  grid-area: FMC;
+  width: 36ch;
+  min-height: 4em;
+  font-family: 'Syne Mono', monospace;
+  font-size: 1.94dvw;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.focus-inflection-point {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.focus-reader {
+  box-sizing: border-box
+}
+.string-of-flashes {
+  text-indent: 4ch;
+}
+.flicker-flashes {
+  text-indent: 4ch;
+}
+.string-of-flashes > span:hover {
+  background-color: #be1410;
+}
+.flicker-flashes > span:hover {
+  background-color: #a05010;
+}
+
+.stream {
+  inset: 0;
+  margin: auto;
+  width: 48ch;
+}
+
+.masonry {
+  box-sizing: border-box;
+  column-count: 3;
+  column-gap: 1rem;
+}
+
+.textitem {
+  box-sizing: border-box;
+  break-inside: avoid; 
+  width: 28ch;
+  margin-bottom: 1rem;
+}
+
+div {
+  border: 1px solid white;
+}
+
+button {
+  outline-color: transparent;
+  background-color: #4080a0;
+  color: white;
+  font-family: 'Syne Mono', monospace;
+}
+
+span {
+  padding: 0px 4px;
+}
+
+:has(header) {
+  text-align: center;
+}

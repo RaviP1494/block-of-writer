@@ -9,12 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "solid-js": "^1.9.10"
+    "@fontsource/caveat": "^5.2.8",
+    "@fontsource/syne-mono": "^5.2.7",
+    "@vercel/analytics": "^2.0.1",
+    "solid-js": "^1.9.12"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.12.2",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1",
-    "vite-plugin-solid": "^2.11.10"
+    "vite": "^7.3.2",
+    "vite-plugin-solid": "^2.11.12"
   }
 }
