@@ -16,7 +16,7 @@ export const StreamList: Component<StreamListProps> = (props) => {
       <button class="streambtn"
       onClick={() => {props.handleClick(stream.id)}}
       style={{
-        'background-color' : stream.id === writerTargetID() ? '#be1410' : 'inherit',
+        'background-color' : stream.id === writerTargetID() ? '#0040ff' : '#4080a0',
       }}>
         {stream.title}:{stream.id === writerTargetID() 
           ? '(' + streamWordCount(stream.id) + ')w' 

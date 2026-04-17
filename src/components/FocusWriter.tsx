@@ -2,15 +2,16 @@ import TimerWorker from '../workers/timerWorker?worker';
 import { type Component, createSignal, createEffect, onCleanup } from 'solid-js';
 import { StreamList } from './StreamList';
 
-import { 
+import {
   type Flash, flashDelayT,
   flickerModeOn, flickerDelayT,
   backspaceDisabled, inflecTents,
   typingStartTime, setTypingStartTime,
-  setIsWritersBlockEmpty, 
+  setIsWritersBlockEmpty,
   sendFlash, flickFlash,
-  setIsFlickerOpen, createNewStream, 
-  writerTargetID, setWriterTargetID } from '../store';
+  setIsFlickerOpen, createNewStream,
+  writerTargetID, setWriterTargetID
+} from '../store';
 
 export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
@@ -24,29 +25,30 @@ export const FocusWriter: Component = () => {
   const [newStreamName, setNewStreamName] = createSignal("");
   const worker = new TimerWorker();
 
-worker.onmessage = (e) => {
-  if (e.data.type === 'tick') {
-    // Update our UI signals with the exact remaining milliseconds
-    setFlashTimeLeft(e.data.flashRemaining);
-    setFlickerTimeLeft(e.data.flickerRemaining);
-  } else if (e.data.type === 'flash_timeout') {
-    initFlash();
-  } else if (e.data.type === 'flicker_timeout') {
-    setIsFlickerOpen(false);
-    setIsActiveTimer(false);
-  }
-};
+  worker.onmessage = (e) => {
+    if (e.data.type === 'tick') {
+      // Update our UI signals with the exact remaining milliseconds
+      setFlashTimeLeft(e.data.flashRemaining);
+      setFlickerTimeLeft(e.data.flickerRemaining);
+    } else if (e.data.type === 'flash_timeout') {
+      initFlash();
+    } else if (e.data.type === 'flicker_timeout') {
+      setIsFlickerOpen(false);
+      setIsActiveTimer(false);
+    }
+  };
 
-onCleanup(() => {
-  worker.terminate();
-});
+  onCleanup(() => {
+    worker.terminate();
+  });
 
-  const streamClick = (id:number) => {
-    writerTargetID() !== id 
-      ? setWriterTargetID(id) 
-      : focusedStreamID() !== id 
-        ? setFocusedStreamID(id) 
-        : setFocusedStreamID(0);
+  const streamClick = (id: number) => {
+    console.log(writerTargetID());
+    writerTargetID() !== id
+      ? setWriterTargetID(id) && console.log(writerTargetID())
+      : (focusedStreamID() !== id && console.log(writerTargetID())
+        ? setFocusedStreamID(id) && console.log(focusedStreamID())
+        : setFocusedStreamID(0)) && console.log(focusedStreamID());
   }
 
   const handleCreateStream = () => {
@@ -56,7 +58,7 @@ onCleanup(() => {
 
   const initFlash = () => {
     const text = currentText().trim();
-    if (!text) return; 
+    if (!text) return;
 
     const now = Date.now();
     const start = typingStartTime() || now;
@@ -74,7 +76,7 @@ onCleanup(() => {
     setCurrentText("    ");
     setTypingStartTime(null);
     worker.postMessage({ type: 'stop_flash' });
-    if(!flickerModeOn()) setIsActiveTimer(false);
+    if (!flickerModeOn()) setIsActiveTimer(false);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -91,7 +93,7 @@ onCleanup(() => {
       if (text.trim().length > 0) {
         initFlash();
         if (flickerModeOn()) setIsActiveTimer(true);
-      } else if (inflecTents()){
+      } else if (inflecTents()) {
         flickFlash();
         setTypingStartTime(null);
         worker.postMessage({
@@ -99,7 +101,7 @@ onCleanup(() => {
         });
         setIsActiveTimer(false);
         setFlickerTimeLeft(0);
-      } else{
+      } else {
         setTypingStartTime(null);
         worker.postMessage({
           type: 'stop',
@@ -110,7 +112,7 @@ onCleanup(() => {
     }
 
     // 3. Ignore control keys (Shift, Ctrl, etc.)
-    if (e.key.length !== 1) return; 
+    if (e.key.length !== 1) return;
 
     // 4. Valid character typed: start/reset timer
     if (!typingStartTime()) {
@@ -118,10 +120,10 @@ onCleanup(() => {
       setIsActiveTimer(true);
     }
 
-    worker.postMessage({ 
-      type: 'reset', 
+    worker.postMessage({
+      type: 'reset',
       flashDelay: flashDelayT() * 1000,
-      flickerDelay: flickerDelayT() * 1000 
+      flickerDelay: flickerDelayT() * 1000
     });
   };
 
@@ -137,34 +139,41 @@ onCleanup(() => {
     setIsWritersBlockEmpty(currentText().trim().length === 0);
   });
 
-  
+
 
   return (
     <div class='writersblock'>
 
-      <button onClick={()=>setWriterTargetID(null)}>
-Streamless</button>
+      <button style={{'background-color': '#141414'}}
+        onClick={() => {
+          console.log(writerTargetID());
+          writerTargetID()
+          ? setWriterTargetID(null) 
+          : setFocusedStreamID(0);
+        }}>
+        Out-of-Stream 
+      </button>
 
-<StreamList handleClick={(id) => streamClick(id)}/>
+      <StreamList handleClick={(id) => streamClick(id)} />
 
-<textarea
+      <textarea
         ref={textareaRef}
         value={currentText()}
         onInput={(e) => setCurrentText(e.currentTarget.value)}
         onPaste={(e) => e.preventDefault()}
-        onKeyDown={(e)=> {handleKeyDown(e)}}
-        placeholder="oops" 
-        />
+        onKeyDown={(e) => { handleKeyDown(e) }}
+        placeholder="oops"
+      />
 
       <div style={{
-          display: 'flex',
+        display: 'flex',
       }}>
-      <input type="text" placeholder="Title" value={newStreamName()}
-      onInput={(e) => setNewStreamName(e.currentTarget.value)}
-      onKeyDown={(e)=>{e.key === 'Enter' ? handleCreateStream() : null}}
-      />
-        <button onClick={()=>handleCreateStream()}>
-New Stream</button>
+        <input type="text" placeholder="Title" value={newStreamName()}
+          onInput={(e) => setNewStreamName(e.currentTarget.value)}
+          onKeyDown={(e) => { e.key === 'Enter' ? handleCreateStream() : null }}
+        />
+        <button onClick={() => handleCreateStream()}>
+          New Stream</button>
       </div>
 
     </div>

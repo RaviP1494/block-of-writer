@@ -8,6 +8,7 @@ import {
 import { isActiveTimer } from './FocusWriter'
 
 export const HandBar: Component = () => {
+  const [showMenu, setShowMenu] = createSignal('menu');
   const [flashT, setFlashT] = createSignal(2);
   const [flickerT, setFlickerT] = createSignal(6);
 
@@ -25,42 +26,18 @@ export const HandBar: Component = () => {
     }
   }
 
-
   return (
     <div class={isActiveTimer() ? 'handbar inactivated' : 'handbar'}>
-
-      <div class='mode-selection choice-fun'>
-        <button class='choice-bringer'>
-          {userMode()}
-        </button>
-        <div class='choices'>
-          <button class={userMode() === 'FocusWrite' ? 'hidden' : 'choice'}>
-            FocusWrite
-          </button>
-          <button class={userMode() === 'ReadWrite' ? 'hidden' : 'choice'}>
-            ReadWrite
-          </button>
-          <button class={userMode() === 'ReadArrange' ? 'hidden' : 'choice'}>
-            ReadArrange
-          </button>
-          <button class={userMode() === 'SparkScrape' ? 'hidden' : 'choice'}>
-            SparkScrape
-          </button>
-        </div>
-      </div>
-
-      <div class='choice-fun'>
-        <div class='choice-bringer'>
-          <button>
+      
+        <div class='finger timers'>
+          <button class='knuckle'>
             Adjust Timers
           </button>
-        </div>
-        <div class='choices focus-inflection-point'>
-          <div>
+          <div class='nail'>
+          <div class='delay-set-holder'>
             <span>
-              {flickerModeOn() ? 'Flicker-' : 'Solo-'}
+              {flickerModeOn() ? 'Flashing Flickers' : 'Flashing SoloFlashes'}
             </span>
-            Flashing
             <button onClick={() => setFlickerModeOn(!flickerModeOn())}>
               {flickerModeOn() ? 'No Flicker?' : 'Flicker?'}
             </button>
@@ -108,32 +85,50 @@ export const HandBar: Component = () => {
               </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class='choice-fun'>
-        <button class='choice-bringer'>
-          Options
-        </button>
-        <div class='choices'>
-          <div class='checktog'>
-            <input type='checkbox'
-              checked={backspaceDisabled()}
-              onChange={() => setBackspaceDisabled(!backspaceDisabled())} />
-            <span style={{ 'font-family': "'Caveat', cursive" }}>
-              Disable Backspace</span>
-          </div>
-          <div class='checktog'>
-            <input type='checkbox'
-              checked={inflectionOn()}
-              onChange={() => setInflectionOn(!inflectionOn())} />
-            <span>
-              Inflection Point
-            </span>
           </div>
         </div>
-      </div>
+        <div class='finger modes'>
+          <div class='knuckle'>
+            <button style={{
+              'flex-grow': '1'
+            }}>
+              {userMode()}
+            </button>
+          </div>
+          <div class='nail'>
+            <button class={userMode() === 'FocusWrite' ? 'hidden' : ''}>
+              FocusWrite
+            </button>
+            <button class={userMode() === 'ReadWrite' ? 'hidden' : ''}>
+              ReadWrite
+            </button>
+            <button class={userMode() === 'ReadArrange' ? 'hidden' : ''}>
+              ReadArrange
+            </button>
+            <button class={userMode() === 'SparkScrape' ? 'hidden' : ''}>
+              SparkScrape
+            </button>
+          </div>
+        </div>
+        <div class='finger toggles'>
+        <div class='checktog'>
+          <span>
+            Disable Backspace</span>
+          <input type='checkbox'
+            checked={backspaceDisabled()}
+            onChange={() => setBackspaceDisabled(!backspaceDisabled())} />
+        </div>
+        <div class='checktog'>
+          <span>
+            Inflection Point</span>
+          <input type='checkbox'
+            checked={inflectionOn()}
+            onChange={() => setInflectionOn(!inflectionOn())} />
+        </div>
+    </div>
 
     </div>
+
+
   );
 };
