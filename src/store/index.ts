@@ -48,7 +48,7 @@ export interface ViewSpace {
 // 2. GLOBAL SIGNALS (Transient State)
 // ==========================================
 
-export const [userMode, setUserMode] = createSignal<string> ('FocusWrite');
+export const [userMode, setUserMode] = createSignal<string> ('ReadWrite');
 export const [flashDelayT, setFlashDelayT] = createSignal<number>(2);
 
 export const [flickerModeOn, setFlickerModeOn] = createSignal<boolean>(true);
@@ -64,6 +64,7 @@ export const [isWritersBlockEmpty, setIsWritersBlockEmpty] = createSignal<boolea
 export const [typingStartTime, setTypingStartTime] = createSignal<number | null>(null);
 
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
+export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
 export const [activeParticles, setActiveParticles] = createSignal<Particle[]>([]);
 
@@ -87,7 +88,7 @@ export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
-  { id: 1, name: 'Space 1', tentsInSpace: [] }
+  { id: 1, name: 'Space', tentsInSpace: [] }
 ]);
 
 // ==========================================
@@ -97,7 +98,7 @@ export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
 let nextFlashID = 1;
 let nextStreamID = 1;
 let nextFlickerID = -1;
-let nextViewSpaceID = 2;
+let nextViewSpaceID = 1;
 
 
 export const sendFlash = (flash: Flash) => {
@@ -374,7 +375,7 @@ export const deleteStream = (streamID: number) => {
 
 
 export const createNewStream = (name?:string) => {
-  const streamName = name && name?.length > 0 ? name : `Stream ${nextStreamID - 1}`
+  const streamName = name && name?.length > 0 ? name : `Stream ${nextStreamID}`
   const newStream: Stream = {
     id: nextStreamID++,
     title: streamName, // e.g., "Stream 2", "Stream 3"
@@ -449,6 +450,30 @@ export const streamFlashes = (streamID:number) => {
     });
     return flashes;
 };
+
+export const groupedFlashIDs = (streamID: number) => {
+  if (!streamID && streamID !== 0) return [];
+  const ids = allStreams.find((stream) => stream.id === streamID)?.contentIDs
+  if (!ids) return [];
+  const groups: Array<{ type: 'flashes' | 'flicker', flashIDs: number[] }> = [];
+  let currentFlashGroup: number[] = [];
+  ids.forEach(id => {
+    if (id > 0) {
+      currentFlashGroup.push(id);
+    } else {
+      if (currentFlashGroup.length > 0) {
+        groups.push({ type: 'flashes', flashIDs: currentFlashGroup });
+        currentFlashGroup = [];
+      }
+      const flicker = allFlickers.find(f => f.id === id);
+      groups.push({ type: 'flicker', flashIDs: flicker ? flicker.contentIDs : [] });
+    }
+  });
+  if (currentFlashGroup.length > 0) {
+    groups.push({ type: 'flashes', flashIDs: currentFlashGroup });
+  }
+  return groups;
+}
 
 export const streamWordCount = (streamID:number) => {
   return streamFlashes(streamID).reduce((total, f) => {

@@ -8,7 +8,6 @@ import {
 import { isActiveTimer } from './FocusWriter'
 
 export const HandBar: Component = () => {
-  const [showMenu, setShowMenu] = createSignal('menu');
   const [flashT, setFlashT] = createSignal(2);
   const [flickerT, setFlickerT] = createSignal(6);
 

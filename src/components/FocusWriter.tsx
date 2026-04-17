@@ -9,20 +9,17 @@ import {
   typingStartTime, setTypingStartTime,
   setIsWritersBlockEmpty,
   sendFlash, flickFlash,
-  setIsFlickerOpen, createNewStream,
-  writerTargetID, setWriterTargetID
+  setIsFlickerOpen
 } from '../store';
 
 export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
 export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
-export const [focusedStreamID, setFocusedStreamID] = createSignal(0);
 
 
 export const FocusWriter: Component = () => {
   let textareaRef: HTMLTextAreaElement | undefined;
   const [currentText, setCurrentText] = createSignal("    ");
-  const [newStreamName, setNewStreamName] = createSignal("");
   const worker = new TimerWorker();
 
   worker.onmessage = (e) => {
@@ -42,21 +39,8 @@ export const FocusWriter: Component = () => {
     worker.terminate();
   });
 
-  const streamClick = (id: number) => {
-    console.log(writerTargetID());
-    writerTargetID() !== id
-      ? setWriterTargetID(id) && console.log(writerTargetID())
-      : (focusedStreamID() !== id && console.log(writerTargetID())
-        ? setFocusedStreamID(id) && console.log(focusedStreamID())
-        : setFocusedStreamID(0)) && console.log(focusedStreamID());
-  }
 
-  const handleCreateStream = () => {
-    createNewStream(newStreamName().trim());
-    setNewStreamName('');
-  }
-
-  const initFlash = () => {
+    const initFlash = () => {
     const text = currentText().trim();
     if (!text) return;
 
@@ -142,19 +126,10 @@ export const FocusWriter: Component = () => {
 
 
   return (
-    <div class='writersblock'>
+    <div class='focus-writer'>
 
-      <button style={{'background-color': '#141414'}}
-        onClick={() => {
-          console.log(writerTargetID());
-          writerTargetID()
-          ? setWriterTargetID(null) 
-          : setFocusedStreamID(0);
-        }}>
-        Out-of-Stream 
-      </button>
 
-      <StreamList handleClick={(id) => streamClick(id)} />
+      <StreamList clickDo={true} />
 
       <textarea
         ref={textareaRef}
@@ -164,18 +139,6 @@ export const FocusWriter: Component = () => {
         onKeyDown={(e) => { handleKeyDown(e) }}
         placeholder="oops"
       />
-
-      <div style={{
-        display: 'flex',
-      }}>
-        <input type="text" placeholder="Title" value={newStreamName()}
-          onInput={(e) => setNewStreamName(e.currentTarget.value)}
-          onKeyDown={(e) => { e.key === 'Enter' ? handleCreateStream() : null }}
-        />
-        <button onClick={() => handleCreateStream()}>
-          New Stream</button>
-      </div>
-
     </div>
   );
 };

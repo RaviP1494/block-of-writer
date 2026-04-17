@@ -3,7 +3,7 @@ html, body {
   padding: 0;
   box-sizing: border-box;
   background-color: #000000;
-  color: #ffffff;
+  color: #404040;
 }
 *, *::before, *::after {
   box-sizing: inherit;

@@ -14,12 +14,14 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .handbar {
   box-sizing: border-box;
+  border: 1px dashed white;
   display: grid;
-  grid-template-rows: repeat(2, 100px);
+  grid-template-rows: repeat(4, 50px);
   grid-template-columns: repeat(5, 100px);
   margin: auto;
   font-family: 'Caveat', cursive;
@@ -40,39 +42,53 @@
 }
 .knuckle {
   position: absolute;
+  pointer-events: all;
   transform: translateY(0px) scale(1) rotate(0deg);
-  transition: all 0.6s ease;
+  transition: all 1.0s ease;
 }
 .finger:focus-within > .knuckle{
   opacity: 0;
+  pointer-events: none;
   transform: translateY(-200px) scale(2) rotate(180deg);
-  transition: all 0.6s ease;
+  transition: all 1.0s ease;
 }
 .nail {
   position: absolute;
+  pointer-events: none;
   opacity: 0;
-  transform: translateY(200px) scale(0.1) rotate(180deg);
-  transition: all 0.6s ease;
+  transform: translateY(200px) scale(0.1) rotate(-180deg);
+  transition: all 1.0s ease;
 }
 .finger:focus-within > .nail {
   opacity: 1;
+  pointer-events: all;
   transform: translateY(0px) scale(1) rotate(0deg);
-  transition: all 0.6s ease;
+  transition: all 1.0s ease;
+}
+
+.optset {
+  display: flex; 
+  width: max-content;
+  justify-content: space-between;
+}
+.optset button {
+  color: #404040;
+  text-shadow: 0px 0px 4px, -1px 0px 8px;
+  padding: 5px;
 }
 
 .timers {
-  grid-row: 1 / span 2;
-  grid-column: 1 / span 2;
+  grid-row: 3 / span 2;
+  grid-column: 1 / span 3;
 }
 .modes {
-  grid-row: 1 / span 1;
+  grid-row: 1 / span 2;
   grid-column: 3 / span 1;
 }
 .toggles {
-  grid-row: 2 / span 1;
-  grid-column: 5 / span 1;
+  grid-row: 4 / span 1;
+  grid-column: 4 / span 2;
   display: flex;
-  flex-direction: column;
   justify-content: stretch;
 }
 .checktog {
@@ -115,23 +131,10 @@ div.delay-set > span {
 }
 
 
-.focus-writer {
+.contents {
   box-sizing: border-box;
   height: 90dvh;
   display: flex;
-  border: 1px solid white;
-}
-.focus-writer > div:not(.writersblock) {
-  flex: 1 1 0;
-}
-
-.writersblock {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  width: 40dvw;
-  height: 100%;
 }
 .streamlist {
   max-height: 200px;
@@ -150,10 +153,18 @@ div.delay-set > span {
   width: 100%;
   flex-shrink: 2;
 }
-.writersblock input {
+.focus-writer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 40dvw;
+  height: 100%;
+}
+.focus-writer input {
   flex-grow: 1;
 }
-.writersblock textarea {
+.focus-writer textarea {
   background-image: url('./assets/blue_lined.jpg');
   background-size: 100% 1.5em;
   background-attachment: local;
@@ -171,32 +182,40 @@ div.delay-set > span {
   line-height: 1.5;
 }
 
-.focus-inflection-point {
+.flex-dlist {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.focus-reader {
+.focus-side {
+  border: 1px dashed white;
+  flex: 1 1 0;
   box-sizing: border-box
 }
-.string-of-flashes {
-  text-indent: 4ch;
-}
-.flicker-flashes {
-  text-indent: 4ch;
-}
-.string-of-flashes > span:hover {
-  background-color: #be1410;
-}
-.flicker-flashes > span:hover {
-  background-color: #a05010;
-}
+
 
 .stream {
+  overflow: auto;
   inset: 0;
   margin: auto;
-  width: 48ch;
+  word-spacing: 4px;
+  max-width: 48ch;
+  word-break: break-word;
+}
+.paragraph{
+  text-indent: 4ch;
+  display: block;
+}
+.flicker > span:hover {
+  background-color: rgba(112,160,240,0.3);
+}
+.flash > span:hover {
+  background-color: #a04000;
+}
+
+.title-bar {
+  text-align: center;
 }
 
 .masonry {
@@ -212,21 +231,28 @@ div.delay-set > span {
   margin-bottom: 1rem;
 }
 
-div {
-  border: 1px solid white;
-}
 
 button {
+  box-shadow: 0px 0px 6px;
   outline-color: transparent;
   background-color: #4080a0;
   color: white;
   font-family: 'Syne Mono', monospace;
 }
 
+div :not(.background-one){
+  background-color: #a0a0a0
+}
 span {
   padding: 0px 4px;
+  color: white;
 }
 
-:has(header) {
-  text-align: center;
+h1 {
+  margin-top: 50px;
+  text-shadow: 0px 0px 4px, -1px 0px 8px;
+}
+
+.checktog input{
+  accent-color: white;
 }
