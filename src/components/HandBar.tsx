@@ -3,7 +3,9 @@ import {
   inflectionOn, setInflectionOn,
   flickerModeOn, setFlickerModeOn,
   backspaceDisabled, setBackspaceDisabled,
-  userMode
+  userMode,
+  manualSaveApp,
+  loadSavedApp
 } from '../store';
 import { isActiveTimer } from './FocusWriter'
 
@@ -27,23 +29,27 @@ export const HandBar: Component = () => {
 
   return (
     <div class={isActiveTimer() ? 'handbar inactivated' : 'handbar'}>
-      
+
+    <div class='finger cache-actions'>
+    <div style={{'margin-bottom': '5px', 'border-bottom': '1px solid'}}>Browser Cache</div>
+    <div>
+    <button onClick={()=>manualSaveApp()}>Save to</button>
+    <button onClick={()=>loadSavedApp()}>Load from</button>
+    </div>
+    </div>
         <div class='finger timers'>
           <button class='knuckle'>
             Adjust Timers
           </button>
           <div class='nail'>
           <div class='delay-set-holder'>
-            <span>
-              {flickerModeOn() ? 'Flashing Flickers' : 'Flashing SoloFlashes'}
-            </span>
             <button onClick={() => setFlickerModeOn(!flickerModeOn())}>
-              {flickerModeOn() ? 'No Flicker?' : 'Flicker?'}
+              {flickerModeOn() ? 'Flicker On' : 'Flicker Off'}
             </button>
           </div>
           <div class='delay-set-holder'>
             <div>
-              Delay To End Flash
+              Flash Delay: 
             </div>
             <div class='delay-set'>
               <button class='minus'
@@ -66,7 +72,7 @@ export const HandBar: Component = () => {
           <div class='delay-set-holder'
             style={{ display: flickerModeOn() ? 'flex' : 'none' }}>
             <div>
-              Delay To End Flicker
+              Flicker Delay: 
             </div>
             <div class='delay-set'>
               <button class='minus'
@@ -88,6 +94,7 @@ export const HandBar: Component = () => {
         </div>
         <div class='finger modes'>
           <div class='knuckle'>
+          <div style={{'margin-bottom': '5px', 'border-bottom': '1px solid'}}>Mode:</div>
             <button style={{
               'flex-grow': '1'
             }}>
@@ -111,18 +118,17 @@ export const HandBar: Component = () => {
         </div>
         <div class='finger toggles'>
         <div class='checktog'>
-          <span>
-            Disable Backspace</span>
           <input type='checkbox'
             checked={backspaceDisabled()}
             onChange={() => setBackspaceDisabled(!backspaceDisabled())} />
+          <span>Disable Backspace</span>
         </div>
         <div class='checktog'>
-          <span>
-            Inflection Point</span>
           <input type='checkbox'
             checked={inflectionOn()}
             onChange={() => setInflectionOn(!inflectionOn())} />
+          <span>
+            Inflection Point</span>
         </div>
     </div>
 

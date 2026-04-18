@@ -1,5 +1,3 @@
-import { type Particle } from '../workers/animWorker.ts';
-import AnimWorker from '../workers/animWorker?worker';
 import { createSignal, batch } from 'solid-js';
 import { createStore, unwrap } from 'solid-js/store';
 
@@ -66,17 +64,9 @@ export const [typingStartTime, setTypingStartTime] = createSignal<number | null>
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
-export const [activeParticles, setActiveParticles] = createSignal<Particle[]>([]);
-
-export const animWorker = new AnimWorker();
 
 
-animWorker.onmessage = (e) => {
-  if (e.data.type === 'tick') {
-    // SolidJS will batch these updates and efficiently update the SVG
-    setActiveParticles(e.data.particles);
-  }
-};
+
 
 // ==========================================
 // 3. GLOBAL STORES (Persistent Databases)

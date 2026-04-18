@@ -22,7 +22,7 @@ export const InflectionPoint: Component = () => {
             <div 
             style={{ 
               'text-align': 'center',
-              'color': '#a9a979',
+              'color': '#141414',
               border: '1px solid #ccc',
               "border-radius": '4px',
               padding: '8px',
@@ -41,7 +41,7 @@ export const InflectionPoint: Component = () => {
             fallback={
                 <div
                 style={{ 
-                    'color': '#a9a979',
+                    'color': '#141414',
                     width: '100%',
                     height: 'fit-contents',
                     border: '1px solid #ccc',
@@ -54,10 +54,10 @@ export const InflectionPoint: Component = () => {
                 {(holder() as Flash).textContents}
                 </div>}
                 >
-                <div class='
-                'style={{ 
+                <div 
+                style={{ 
                     width: '100%',
-                    'color': '#a9a979',
+                    'color': '#141414',
                     display: 'flex', 
                     "flex-direction": 'column', 
                     border: '1px solid #ccc',
@@ -72,7 +72,7 @@ export const InflectionPoint: Component = () => {
                     const flash = allFlashes.find(f => f.id === flashID);
                     return (
                         <Show when={flash}>
-                        <div style={{ color: '#a9a979', flex: "1 1 0%"}}>{flash!.textContents}</div>
+                        <div style={{ color: '#141414', flex: "1 1 0%"}}>{flash!.textContents}</div>
                         </Show>
                     );
                 }}

@@ -9,8 +9,8 @@ import {
 
 export const FocusReader: Component = () => {
   const [showSecondaryOpts, setShowSecondaryOpts] = createSignal(false);
-  const [flickerSpacing, setFlickerSpacing] = createSignal(false);
   const [flashSpacing, setFlashSpacing] = createSignal(false);
+  const [showTimes, setShowTimes] = createSignal(false);
   const [flowUp, setFlowUp] = createSignal(false);
   const [isEditingTitle, setIsEditingTitle] = createSignal(false);
   const stream = () => allStreams.find((stream) => stream.id === focusedStreamID());
@@ -20,10 +20,7 @@ export const FocusReader: Component = () => {
     if (flowUp()) {
       groups.reverse();
       groups = groups.map(group => {
-        if (group.type === 'flashes' && flashSpacing()) {
-          return { ...group, flashIDs: [...group.flashIDs].reverse() };
-        }
-        if (group.type === 'flicker') {
+        if (flashSpacing()) {
           return { ...group, flashIDs: [...group.flashIDs].reverse() };
         }
         return group;
@@ -61,7 +58,7 @@ export const FocusReader: Component = () => {
               </h1>
             </Show>
           </div>
-          <div class='space'>
+          <div class='stream'>
             <For each={nonStreams()}>
               {(ent) => {
                 if (ent.entityType === 'flash') {
@@ -86,7 +83,52 @@ export const FocusReader: Component = () => {
         </Show>
       );
   };
+  const FlashNode: Component<{ id: number; prevID: number | null }> = (props) => {
+    const flash = () => allFlashes.find(f => f.id === props.id);
 
+    return (
+      <Show when={flash()}>
+        <Show 
+          when={showTimes()}
+          fallback={
+            <span class={flashSpacing() ? 'paragraph' : ''}
+              title={(flash()!.tSpan / 1000).toString() + ' seconds'}>
+              {flash()!.textContents}
+            </span>
+          }
+        >
+            <div style={{color: '#800000', 'text-align': 'center'}}>
+              {(() => {
+                if (!props.prevID) {
+                  // First flash: Show absolute time
+                  const d = new Date(flash()!.createDT);
+                  const pad = (n: number) => n.toString().padStart(2, '0');
+                  const hours = pad(d.getHours() % 12);
+                  const suffix = d.getHours() > 12 ? 'PM' : 'AM'
+                  return `${hours}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${suffix}`;
+                } else {
+                  const prevFlash = allFlashes.find(f => f.id === props.prevID);
+                  if (prevFlash) {
+                    const prevEnd = prevFlash.createDT + prevFlash.tSpan;
+                    const deltaMs = flash()!.createDT - prevEnd;
+                    // Math.max prevents negative values if typing overlaps
+                    const deltaSec = (Math.max(0, deltaMs) / 1000).toFixed(1);
+                    return `+${deltaSec}s`;
+                  }
+                  return '';
+                }
+              })()}
+            </div>
+            <div
+              class='paragraph flash'
+              title={(flash()!.tSpan / 1000).toString() + ' seconds'}
+              style={{ 'color': '#000000' }}>
+              {flash()!.textContents}
+            </div>
+        </Show>
+      </Show>
+    );
+  };
   return (
     <Show when={focusedStreamID() !== 0}
     fallback={renderSpace()}>
@@ -116,17 +158,16 @@ export const FocusReader: Component = () => {
           Flash Spacing
           </button>
           <button 
-          onClick={()=>
-            setFlickerSpacing(!flickerSpacing())}>
-          Flicker Spacing
-          </button>
+          onClick={() => {
+            setFlashSpacing(true)
+            setShowTimes(!showTimes())
+            }}>Show Times</button>
           <button 
           onClick={()=>
             {setShowSecondaryOpts(true)}}>
-            Upcoming Options</button>
+            More Options</button>
           </div>
           <div style={{width: '100%'}} class={showSecondaryOpts() ? 'knuckle optset' : 'nail optset'}>
-          <button>Show Times</button>
           <button 
           onClick={()=>{
             setShowSecondaryOpts(false)}}>
@@ -138,23 +179,21 @@ export const FocusReader: Component = () => {
           </h1>
         </Show>
       </div>
-      <div 
-      class='stream'>
+      <div class='stream'>
         <For each={groupedContent()}>
           {(group) => (
-            <span
-            class={
-              group.type === 'flashes'
-                ? 'flash paragraph' 
-                : 'flicker paragraph'}>
+            <div 
+              class={
+                flashSpacing() ?
+                  'flicker' :
+                  'paragraph flicker'}>
               <For each={group.flashIDs}>
-                {(flashID) => (
-                  <span class={flashSpacing() ? 'paragraph' : ''}>{
-                    allFlashes.find(f => f.id === flashID)?.textContents || ''}
-                  </span>
-                )}
+                {(flashID, index) => {
+                  const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
+                  return <FlashNode id={flashID} prevID={prevID} />;
+                }}
               </For>
-            </span>
+            </div>
           )}
         </For>
       </div>

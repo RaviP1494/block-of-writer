@@ -44,6 +44,7 @@ const handleCreateStream = () => {
     <For each={[...allStreams]}>
     {(stream) => (
       <button class="streambtn"
+      id={'stream' + stream.id.toString()}
       onClick={() => {handleClick(stream.id)}}
       style={{
         'background-color' : stream.id === writerTargetID() ? '#0040ff' : '#408080',

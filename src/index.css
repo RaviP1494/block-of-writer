@@ -1,6 +1,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  max-height: 100dvh;
   box-sizing: border-box;
   background-color: #000000;
   color: #404040;
