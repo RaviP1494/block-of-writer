@@ -126,7 +126,7 @@ export const AnimationOverlay: Component = () => {
         targetX = p.flowPoints[p.flowTargetIdx][1];
         
         // If it reaches the current flow point, cycle to the next one
-        if (Math.hypot(targetX - p.x, targetY - p.y) < p.radius + 60) {
+        if (Math.hypot(targetX - p.x, targetY - p.y) < p.radius + 20) {
           p.flowTargetIdx = (p.flowTargetIdx + 1) % p.flowPoints.length;
         }
       }
@@ -169,8 +169,8 @@ export const AnimationOverlay: Component = () => {
       ctx.fillStyle = '#ffffff';
       
       // Makes it glow!
-      ctx.shadowBlur = p.radius * 2; 
-      ctx.shadowColor = p.isDespawning ? '#ff0055' : '#00ffff'; // Changes color when arcing to despawn
+      ctx.shadowBlur = p.radius; 
+      ctx.shadowColor = p.isDespawning ? '#00ff7f' : '#ffff00'; // Changes color when arcing to despawn
       ctx.fill();
       ctx.closePath();
     }

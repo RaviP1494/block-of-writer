@@ -222,8 +222,7 @@ div.delay-set > span {
 .stream {
   background-image: url('./assets/parchment_center.jpg'); 
   background-size: 100% 1.5em;
-  font-family: 'Caveat', cursive;
-  font-size: 20px;
+  font-size: 14px;
   padding: 0 4ch;
   background-attachment: local;
   background-repeat: repeat-y;
@@ -240,7 +239,6 @@ div.delay-set > span {
 }
 .paragraph{
   text-indent: 4ch;
-  text-decoration: overline;
   display: block;
 }
 
@@ -277,7 +275,7 @@ button {
 
 span {
   padding: 0px 4px;
-  color: white;
+  color: #303030;
 }
 
 h1 {

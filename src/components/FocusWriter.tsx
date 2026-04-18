@@ -38,9 +38,9 @@ const spawnMyParticle = () => {
     targets.push([topW + heightW, leftW + widthW]);
     targets.push([topW + heightW * 2, leftW]);
   // id: 1, speed: 5, radius: 8, density: 10
-  const density = Math.floor(Math.random() * 10);
-  const speed = Math.floor(Math.random() * 5)+5;
-  const radius = Math.floor(Math.random() * 4) + 3;
+  const density = Math.floor(Math.random() * 5) + 2;
+  const speed = Math.floor(Math.random() * 6) + 3;
+  const radius = Math.floor(Math.random() * 3) + 1;
   spawnParticle(1, speed, radius, density, targets);
 };
 
