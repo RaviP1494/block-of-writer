@@ -1,6 +1,5 @@
 import TimerWorker from '../workers/timerWorker?worker';
 import { type Component, createSignal, createEffect, onCleanup, Show } from 'solid-js';
-import { StreamList } from './StreamList';
 import { spawnParticle, triggerDespawn, type PointTuple } from './AnimationOverlay';
 import {
   type Flash, flashDelayT,
@@ -8,7 +7,6 @@ import {
   backspaceDisabled, inflecTents,
   typingStartTime, setTypingStartTime,
   setIsWritersBlockEmpty,
-  writerTargetID,
   sendFlash, flickFlash,
   setIsFlickerOpen,
   inflectionOn
@@ -19,34 +17,41 @@ export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
 export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
 
-
-const spawnMyParticle = () => {
-  const textArea = document.querySelector('.focus-writer textarea');
-  const streamBtn = writerTargetID() ? document.querySelector(`#stream${writerTargetID()}`) : document.querySelector('.focus-left');
-    const textRect = textArea?.getBoundingClientRect();
-    const targetRect = streamBtn?.getBoundingClientRect();
-    const topW = textRect?.top ? textRect.top : 10;
-    const leftW = textRect?.left ? textRect.left : 10;
-    const heightW = textRect?.height ? textRect.height : 10;
-    const widthW = textRect?.width ? textRect.width : 10;
-    const topS = targetRect?.top ? targetRect.top : 10;
-    const leftS = targetRect?.left ? targetRect.left : 10;
-    const widthS = targetRect?.width ? targetRect.width : 10;
-    const targets: PointTuple[] = [];
-    targets.push([topW, leftW]);
-    targets.push([topS, leftS+widthS]);
-    targets.push([topW + heightW, leftW + widthW]);
-    targets.push([topW + heightW * 2, leftW]);
+  // const textArea = document.querySelector('.focus-writer textarea');
+  // const streamBtn = writerTargetID() ? document.querySelector(`#stream${writerTargetID()}`) : document.querySelector('.focus-left');
+  //   const textRect = textArea?.getBoundingClientRect();
+  //   const targetRect = streamBtn?.getBoundingClientRect();
+  //   const topW = textRect?.top ? textRect.top : 10;
+  //   const leftW = textRect?.left ? textRect.left : 10;
+  //   const heightW = textRect?.height ? textRect.height : 10;
+  //   const widthW = textRect?.width ? textRect.width : 10;
+  //   const topS = targetRect?.top ? targetRect.top : 10;
+  //   const leftS = targetRect?.left ? targetRect.left : 10;
+  //   const widthS = targetRect?.width ? targetRect.width : 10;
+  //   const targets: PointTuple[] = [];
+  //   targets.push([topW, leftW]);
+  //   targets.push([topS, leftS+widthS]);
+  //   targets.push([topW + heightW, leftW + widthW]);
+  //   targets.push([topW + heightW * 2, leftW]);
   // id: 1, speed: 5, radius: 8, density: 10
-  const density = Math.floor(Math.random() * 5) + 2;
-  const speed = Math.floor(Math.random() * 6) + 3;
-  const radius = Math.floor(Math.random() * 3) + 1;
-  spawnParticle(1, speed, radius, density, targets);
+  // const speed = Math.floor(Math.random() * 6) + 3;
+  // const radius = Math.floor(Math.random() * 3) + 1;
+
+const spawnMyParticle = (char:string) => {
+  const bg = document.querySelector('.background-one');
+  const textArea = document.querySelector('.focus-writer textarea');
+  const bgRect = bg?.getBoundingClientRect();
+  const textRect = textArea!.getBoundingClientRect();
+  const bgDims:PointTuple = [bgRect!.height,bgRect!.width];
+  const gravPt: PointTuple = [textRect.top + textRect.height, textRect.left + textRect.width / 2];
+  const speed = Math.floor(Math.random() * 4) + 2;
+  const radius = Math.floor(Math.random() * 8) + 4;
+  spawnParticle(char, gravPt, bgDims, speed, radius);
 };
 
 // Example: Arcing it to the StreamList to destroy it
 const killMyParticle = () => {
-  const bg = document.querySelector('.background-one');
+  const bg = document.querySelector('.welcomer');
     const rect = bg!.getBoundingClientRect();
     const target: PointTuple = [rect.top + rect.height, rect.left + rect.width / 2];
     triggerDespawn(target);
@@ -55,6 +60,7 @@ const killMyParticle = () => {
 export const FocusWriter: Component = () => {
   let textareaRef: HTMLTextAreaElement | undefined;
   const [currentText, setCurrentText] = createSignal("    ");
+  const [particlesSpawned, setParticlesSpawned] = createSignal(0);
   const worker = new TimerWorker();
 
   worker.onmessage = (e) => {
@@ -90,7 +96,7 @@ export const FocusWriter: Component = () => {
       tSpan: now - start,
       delayTSpan: flashDelayT() * 1000 // Convert UI seconds to MS
     };
-
+    setParticlesSpawned(0);
     sendFlash(newFlash);
     setCurrentText("    ");
     setTypingStartTime(null);
@@ -131,13 +137,21 @@ export const FocusWriter: Component = () => {
     }
 
     // 3. Ignore control keys (Shift, Ctrl, etc.)
-    if (e.key.length !== 1) return;
-    spawnMyParticle();
     // 4. Valid character typed: start/reset timer
     if (!typingStartTime()) {
       setTypingStartTime(Date.now());
       setIsActiveTimer(true);
+    } else {
+      const elapsedMS = Date.now() - typingStartTime()!;
+      const expectedParticles = Math.floor(elapsedMS / 5000); 
+
+      if (expectedParticles > particlesSpawned()) {
+        console.log(expectedParticles + '<e a>' + particlesSpawned());
+        spawnMyParticle(e.key);
+        setParticlesSpawned(expectedParticles); 
+      }
     }
+
 
     worker.postMessage({
       type: 'reset',
@@ -161,11 +175,7 @@ export const FocusWriter: Component = () => {
 
 
   return (
-    <div class='focus-writer'>
-
-
-      <StreamList clickDo={true} />
-
+    <div class='focus focus-writer'>
       <textarea
         ref={textareaRef}
         value={currentText()}
@@ -173,6 +183,7 @@ export const FocusWriter: Component = () => {
         onPaste={(e) => e.preventDefault()}
         onKeyDown={(e) => { handleKeyDown(e) }}
         placeholder="oops"
+        autofocus
       />
       <Show when={inflectionOn()}>
         <InflectionPoint />

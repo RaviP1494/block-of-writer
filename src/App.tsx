@@ -2,11 +2,13 @@ import './App.css'
 
 import { Show } from 'solid-js';
 import { type Component } from 'solid-js';
-import { HandBar } from './components/HandBar';
 import { FocusWriter } from './components/FocusWriter';
 import { FocusReader } from './components/FocusReader';
 import { userMode } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
+import { StreamList } from './components/StreamList';
+import { WelcomeTitle } from './components/WelcomeTitle';
+import { WritersHandBar } from './components/WritersHandBar';
 
 
 const App: Component = () => {
@@ -16,13 +18,18 @@ const App: Component = () => {
     <>
       <AnimationOverlay />
       <div class="background-one">
-        <HandBar />
+      <WelcomeTitle />
+      <WritersHandBar />
 
         <Show when={userMode() === 'ReadWrite'}>
-          <div class='focus-left'>
-            <FocusReader />
+          <div class='focus-left flex-down' 
+          style={{'justify-content': 'flex-end'}}>
+          <StreamList clickDo={true} />
           </div>
           <FocusWriter />
+          <div class='focus-right flex-down'>
+          <FocusReader />
+          </div>
         </Show>
 
       </div>

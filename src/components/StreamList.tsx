@@ -24,11 +24,10 @@ const handleCreateStream = () => {
     }
   }
 
-
   return (
-    <div class="streamlist">
+    <div class="streamlist-box">
       <div style={{
-        width: '100%',
+        'max-width': '100%',
         display: 'flex',
       }}>
         <input type="text" placeholder="Title" value={newStreamName()}
@@ -37,10 +36,26 @@ const handleCreateStream = () => {
         />
         <button onClick={() => handleCreateStream()}
         style={{
+          'box-shadow': 'none',
+          'border-radius': '20px',
+          'min-width': '6ch',
+  'overflow': 'hidden',
           'background-color': '#408040',
+          'max-height': '3ch',
         'flex-grow': '1'}}>
           New Stream</button>
       </div>
+      <button style={{
+        'background-color': 
+          writerTargetID() === 0 ? '#141414' : '#404040', 
+        'max-height': '4ch',
+          width: '100%'}}
+        onClick={() => {
+          handleClick(0);
+        }}>
+        Space
+      </button>
+    <div class="streamlist">
     <For each={[...allStreams]}>
     {(stream) => (
       <button class="streambtn"
@@ -50,19 +65,12 @@ const handleCreateStream = () => {
         'background-color' : stream.id === writerTargetID() ? '#0040ff' : '#408080',
       }}>
         {stream.title}:{stream.id === writerTargetID() 
-          ? '(' + streamWordCount(stream.id) + ')w' 
-          : '(' + getStreamTSpan(stream.id) + ')s' }
+          ? '(' + streamWordCount(stream.id) + 'w)' 
+          : '(' + getStreamTSpan(stream.id) + ')' }
       </button>
     )}
     </For>
-      <button style={{
-        'background-color': writerTargetID() === 0 ? '#141414' : '#404040', 
-          width: '100%'}}
-        onClick={() => {
-          handleClick(0);
-        }}>
-        Space
-      </button>
+      </div>
     </div>
   );
 };

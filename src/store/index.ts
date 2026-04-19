@@ -482,9 +482,19 @@ export const flickerWordCount = (flickerID:number) => {
   }, 0);
 };
 
+export const textWordCount = (text:string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
+
 export const getStreamTSpan = (streamID:number) => {
   const ms = streamFlashes(streamID).reduce((total, f) => total + f.tSpan, 0);
-  return Number((ms / 1000).toFixed(2));
+  const sec = ms / 1000;
+  const hours = Math.floor(sec / 3600);
+  const minutes = Math.floor(sec / 60);
+  const seconds = Math.floor(sec % 60);
+  let retStr = '';
+  hours ? retStr+=hours.toString() + 'h:' : '';
+  minutes ? retStr+=minutes.toString() + 'm:' :'';
+  retStr.length ? retStr+=seconds.toString() + 's' : retStr+=Number((ms / 1000).toFixed(2)) + 's';
+  return retStr;
 };
 
 export const getFlickerTSpan = (flickerID: number) => {

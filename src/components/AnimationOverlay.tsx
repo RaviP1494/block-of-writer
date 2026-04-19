@@ -4,71 +4,74 @@ import { type Component, onMount, onCleanup } from 'solid-js';
 export type PointTuple = [number, number]; 
 
 interface ActiveParticle {
-  id: string | number;
+  id: number;
   radius: number;
-  mass: number;
   speed: number;
-  x: number;     // Left
-  y: number;     // Top
+  x: number;
+  y: number;
   vx: number;
   vy: number;
-  flowPoints: PointTuple[];
-  flowTargetIdx: number;
+  gravX: number;
+  gravY: number;
   isDespawning: boolean;
   despawnTarget?: PointTuple;
 }
 
 // Global array to hold the active physics particles
+let nextParticleID = 1;
 let particles: ActiveParticle[] = [];
-
 // ==========================================
 // EXPORTED TRIGGER FUNCTIONS
 // ==========================================
+const charGroups = ['qaz', 'wsx', 'edc', 'rfv','uh','bij','okn','plm'];
 
-export const spawnParticle = (
-  id: string | number, 
-  speed: number, 
-  radius: number, 
-  density: number, 
-  flowPoints: PointTuple[]
-) => {
-  if (flowPoints.length === 0) return;
+const charMap = new Int8Array(26).fill(-1); 
 
-  const startY = flowPoints[0][0]; // Top
-  const startX = flowPoints[0][1]; // Left
+charGroups.forEach((group, index) => {
+  for (let i = 0; i < group.length; i++) {
+    charMap[group.charCodeAt(i) - 97] = index;
+  }
+});
+
+export function getGroupIndexFast(char: string): number {
+  if (!char) return -1;
+  const code = char.toLowerCase().charCodeAt(char.length-1) - 97;
   
-  // Calculate Mass (prevent division by zero later)
-  const mass = Math.max(0.1, radius * density); 
+  // Ensure it's a standard letter between a and z
+  if (code >= 0 && code <= 25) {
+     return charMap[code] + 1;
+  }
+  return -1; // Character not in any group (like numbers, punctuation, or 't')
+}
+export const spawnParticle = (
+  keyPressed: string,
+  gravPoint: PointTuple,
+  bgDims: PointTuple,
+  speed: number, 
+  radius: number
+) => {
+  const idKeyPr=getGroupIndexFast(keyPressed);
+  if (idKeyPr < 0 || !idKeyPr) return;
 
-  // Determine initial velocity vector. Point it towards the second point if it exists.
-  let initialVx = 0;
-  let initialVy = 0;
+  const x = bgDims[1] * idKeyPr / 8;
+  const y = bgDims[0];
 
-  if (flowPoints.length > 1) {
-    const nextY = flowPoints[1][0];
-    const nextX = flowPoints[1][1];
-    const dist = Math.hypot(nextX - startX, nextY - startY) || 1;
-    initialVx = ((nextX - startX) / dist) * speed;
-    initialVy = ((nextY - startY) / dist) * speed;
-  } 
-    const angle = Math.random() * Math.PI * 2;
-    initialVx += Math.cos(angle) * speed / 4;
-    initialVy += Math.sin(angle) * speed / 4;
+  let initialVx = ((Math.random() * 2) - 1) * speed;
+  let initialVy = 0 - Math.random() * speed;
 
   particles.push({
-    id,
+    id: nextParticleID++,
     radius,
-    mass,
     speed,
-    x: startX,
-    y: startY,
+    x,
+    y,
     vx: initialVx,
     vy: initialVy,
-    flowPoints,
-    flowTargetIdx: flowPoints.length > 1 ? 1 : 0,
+    gravX: gravPoint[1],
+    gravY: gravPoint[0],
     isDespawning: false
   });
-  return id;
+  return nextParticleID;
 };
 
 export const triggerDespawn = (targetTuple: PointTuple) => {
@@ -77,7 +80,6 @@ export const triggerDespawn = (targetTuple: PointTuple) => {
       p.isDespawning = true;
       p.despawnTarget = targetTuple;
 
-      // Optional: Boost the speed slightly upon despawn trigger so it "zips" away
       p.speed *= 1.5;
     }
   });
@@ -101,63 +103,42 @@ export const AnimationOverlay: Component = () => {
       canvasRef.width = window.innerWidth;
       canvasRef.height = window.innerHeight;
     }
-
-    // Clear previous frame
     ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
 
-    // Iterate backwards so we can safely splice out despawned particles
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      let targetX: number;
-      let targetY: number;
+    if (!particles.length) nextParticleID = 1;
+     // Iterate backwards so we can safely splice out despawned particles
+     for (let i = particles.length - 1; i >= 0; i--) {
+       const p = particles[i];
+       let gravX: number;
+       let gravY: number;
+    
+       // 1. Determine Target
+       if (p.isDespawning && p.despawnTarget) {
+         gravY = p.despawnTarget[0];
+         gravX = p.despawnTarget[1];
+    
+         p.radius-=.02;
+         // If it gets close enough to the despawn point, kill it
+         if (Math.hypot(gravX - p.x, gravY - p.y) < 140) {
+           particles.splice(i, 1);
+           continue;
+         }
+       } else {
+         gravX = p.gravX;
+         gravY = p.gravY;
+       }
 
-      // 1. Determine Target
-      if (p.isDespawning && p.despawnTarget) {
-        targetY = p.despawnTarget[0];
-        targetX = p.despawnTarget[1];
-        
-        // If it gets close enough to the despawn point, kill it
-        if (Math.hypot(targetX - p.x, targetY - p.y) < p.speed + p.radius) {
-          particles.splice(i, 1);
-          continue;
-        }
-      } else {
-        targetY = p.flowPoints[p.flowTargetIdx][0];
-        targetX = p.flowPoints[p.flowTargetIdx][1];
-        
-        // If it reaches the current flow point, cycle to the next one
-        if (Math.hypot(targetX - p.x, targetY - p.y) < p.radius + 20) {
-          p.flowTargetIdx = (p.flowTargetIdx + 1) % p.flowPoints.length;
-        }
-      }
-
-      // 2. Physics & Steering Math
-      const dx = targetX - p.x;
-      const dy = targetY - p.y;
-      const distance = Math.hypot(dx, dy) || 1;
-
-      // Desired velocity is straight towards the target at max speed
-      const desiredVx = (dx / distance) * p.speed;
-      const desiredVy = (dy / distance) * p.speed;
-
-      // Steering force is the difference between desired and current velocity
-      const steerX = desiredVx - p.vx;
-      const steerY = desiredVy - p.vy;
+       const inversePull = p.isDespawning ? 14 : 34;
+      const dx = (gravX - p.x) / inversePull;
+      const dy = (gravY - p.y) / inversePull;
 
       // Acceleration = Force / Mass. 
       // (We multiply mass by a small constant so the turning feels smooth on screen)
-      const ax = steerX / (p.mass);
-      const ay = steerY / (p.mass);
+      const ax = dx / p.radius * .1;
+      const ay = dy / p.radius * .1; 
 
       p.vx += ax;
       p.vy += ay;
-
-      // Cap the velocity at the particle's speed limit
-      const currentSpeed = Math.hypot(p.vx, p.vy);
-      if (currentSpeed > p.speed) {
-        p.vx = (p.vx / currentSpeed) * p.speed;
-        p.vy = (p.vy / currentSpeed) * p.speed;
-      }
 
       // Apply velocity to position
       p.x += p.vx;
