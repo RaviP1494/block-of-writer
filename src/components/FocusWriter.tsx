@@ -12,7 +12,6 @@ import {
   inflectionOn,
   focusedStreamID,
   writerTargetID,
-  textWordCount
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 
@@ -41,29 +40,30 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
   // const radius = Math.floor(Math.random() * 3) + 1;
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
-  const bg = document.querySelector('.background-one');
-  const target = focusedStreamID() 
-    ? document.querySelector('.stream-title')
-    : writerTargetID()
-    ? document.querySelector(`#stream${writerTargetID()}`)
-    : document.querySelector('.focus-writer textarea');
-  const bgRect = bg?.getBoundingClientRect();
-  const targetRect = target?.getBoundingClientRect();
-  const bgDims:PointTuple = [bgRect!.height,bgRect!.width];
-  const gravPt: PointTuple = [targetRect!.top + targetRect!.height, targetRect!.left + targetRect!.width / 2];
+  const textA = document.querySelector('.focus-writer textarea');
 
-  const speed = timeSpan;
-  const radius = textWordCount(text); 
-  // const speed = Math.floor(Math.random() * 4) + 2;
-  // const radius = Math.floor(Math.random() * 8) + 4;
-  spawnParticle(gravPt, bgDims, speed, radius);
+  const txtARect = textA?.getBoundingClientRect();
+  const gravPt:PointTuple = 
+    [txtARect!.top + txtARect!.height, 
+      (txtARect!.left + txtARect!.width) / 2];
+  const startPt: PointTuple = 
+    [txtARect!.top, 
+      (txtARect!.left + txtARect!.width) / 2];
+
+  spawnParticle(gravPt, startPt, text, timeSpan);
 };
 
 // Example: Arcing it to the StreamList to destroy it
 const killMyParticle = () => {
-  const bg = document.querySelector('.welcomer');
-    const rect = bg!.getBoundingClientRect();
-    const target: PointTuple = [rect.top + rect.height, rect.left + rect.width / 2];
+  const targetElement = focusedStreamID() 
+    ? document.querySelector('.stream-title')
+    : writerTargetID()
+    ? document.querySelector(`#stream${writerTargetID()}`)
+    : document.querySelector('.streamlist');
+  const targetRect = targetElement?.getBoundingClientRect();
+  const target: PointTuple = 
+    [targetRect!.top + targetRect!.height / 2, 
+      (targetRect!.left + targetRect!.width) / 2];
     triggerDespawn(target);
 }
 
@@ -98,13 +98,14 @@ export const FocusWriter: Component = () => {
 
     const now = Date.now();
     const start = typingStartTime() || now;
+    const delayT = flashDelayT() * 1000;
 
     const newFlash: Flash = {
       id: 0,
       createDT: now,
       textContents: text,
       tSpan: now - start,
-      delayTSpan: flashDelayT() * 1000 // Convert UI seconds to MS
+      delayTSpan: delayT // Convert UI seconds to MS
     };
     sendFlash(newFlash);
     if (text) spawnMyParticle((now-start)/1000, text);

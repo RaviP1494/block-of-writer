@@ -1,4 +1,5 @@
 import { type Component, onMount, onCleanup } from 'solid-js';
+import { textWordCount } from '../store';
 
 // We use [top, left] to match your tuple requirement
 export type PointTuple = [number, number]; 
@@ -6,7 +7,7 @@ export type PointTuple = [number, number];
 interface ActiveParticle {
   id: number;
   radius: number;
-  speed: number;
+  mass: number;
   x: number;
   y: number;
   vx: number;
@@ -45,26 +46,26 @@ export function getGroupIndexFast(char: string): number {
 }
 export const spawnParticle = (
   gravPoint: PointTuple,
-  bgDims: PointTuple,
-  speed: number, 
-  radius: number
+  startPt: PointTuple,
+  text: string, 
+  timeSpan: number
 ) => {
-  const idKeyPr = Math.ceil(Math.random() * 8);
-  if (idKeyPr < 0 || !idKeyPr) return;
 
-  const x = bgDims[1] * idKeyPr / 8;
-  const y = bgDims[0];
+  const mass = text.length;
+  const radius = Math.sqrt(mass) + 5;
 
-  let initialVx = ((Math.random() * 20) - 10) * speed;
-  let initialVy = 0 - (Math.random() * 20 * speed);
-  console.log('speed: ' + speed)
+  const wordsPerSecond = textWordCount(text) / timeSpan;
+  let initialVx = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond * 10;
+  let initialVy = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond * 10;
+
+  console.log('id:' + nextParticleID + ',density:' + ',radius:' + radius + ',mass:' + mass + ',x:' + startPt[1] + ',y:' + startPt[0] + ',vx:' + + initialVx + ',vy:' + initialVy + ',gravX:' + gravPoint[1] + ',gravY:' + gravPoint[0]);
 
   particles.push({
     id: nextParticleID++,
     radius,
-    speed,
-    x,
-    y,
+    mass,
+    x: gravPoint[1],
+    y: gravPoint[0],
     vx: initialVx,
     vy: initialVy,
     gravX: gravPoint[1],
@@ -80,7 +81,7 @@ export const triggerDespawn = (targetTuple: PointTuple) => {
       p.isDespawning = true;
       p.despawnTarget = targetTuple;
 
-      p.speed *= 1.5;
+      p.mass *= 1.5;
     }
   });
 };
@@ -111,54 +112,50 @@ export const AnimationOverlay: Component = () => {
        const p = particles[i];
        let gravX: number;
        let gravY: number;
-       let inversePull: number;
-    
-       if(p.x > canvasRef.width) p.vx = (0 - Math.abs(p.vx)) - 1;
-       else if(p.x < 0) p.vx = Math.abs(p.vx) - 1;
-       if(p.y > canvasRef.height) p.vy = (0 - Math.abs(p.vy)) - 1;
-       else if(p.y < 0) p.vy = Math.abs(p.vy) - 1;
+       let pull: number;
+   
+       if(p.x > canvasRef.width) p.vx = 0 - (Math.abs(p.vx) * 9 / 10);
+       else if(p.x < 0) p.vx = Math.abs(p.vx * 9 / 10);
+       if(p.y > canvasRef.height) p.vy = 0 - (Math.abs(p.vy) * 9 / 10);
+       else if(p.y < 0) p.vy = Math.abs(p.vy * 9 / 10);
 
        // 1. Determine Target
        if (p.isDespawning && p.despawnTarget) {
          gravY = p.despawnTarget[0];
          gravX = p.despawnTarget[1];
-         inversePull = 70;
+         pull = p.mass * 300;
     
          p.radius -= .02;
          // If it gets close enough to the despawn point, kill it
-         if (Math.hypot(gravX - p.x, gravY - p.y) < 140) {
-           console.log(p.vx + ' ' + p.vy);
+         if (Math.hypot(gravX - p.x, gravY - p.y) < 140 || p.radius < 0.5) {
            particles.splice(i, 1);
            continue;
          }
        } else {
          gravX = p.gravX;
          gravY = p.gravY;
-         inversePull = 25;
+         pull = p.mass * 100;
        }
 
-      const dx = (gravX - p.x) / inversePull;
-      const dy = (gravY - p.y) / inversePull;
+       const d = Math.max(Math.hypot(gravX - p.x, gravY - p.y), 0.1);
+       const ax = Math.min(20,pull * p.x / (d * d * d));
+       const ay = Math.min(20,pull * p.y / (d * d * d));
 
-      // Acceleration = Force / Mass. 
-      // (We multiply mass by a small constant so the turning feels smooth on screen)
-      const ax = dx / p.radius * .4;
-      const ay = dy / p.radius * .4; 
 
-      p.vx += ax;
-      p.vy += ay;
+       // console.log('vx:' + p.vx + '+ax:(' + ax + ')vy:' + p.vy + '+ay:(' + ay + ')');
+       p.vx += ax;
+       p.vy += ay;
 
-      // Apply velocity to position
       p.x += p.vx;
       p.y += p.vy;
 
       // 3. Draw the Particle
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#a9a9a9';
+      ctx.fillStyle = '#ffffff';
       
       // Makes it glow!
-      ctx.shadowBlur = p.radius * 5; 
+      ctx.shadowBlur = p.radius; 
       ctx.shadowColor = p.isDespawning ? '#008020' : '#000000'; // Changes color when arcing to despawn
       ctx.fill();
       ctx.closePath();
