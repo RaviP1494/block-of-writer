@@ -52,7 +52,7 @@ const spawnMyParticle = (timeSpan: number, text: string) => {
   const bgDims:PointTuple = [bgRect!.height,bgRect!.width];
   const gravPt: PointTuple = [targetRect!.top + targetRect!.height, targetRect!.left + targetRect!.width / 2];
 
-  const speed = timeSpan / 10;
+  const speed = timeSpan;
   const radius = textWordCount(text); 
   // const speed = Math.floor(Math.random() * 4) + 2;
   // const radius = Math.floor(Math.random() * 8) + 4;
@@ -107,7 +107,7 @@ export const FocusWriter: Component = () => {
       delayTSpan: flashDelayT() * 1000 // Convert UI seconds to MS
     };
     sendFlash(newFlash);
-    spawnMyParticle(flashDelayT(), text);
+    if (text) spawnMyParticle((now-start)/1000, text);
     setCurrentText("    ");
     setTypingStartTime(null);
     worker.postMessage({ type: 'stop_flash' });
@@ -129,6 +129,7 @@ export const FocusWriter: Component = () => {
         initFlash();
         if (flickerModeOn()) setIsActiveTimer(true);
       } else if (inflecTents()) {
+        killMyParticle();
         flickFlash();
         setTypingStartTime(null);
         worker.postMessage({

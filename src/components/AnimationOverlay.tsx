@@ -55,8 +55,9 @@ export const spawnParticle = (
   const x = bgDims[1] * idKeyPr / 8;
   const y = bgDims[0];
 
-  let initialVx = ((Math.random() * 2) - 1) * speed;
-  let initialVy = 0 - Math.random() * speed;
+  let initialVx = ((Math.random() * 20) - 10) * speed;
+  let initialVy = 0 - (Math.random() * 20 * speed);
+  console.log('speed: ' + speed)
 
   particles.push({
     id: nextParticleID++,
@@ -110,31 +111,39 @@ export const AnimationOverlay: Component = () => {
        const p = particles[i];
        let gravX: number;
        let gravY: number;
+       let inversePull: number;
     
+       if(p.x > canvasRef.width) p.vx = (0 - Math.abs(p.vx)) - 1;
+       else if(p.x < 0) p.vx = Math.abs(p.vx) - 1;
+       if(p.y > canvasRef.height) p.vy = (0 - Math.abs(p.vy)) - 1;
+       else if(p.y < 0) p.vy = Math.abs(p.vy) - 1;
+
        // 1. Determine Target
        if (p.isDespawning && p.despawnTarget) {
          gravY = p.despawnTarget[0];
          gravX = p.despawnTarget[1];
+         inversePull = 70;
     
-         p.radius-=.02;
+         p.radius -= .02;
          // If it gets close enough to the despawn point, kill it
          if (Math.hypot(gravX - p.x, gravY - p.y) < 140) {
+           console.log(p.vx + ' ' + p.vy);
            particles.splice(i, 1);
            continue;
          }
        } else {
          gravX = p.gravX;
          gravY = p.gravY;
+         inversePull = 25;
        }
 
-       const inversePull = p.isDespawning ? 14 : 34;
       const dx = (gravX - p.x) / inversePull;
       const dy = (gravY - p.y) / inversePull;
 
       // Acceleration = Force / Mass. 
       // (We multiply mass by a small constant so the turning feels smooth on screen)
-      const ax = dx / p.radius * .1;
-      const ay = dy / p.radius * .1; 
+      const ax = dx / p.radius * .4;
+      const ay = dy / p.radius * .4; 
 
       p.vx += ax;
       p.vy += ay;
@@ -146,11 +155,11 @@ export const AnimationOverlay: Component = () => {
       // 3. Draw the Particle
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#a9a9a9';
       
       // Makes it glow!
-      ctx.shadowBlur = p.radius; 
-      ctx.shadowColor = p.isDespawning ? '#00ff7f' : '#ffff00'; // Changes color when arcing to despawn
+      ctx.shadowBlur = p.radius * 5; 
+      ctx.shadowColor = p.isDespawning ? '#008020' : '#000000'; // Changes color when arcing to despawn
       ctx.fill();
       ctx.closePath();
     }

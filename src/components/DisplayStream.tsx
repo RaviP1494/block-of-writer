@@ -12,6 +12,7 @@ export interface DisplayStreamProps {
 }
 
 export const DisplayStream: Component<DisplayStreamProps> = (props) => {
+  const [streamBG, setStreamBG] = createSignal(true);
   const [deleteClicked, setDeleteClicked] = createSignal(false);
   const [flashSpacing, setFlashSpacing] = createSignal(false);
   const [showTimes, setShowTimes] = createSignal(false);
@@ -37,7 +38,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
   return (
     <Show when={stream()}>
       <div class='flex-top-down stream-box'>
-        <div class='stream white-bg'>
+        <div class={streamBG() ? 'stream white-bg' : 'stream parchment-bg'}>
           <div class='stream-title'>
             <Show when={!isEditingTitle()}
               fallback={
@@ -61,6 +62,10 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 </h1>
 
                 <div class='tiny-fun flex-wide'>
+                  <button
+                    class={streamBG() ? 'tog-on' : 'tog-off'}
+                    onClick={() => setStreamBG(p=>!p)}
+                    >⬚</button>
                   <button
                     class={flowUp() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
                     onClick={() => {
@@ -107,14 +112,12 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   </button>
                   <button
                     onClick={() => setDeleteClicked(true)}
-                    class={deleteClicked() ? 'delete-hide' : 'delete-reveal'}>X</button>
-
+                    class={deleteClicked() ? 
+                      'delete-hide' : 'delete-reveal'}>
+                    X
+                    </button>
                 </div>
-
-
-
               </div>
-
             </Show>
           </div>
           <br />
