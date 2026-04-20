@@ -117,6 +117,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
             </Show>
           </div>
+          <br/>
           <For each={groupedContent()}>
             {(group) => (
               <div

@@ -9,7 +9,9 @@ import {
   setIsWritersBlockEmpty,
   sendFlash, flickFlash,
   setIsFlickerOpen,
-  inflectionOn
+  inflectionOn,
+  focusedStreamID,
+  writerTargetID
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 
@@ -39,11 +41,15 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
 
 const spawnMyParticle = (char:string) => {
   const bg = document.querySelector('.background-one');
-  const textArea = document.querySelector('.focus-writer textarea');
+  const target = focusedStreamID() 
+    ? document.querySelector('.stream-title')
+    : writerTargetID()
+    ? document.querySelector(`#stream${writerTargetID()}`)
+    : document.querySelector('.focus-writer textarea');
   const bgRect = bg?.getBoundingClientRect();
-  const textRect = textArea!.getBoundingClientRect();
+  const targetRect = target?.getBoundingClientRect();
   const bgDims:PointTuple = [bgRect!.height,bgRect!.width];
-  const gravPt: PointTuple = [textRect.top + textRect.height, textRect.left + textRect.width / 2];
+  const gravPt: PointTuple = [targetRect!.top + targetRect!.height, targetRect!.left + targetRect!.width / 2];
   const speed = Math.floor(Math.random() * 4) + 2;
   const radius = Math.floor(Math.random() * 8) + 4;
   spawnParticle(char, gravPt, bgDims, speed, radius);
