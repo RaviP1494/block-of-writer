@@ -11,7 +11,8 @@ import {
   setIsFlickerOpen,
   inflectionOn,
   focusedStreamID,
-  writerTargetID
+  writerTargetID,
+  textWordCount
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 
@@ -39,7 +40,7 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
   // const speed = Math.floor(Math.random() * 6) + 3;
   // const radius = Math.floor(Math.random() * 3) + 1;
 
-const spawnMyParticle = (char:string) => {
+const spawnMyParticle = (timeSpan: number, text: string) => {
   const bg = document.querySelector('.background-one');
   const target = focusedStreamID() 
     ? document.querySelector('.stream-title')
@@ -50,9 +51,12 @@ const spawnMyParticle = (char:string) => {
   const targetRect = target?.getBoundingClientRect();
   const bgDims:PointTuple = [bgRect!.height,bgRect!.width];
   const gravPt: PointTuple = [targetRect!.top + targetRect!.height, targetRect!.left + targetRect!.width / 2];
-  const speed = Math.floor(Math.random() * 4) + 2;
-  const radius = Math.floor(Math.random() * 8) + 4;
-  spawnParticle(char, gravPt, bgDims, speed, radius);
+
+  const speed = timeSpan / 10;
+  const radius = textWordCount(text); 
+  // const speed = Math.floor(Math.random() * 4) + 2;
+  // const radius = Math.floor(Math.random() * 8) + 4;
+  spawnParticle(gravPt, bgDims, speed, radius);
 };
 
 // Example: Arcing it to the StreamList to destroy it
@@ -66,7 +70,7 @@ const killMyParticle = () => {
 export const FocusWriter: Component = () => {
   let textareaRef: HTMLTextAreaElement | undefined;
   const [currentText, setCurrentText] = createSignal("    ");
-  const [particlesSpawned, setParticlesSpawned] = createSignal(0);
+  // const [particlesSpawned, setParticlesSpawned] = createSignal(0);
   const worker = new TimerWorker();
 
   worker.onmessage = (e) => {
@@ -77,6 +81,7 @@ export const FocusWriter: Component = () => {
     } else if (e.data.type === 'flash_timeout') {
       initFlash();
     } else if (e.data.type === 'flicker_timeout') {
+      killMyParticle();
       setIsFlickerOpen(false);
       setIsActiveTimer(false);
     }
@@ -88,7 +93,6 @@ export const FocusWriter: Component = () => {
 
 
   const initFlash = () => {
-    killMyParticle()
     const text = currentText().trim();
     if (!text) return;
 
@@ -102,8 +106,8 @@ export const FocusWriter: Component = () => {
       tSpan: now - start,
       delayTSpan: flashDelayT() * 1000 // Convert UI seconds to MS
     };
-    setParticlesSpawned(0);
     sendFlash(newFlash);
+    spawnMyParticle(flashDelayT(), text);
     setCurrentText("    ");
     setTypingStartTime(null);
     worker.postMessage({ type: 'stop_flash' });
@@ -147,16 +151,18 @@ export const FocusWriter: Component = () => {
     if (!typingStartTime()) {
       setTypingStartTime(Date.now());
       setIsActiveTimer(true);
-    } else {
-      const elapsedMS = Date.now() - typingStartTime()!;
-      const expectedParticles = Math.floor(elapsedMS / 5000); 
+    }{/* else {
+      
+        const elapsedMS = Date.now() - typingStartTime()!;
+        const expectedParticles = Math.floor(elapsedMS / 5000); 
 
       if (expectedParticles > particlesSpawned()) {
         console.log(expectedParticles + '<e a>' + particlesSpawned());
         spawnMyParticle(e.key);
         setParticlesSpawned(expectedParticles); 
-      }
-    }
+      */}
+      
+    
 
 
     worker.postMessage({

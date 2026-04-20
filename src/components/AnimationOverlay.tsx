@@ -44,13 +44,12 @@ export function getGroupIndexFast(char: string): number {
   return -1; // Character not in any group (like numbers, punctuation, or 't')
 }
 export const spawnParticle = (
-  keyPressed: string,
   gravPoint: PointTuple,
   bgDims: PointTuple,
   speed: number, 
   radius: number
 ) => {
-  const idKeyPr=getGroupIndexFast(keyPressed);
+  const idKeyPr = Math.ceil(Math.random() * 8);
   if (idKeyPr < 0 || !idKeyPr) return;
 
   const x = bgDims[1] * idKeyPr / 8;
