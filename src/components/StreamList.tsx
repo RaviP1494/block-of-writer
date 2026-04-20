@@ -29,8 +29,9 @@ const handleCreateStream = () => {
       <div style={{
         'max-width': '100%',
         display: 'flex',
+        'flex-wrap': 'wrap',
       }}>
-        <input type="text" placeholder="Title" value={newStreamName()}
+        <input type="text" placeholder="Name for" value={newStreamName()}
           onInput={(e) => setNewStreamName(e.currentTarget.value)}
           onKeyDown={(e) => { e.key === 'Enter' ? handleCreateStream() : null }}
         />

@@ -26,6 +26,7 @@
   align-self: center;
   border-radius: 100px;
   width: 200px;
+  height: 35px;
   box-sizing: border-box;
   margin-top: 0;
   padding-top: 0;
@@ -54,6 +55,13 @@
 }
 .welcomer {
   position: relative;
+  background-color: #202020;
+  margin: 0 auto;
+  padding: 0 50px;
+  width: fit-content;
+  grid-row: 1;
+  grid-column: 2;
+  border-radius: 40px;
   text-align: center;
   gap: 4px;
 }
@@ -79,23 +87,30 @@
   grid-column: 3 / span 1;
 }
 
+.parchment-bg {
+  background-image: url('./assets/parchment_center.jpg'); 
+  background-size: 100% 1.5em;
+  background-attachment: local;
+  background-repeat: repeat-y;
+}
+.white-bg {
+  background-color: #ffffff;
+  box-shadow: inset 50px 0px 100px -50px #303000,
+              inset -50px 0px 100px -50px #303000;
+}
 .stream-box {
   height: 100%;
   position: relative;
 }
 .stream {
-  background-image: url('./assets/parchment_center.jpg'); 
-  background-size: 100% 1.5em;
-  width: 100%;
-  font-size: 12px;
+  min-width: 36ch;
+  max-width: 40ch;
+  font-size: 14px;
   padding: 1ch 2ch;
-  background-attachment: local;
-  background-repeat: repeat-y;
   overflow: auto;
-  border: 1px solid blue;
   min-height: 300px;
   max-height: 100%;
-  columns: 32ch;
+  columns: 36ch;
   inset: 0;
   margin: auto;
   word-spacing: 3px;
@@ -108,20 +123,58 @@
 }
 .stream-title {
   text-align: center;
+  border-bottom: 2px double black;
 }
-.stream-title > h2,
-.stream-title > input{
+.stream-title h1 {
+  padding: 0 2ch;
+  border: 0.5px double;
+  box-shadow: 4px 4px 20px -5px;
+}
+.stream-title h1,
+.stream-title input{
   font-family: 'Caveat', cursive;
+  text-shadow: 0px 0px 4px black;
   color: #000000;
+  width: fit-content;
+  align-self: center;
+  text-align: center;
 }
-.stream-title .stream-delete {
+.stream-title .display-top-box{
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #400000
+  width: 100%;
+  height: 50px;
 }
-.stream-title .stream-delete:focus-within{
-  background-color: #ff0030
+.display-stream-buttons{
+  position: absolute;
+  left: 0px;
+}
+.delete-hide {
+  position: absolute;
+  background-color: #400000;
+  transform: scale(0.1) translateX(20px);
+  border: 2px solid black;
+  opacity: 0;
+  pointer-events: none;
+  width: max-content;
+  top: 2px;
+  right: 0px;
+  transition: all 0.5s ease;
+}
+.delete-reveal {
+  position: absolute;
+  background-color: #ff0030;
+  border: 2px solid black;
+  transform: scale(1.0) translateX(0px);
+  pointer-events: all;
+  opacity: 1;
+  width: max-content;
+  top: 2px;
+  right: 0px;
+  transition: all 0.5s ease;
+}
+.delete-box .knuckle{
+  background-color: #500000;
+  right: 5px;
 }
 
 .streamlist-box {
@@ -133,6 +186,7 @@
   text-align: center;
 }
 .streamlist {
+  flex-grow: 1;
   flex-direction: row-reverse;
   flex-wrap: wrap-reverse;
   overflow: auto;
@@ -152,8 +206,8 @@
   max-height: 3ch;
   background-color: rgba(200,200,200,0.4);
   text-align: center;
-  flex-grow: 1;
-  border-radius: 20px;
+  flex: 1 1 70%;
+  border-radius: 5px;
 }
 
 
@@ -300,27 +354,32 @@ div.delay-set > span {
 
 .tiny-fun {
   color: white;
-  z-index: 1;
+  position: relative;
+  min-width: 50%;
+  margin-bottom: 20px;
 }
 .tiny-fun button {
-  height: 35px;
+  height: 20px;
+  background-color: #141414;
+  font-size: 10px;
+  min-width: 3ch;
   box-sizing: border-box;
-  position: sticky;
+  box-shadow: none;
 }
 .tog-off {
-  background-color: #300010;
+  border: 2px solid #a00000;
   transition: all 0.6s ease;
 }
 .tog-off:hover {
-  background-color: #009014;
+  border: 2px solid #009014;
   transition: all 0.6s ease;
 }
 .tog-on {
-  background-color: #003010;
+  border: 2px solid #003010;
   transition: all 0.6s ease;
 }
 .tog-on:hover {
-  background-color: #900014;
+  border: 2px solid #ff0000;
   transition: all 0.6s ease;
 }
 .anim-spacing {
@@ -335,10 +394,12 @@ div.delay-set > span {
 }
 .anim-spacing-off:hover {
   letter-spacing: 6px;
+  padding: 3px 0;
   padding-left: 6px;
   transition: all 0.6s ease;
 }
 .anim-spacing-off {
+  padding: 3px 0;
   letter-spacing: 0px;
   transition: all 0.6s ease;
 }
@@ -375,7 +436,8 @@ div.delay-set > span {
 
 
 button {
-  box-shadow: 0px 0px 6px;
+  box-shadow: 0 0 10px;
+  border-color: transparent;
   outline-color: transparent;
   background-color: #4080a0;
   color: white;
@@ -419,6 +481,11 @@ h1 {
   justify-content: space-around;
 }
 
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .flex-col {
   display: flex;
   flex-direction: column;
@@ -427,4 +494,13 @@ h1 {
   display: flex;
   flex-wrap: wrap;
 }
-
+.background-one > div{
+  box-shadow: 0 0 25px -10px rgba(0,0,0,0.5);
+}
+div.streamlist{
+  background-color: black;
+}
+button.transparent{ 
+  background-color: transparent;
+  color: #000000;
+}

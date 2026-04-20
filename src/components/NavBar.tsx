@@ -6,7 +6,9 @@ import {
 export const NavBar: Component = () => {
 
   return (
-      <div class='finger'>
+      <div 
+      style={{'margin-top': '10px'}}
+      class='finger'>
         <div class='knuckle flex-down'>
           <button style={{
             'flex-grow': '1'
@@ -14,17 +16,25 @@ export const NavBar: Component = () => {
             {userMode()}
           </button>
         </div>
-        <div class='nail flex-wide'>
-          <button class={userMode() === 'FocusWrite' ? 'hidden' : ''}>
+        <div 
+        class='nail flex-wide'>
+          <button 
+          class={userMode() === 'FocusWrite' ? 'hidden' : ''}>
             FocusWrite
           </button>
-          <button class={userMode() === 'ReadWrite' ? 'hidden' : ''}>
+          <button 
+          style={{margin: '0 10px'}} 
+          class={userMode() === 'ReadWrite' ? 'hidden' : ''}>
             ReadWrite
           </button>
-          <button class={userMode() === 'ReadArrange' ? 'hidden' : ''}>
+          <button 
+          style={{margin: '0 10px'}} 
+          class={userMode() === 'ReadArrange' ? 'hidden' : ''}>
             ReadArrange
           </button>
-          <button class={userMode() === 'SparkScrape' ? 'hidden' : ''}>
+          <button 
+          style={{margin: '0 5px'}} 
+          class={userMode() === 'SparkScrape' ? 'hidden' : ''}>
             SparkScrape
           </button>
         </div>

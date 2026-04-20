@@ -343,7 +343,7 @@ export const deleteFlicker = (flickerID: number) => {
 
 export const deleteStream = (streamID: number) => {
   const stream = allStreams.find(s => s.id === streamID);
-  if (!stream) return;
+  if (!stream) return null;
   const contentsToDelete = [...stream.contentIDs];
   contentsToDelete.forEach(id => {
     if (id > 0) {
@@ -361,6 +361,7 @@ export const deleteStream = (streamID: number) => {
     setWriterTargetID(null);
   }
   setAllStreams(prev => prev.filter(s => s.id !== streamID));
+  return 1;
 };
 
 

@@ -2,7 +2,8 @@ import { type Component, createMemo, createSignal, Show, For } from 'solid-js';
 import { EditTitle } from './EditTitle';
 import {
   allStreams, updateStreamTitle,
-  groupedFlashIDs
+  groupedFlashIDs,
+  deleteStream
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -35,31 +36,8 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
   return (
     <Show when={stream()}>
-      <div class='tiny-fun flex-center'>
-        <button
-        class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
-          onClick={() => {
-            setFlowUp(!flowUp())
-            setShowTimes(false)
-          }}>🡇</button>
-        <button
-        class={
-          showTimes() ? 'anim-spacing inactivated' 
-            : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off' }
-          onClick={() =>
-            setFlashSpacing(!flashSpacing())}>
-         ⟣⟢
-        </button>
-        <button
-        class={flowUp() ? 'tog-off anim-flip-off inactivated' 
-          : showTimes() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
-          onClick={() => {
-            setFlashSpacing(true)
-            setShowTimes(!showTimes())
-          }}>⏲</button>
-      </div>
       <div class='flex-top-down stream-box'>
-        <div class='stream'>
+        <div class='stream white-bg'>
           <div class='stream-title'>
             <Show when={!isEditingTitle()}
               fallback={
@@ -71,17 +49,72 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   }}
                   onCancel={() => setIsEditingTitle(false)} />
               }>
-              <div class='flex-center' style={{position: 'relative'}}>
-              <button onClick={()=>
-                deleteClicked() 
-                  ? console.log(stream()?.id)
-                  : setDeleteClicked(true) }
-                  onMouseOut={()=>setDeleteClicked(false)}
-                  class='stream-delete'>{deleteClicked() ? 'Delete?' : 'x'}</button>
-              <h2 onClick={() => setIsEditingTitle(true)}>
-                {stream()?.title}
-              </h2>
+
+              <div
+                class='flex-top-down'
+                onClick={(e) => console.log(e)}
+                style={{
+                  position: 'relative'
+                }}>
+                <h1>
+                  {stream()?.title}
+                </h1>
+
+                <div class='tiny-fun flex-wide'>
+                  <button
+                    class={flowUp() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
+                    onClick={() => {
+                      setFlowUp(!flowUp())
+                      setShowTimes(false)
+                    }}>🡇</button>
+                  <button
+                    class={
+                      showTimes() ? 'tog-on anim-spacing inactivated'
+                        : flashSpacing() ? 'tog-on anim-spacing' : 'tog-off anim-spacing-off'}
+                    onClick={() =>
+                      setFlashSpacing(!flashSpacing())}>
+                    ⟣⟢
+                  </button>
+                  <button
+                    class={flowUp() ? 'tog-off anim-flip-off inactivated'
+                      : showTimes() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
+                    onClick={() => {
+                      setFlashSpacing(true)
+                      setShowTimes(!showTimes())
+                    }}>⏲</button>
+                </div>
+                <div onMouseLeave={() => setDeleteClicked(false)}
+                  class='display-top-box'
+                  style={{
+                    border: deleteClicked() ? '1px dashed #003004' : 'none',
+                    transition: 'border 0.5s ease'
+                  }}>
+                <button style={{ position: 'absolute', left: '0px'}}
+                  class='transparent'
+                  onClick={() => setIsEditingTitle(true)}>
+                  Rename
+                </button>
+
+                  <button class={deleteClicked()
+                    ? 'delete-reveal' : 'delete-hide'}
+                    onClick={() =>
+                      deleteClicked()
+                        ? deleteStream(stream()!.id)
+                        && setDeleteClicked(false)
+                        : ''}
+                  >
+                    Confirm?
+                  </button>
+                  <button
+                    onClick={() => setDeleteClicked(true)}
+                    class={deleteClicked() ? 'delete-hide' : 'delete-reveal'}>X</button>
+
+                </div>
+
+
+
               </div>
+
             </Show>
           </div>
           <For each={groupedContent()}>
@@ -90,7 +123,8 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 class={
                   flashSpacing() ?
                     'flicker' :
-                    'paragraph flicker'}>
+                    'paragraph flicker'
+                }>
                 <For each={group.flashIDs}>
                   {(flashID, index) => {
                     const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
