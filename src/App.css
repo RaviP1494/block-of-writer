@@ -47,6 +47,18 @@
   outline-color: transparent;
   background-color: transparent;
 }
+.cache-actions .save {
+  box-shadow: 0 0 20px -5px #ffffff;
+}
+.cache-actions .save:active {
+  box-shadow: inset 0 0 20px -5px #ffffff;
+}
+.cache-actions .load {
+  box-shadow: inset 0 0 20px -5px #ffffff;
+}
+.cache-actions .load:active {
+  box-shadow: 0 0 20px -5px #ffffff;
+}
 
 .title {
   grid-column: 2 / span 1;

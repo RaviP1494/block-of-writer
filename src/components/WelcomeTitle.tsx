@@ -6,12 +6,12 @@ export const WelcomeTitle: Component = () => {
   return (
     <div class='welcomer flex-top-down'>
       <div class='cache-actions'>
-        <button
+        <button class='save'
           onClick={() => manualSaveApp()}>
           Save
         </button>
         <div>Browser Cache</div>
-        <button
+        <button class='load'
           onClick={() => loadSavedApp()}>
           Load
         </button>
