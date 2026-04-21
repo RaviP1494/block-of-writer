@@ -37,8 +37,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
   return (
     <Show when={stream()}>
-      <div class='flex-top-down stream-box'>
-        <div class={streamBG() ? 'stream white-bg' : 'stream parchment-bg'}>
+      <div class={streamBG() ? 'stream-box white-bg' : 'stream-box parchment-bg'}>
           <div class='stream-title'>
             <Show when={!isEditingTitle()}
               fallback={
@@ -64,21 +63,25 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 <div class='tiny-fun flex-wide'>
                   <button
                     class={streamBG() ? 'tog-on' : 'tog-off'}
-                    onClick={() => setStreamBG(p=>!p)}
-                    >⬚</button>
+                    onClick={() => setStreamBG(p => !p)}
+                  >
+⬚
+                  </button>
                   <button
                     class={flowUp() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
                     onClick={() => {
                       setFlowUp(!flowUp())
                       setShowTimes(false)
-                    }}>🡇</button>
+                    }}>
+🡇
+                  </button>
                   <button
                     class={
                       showTimes() ? 'tog-on anim-spacing inactivated'
                         : flashSpacing() ? 'tog-on anim-spacing' : 'tog-off anim-spacing-off'}
                     onClick={() =>
                       setFlashSpacing(!flashSpacing())}>
-                    ⟣⟢
+⟣⟢
                   </button>
                   <button
                     class={flowUp() ? 'tog-off anim-flip-off inactivated'
@@ -86,7 +89,9 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     onClick={() => {
                       setFlashSpacing(true)
                       setShowTimes(!showTimes())
-                    }}>⏲</button>
+                    }}>
+⏲
+                    </button>
                 </div>
                 <div onMouseLeave={() => setDeleteClicked(false)}
                   class='display-top-box'
@@ -94,11 +99,11 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     border: deleteClicked() ? '1px dashed #003004' : 'none',
                     transition: 'border 0.5s ease'
                   }}>
-                <button style={{ position: 'absolute', left: '0px'}}
-                  class='transparent'
-                  onClick={() => setIsEditingTitle(true)}>
-                  Rename
-                </button>
+                  <button style={{ position: 'absolute', left: '0px' }}
+                    class='transparent'
+                    onClick={() => setIsEditingTitle(true)}>
+                    Rename
+                  </button>
 
                   <button class={deleteClicked()
                     ? 'delete-reveal' : 'delete-hide'}
@@ -108,41 +113,42 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                         && setDeleteClicked(false)
                         : ''}
                   >
-                    Confirm?
+Confirm?
                   </button>
                   <button
                     onClick={() => setDeleteClicked(true)}
-                    class={deleteClicked() ? 
+                    class={deleteClicked() ?
                       'delete-hide' : 'delete-reveal'}>
-                    X
-                    </button>
+X
+                  </button>
                 </div>
               </div>
             </Show>
           </div>
           <br />
-          <For each={groupedContent()}>
-            {(group) => (
-              <div
-                class={
-                  flashSpacing() ?
-                    'flicker' :
-                    'paragraph flicker'
-                }>
-                <For each={group.flashIDs}>
-                  {(flashID, index) => {
-                    const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
-                    return <DisplayFlash id={flashID}
-                      prevID={prevID}
-                      showTimes={() => showTimes()}
-                      isSpaced={() => flashSpacing()} />;
-                  }}
-                </For>
-              </div>
-            )}
-          </For>
+          <div class='stream-text'>
+            <For each={groupedContent()}>
+              {(group) => (
+                <div
+                  class={
+                    flashSpacing() ?
+                      'flicker' :
+                      'paragraph flicker'
+                  }>
+                  <For each={group.flashIDs}>
+                    {(flashID, index) => {
+                      const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
+                      return <DisplayFlash id={flashID}
+                        prevID={prevID}
+                        showTimes={() => showTimes()}
+                        isSpaced={() => flashSpacing()} />;
+                    }}
+                  </For>
+                </div>
+              )}
+            </For>
+          </div>
         </div>
-      </div>
     </Show>
   );
 };

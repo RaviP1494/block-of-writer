@@ -72,7 +72,7 @@ export const FocusReader: Component = () => {
     <Show when={focusedStreamID()} fallback={(
       <div class='focus-right'>Y'ello</div>
     )}>
-    <div class='focus-right' style={{'position': 'relative', 'overflow': 'auto'}}>
+    <div class='focus-right flex-col'>
       <DisplayStream id={focusedStreamID()} />
     </div>
     </Show>

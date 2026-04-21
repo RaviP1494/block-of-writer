@@ -97,6 +97,7 @@
 .focus-right {
   grid-row: 1 / span 2;
   grid-column: 3 / span 1;
+  height: 100%;
 }
 
 .parchment-bg {
@@ -113,31 +114,36 @@
 .stream-box {
   height: 100%;
   position: relative;
-}
-.stream {
   min-width: 36ch;
   max-width: 40ch;
-  font-size: 14px;
-  padding: 1ch 2ch;
-  overflow: auto;
+  padding: 2ch 2ch;
   min-height: 300px;
   max-height: 100%;
-  columns: 36ch;
+  overflow-x: auto;
+  overflow-y: clip;
   inset: 0;
   margin: auto;
+}
+
+.stream-text{
+  position: relative;
+  width: 100%;
+  font-size: 12px;
+  max-height: 100%;
+  padding: 2ch 2ch;
+  overflow-y: auto;
   word-spacing: 3px;
   letter-spacing: -0.14ch;
   word-break: break-word;
 }
-.paragraph{
-  text-indent: 4ch;
-  display: block;
-}
 .stream-title {
+  position: relative;
   text-align: center;
   border-bottom: 2px double black;
 }
 .stream-title h1 {
+  position: relative;
+  margin: auto;
   padding: 0 2ch;
   border: 0.5px double;
   box-shadow: 4px 4px 20px -5px;
@@ -221,6 +227,11 @@
   flex: 1 1 70%;
   border-radius: 5px;
 }
+.paragraph{
+  text-indent: 4ch;
+  display: block;
+}
+
 
 
 .focus-writer {

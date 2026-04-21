@@ -27,9 +27,7 @@ const App: Component = () => {
           <StreamList clickDo={true} />
           </div>
           <FocusWriter />
-          <div class='focus-right flex-down'>
           <FocusReader />
-          </div>
         </Show>
 
       </div>
