@@ -28,6 +28,7 @@ export const NavBar: Component = () => {
             ReadWrite
           </button>
           <button 
+          onClick={()=>setUserMode('ReadArrange')}
           class={userMode() === 'ReadArrange' ? 'hidden' : ''}>
             ReadArrange
           </button>

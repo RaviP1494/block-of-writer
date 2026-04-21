@@ -72,7 +72,7 @@ export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(n
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
 export const [focusedChainID, setFocusedChainID] = createSignal<number>(0); 
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
-
+export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 
 
 

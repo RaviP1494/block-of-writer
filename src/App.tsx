@@ -3,7 +3,7 @@ import './App.css'
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { focusedStreamID, userMode, focusedChainID, chainAttStreamIDs } from './store';
+import { focusedStreamID, userMode, focusedChainID, chainAttStreamIDs, showStats } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { StreamList } from './components/StreamList';
 import { WelcomeTitle } from './components/WelcomeTitle';
@@ -11,6 +11,8 @@ import { WritersHandBar } from './components/WritersHandBar';
 import { DisplayStream } from './components/DisplayStream';
 import { DisplayChain } from './components/DisplayChain';
 import { ChainList } from './components/ChainList';
+import { DisplayStats } from './components/DisplayStats';
+import { DisplaySpace } from './components/DisplaySpace';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -60,6 +62,34 @@ const App: Component = () => {
               <ChainList clickDo='focus' />
               <DisplayChain id={focusedChainID()} />
             </div>
+          </Match>
+
+          <Match when={userMode() === 'ReadArrange'}>
+
+            <div class='focus-left'>
+            <div 
+            style={{color: '#ff0000'}}
+            class='flex-top-down'>
+              <Show when={showStats()}>
+                <DisplayStats />
+              </Show>
+              </div>
+              <DisplaySpace id={1} />
+            </div>
+
+            <div class='focus multi-stream'>
+              <StreamList clickDo='sparkcatch' />
+              <For each={chainAttStreamIDs}>
+                {(id) => (
+                  <DisplayStream id={id} innerClickMode='chain' />)}
+              </For>
+            </div>
+
+            <div class='focus-right'>
+              <ChainList clickDo='focus' />
+              <DisplayChain id={focusedChainID()} />
+            </div>
+
           </Match>
         </Switch>
 
