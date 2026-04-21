@@ -39,7 +39,7 @@ const App: Component = () => {
             <FocusWriter />
 
             <div class='focus-right'>
-              <DisplayStream id={focusedStreamID()} />
+              <DisplayStream id={focusedStreamID()} innerClickMode='focus' />
             </div>
           </Match>
 

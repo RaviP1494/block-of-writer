@@ -636,6 +636,7 @@ export const manualSaveApp = async () => {
     allFlickers: unwrap(allFlickers),
     suspenBarTents: unwrap(suspenBarTents),
     viewSpaces: unwrap(viewSpaces),
+    sparkChains: unwrap(sparkChains),
   };
 
   try {
@@ -667,6 +668,7 @@ export const loadSavedApp = async () => {
       setAllStreams(data.allStreams || []);
       setAllFlickers(data.allFlickers || []);
       setSuspenBarTents(data.suspenBarTents || []);
+      setSparkChains(data.sparkChains || []);
       
       const safeViewSpaces = (data.viewSpaces || []).map((vs: any) => ({
         ...vs,
