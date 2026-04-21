@@ -1,9 +1,9 @@
 import { type Component, For, createSignal } from 'solid-js';
-import { allStreams, writerTargetID, getStreamTSpan, streamWordCount, createNewStream, setWriterTargetID, focusedStreamID, setFocusedStreamID } from '../store/';
+import { allStreams, writerTargetID, getStreamTSpan, streamWordCount, createNewStream, focusedStreamID, setFocusedStreamID, setWriterTargetID, setChainAttStreamIDs, chainAttStreamIDs, } from '../store/';
 
 
 interface StreamListProps {
-  clickDo: boolean;
+  clickDo: string;
 };
 
 export const StreamList: Component<StreamListProps> = (props) => {
@@ -15,12 +15,18 @@ const handleCreateStream = () => {
   }
 
   const handleClick = (streamID: number) => {
-    if (props.clickDo){
-      writerTargetID() !== streamID 
-        ? setWriterTargetID(streamID)
-        : (focusedStreamID() !== streamID
-           ? setFocusedStreamID(streamID)
-           : setFocusedStreamID(0))
+    if (props.clickDo === 'focus'){
+              writerTargetID() !== streamID
+                ? setWriterTargetID(streamID)
+                : (focusedStreamID() !== streamID
+                  ? setFocusedStreamID(streamID)
+                  : setFocusedStreamID(0));
+    } else if(props.clickDo === 'sparkcatch'){
+      if(chainAttStreamIDs.some(id => id === streamID)){
+        setChainAttStreamIDs(() => chainAttStreamIDs.filter(id => id !== streamID));
+      }else {
+        setChainAttStreamIDs((prev) => [...prev, streamID]);
+      }
     }
   }
 
@@ -33,7 +39,11 @@ const handleCreateStream = () => {
       }}>
         <input type="text" placeholder="Name for" value={newStreamName()}
           onInput={(e) => setNewStreamName(e.currentTarget.value)}
-          onKeyDown={(e) => { e.key === 'Enter' ? handleCreateStream() : null }}
+          onKeyDown={(e) => { 
+            e.key === 'Enter' 
+            ? handleCreateStream() 
+            : null 
+          }}
         />
         <button onClick={() => handleCreateStream()}
         class='new-stream-btn'>
@@ -56,7 +66,10 @@ const handleCreateStream = () => {
       id={'stream' + stream.id.toString()}
       onClick={() => {handleClick(stream.id)}}
       style={{
-        'background-color' : stream.id === writerTargetID() ? '#0040ff' : '#408080',
+        'background-color' 
+          : stream.id === writerTargetID() 
+          ? '#0040ff' 
+          : '#408080',
       }}>
         {stream.title}:{stream.id === writerTargetID() 
           ? '(' + streamWordCount(stream.id) + 'w)' 

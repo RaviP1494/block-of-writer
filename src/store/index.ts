@@ -6,6 +6,7 @@ import { createStore, unwrap } from 'solid-js/store';
 // ==========================================
 
 export type EntityType = 'flash' | 'flicker' | 'stream';
+export type FlickFlash = 'flash' | 'flicker';
 export type RenderContext = 'ViewSpace' | 'FlickerView' | 'StreamView' | 'ReflectionHold';
 export type FocusMode = 'Write' | 'Read' | 'Float';
 
@@ -42,6 +43,12 @@ export interface ViewSpace {
   tentsInSpace: MultEnt[];
 }
 
+export interface SparkChain {
+  id: number;
+  title: string;
+  sparkIDs: number[];
+}
+
 // ==========================================
 // 2. GLOBAL SIGNALS (Transient State)
 // ==========================================
@@ -63,6 +70,7 @@ export const [typingStartTime, setTypingStartTime] = createSignal<number | null>
 
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
+export const [focusedChainID, setFocusedChainID] = createSignal<number>(0); 
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
 
 
@@ -80,6 +88,8 @@ export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
   { id: 1, name: 'Space', tentsInSpace: [] }
 ]);
+export const [sparkChains, setSparkChains] = createStore<SparkChain[]>([]);
+export const [chainAttStreamIDs, setChainAttStreamIDs] = createStore<number[]>([]);
 
 // ==========================================
 // 4. HELPER ACTIONS
@@ -88,6 +98,7 @@ export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
 let nextFlashID = 1;
 let nextStreamID = 1;
 let nextFlickerID = -1;
+let nextChainID = 1;
 let nextViewSpaceID = 1;
 
 
@@ -364,6 +375,41 @@ export const deleteStream = (streamID: number) => {
   return 1;
 };
 
+export const deleteChain = (chainID: number) => {
+  const chain = sparkChains.find(c => c.id === chainID);
+  if (!chain) return null;
+  setSparkChains(prev => prev.filter(c => c.id !== chainID));
+}
+
+export const addToChain = (id: number) => {
+  if(id > 0){
+    const focusedChain = sparkChains.find(c=>c.id === focusedChainID());
+    if (!focusedChain) return;
+    if (focusedChain.sparkIDs.includes(id)){
+      setSparkChains(
+      (chain) => chain.id === focusedChainID(),
+        'sparkIDs',
+      (prev) => [...prev.filter(sparkID => sparkID !== id)]
+      );
+    } else{
+    setSparkChains(
+      (chain) => chain.id === focusedChainID(),
+        'sparkIDs',
+      (prev) => [...prev, id]
+    );
+    }
+  }
+}
+
+export const createNewChain = () => {
+  const newChain: SparkChain = {
+    id: nextChainID++,
+    title: `Chain ${nextChainID}`,
+    sparkIDs: []
+  };
+  setSparkChains((prev)=> [...prev, newChain]);
+  setFocusedChainID(newChain.id);
+}
 
 export const createNewStream = (name?:string) => {
   const streamName = name && name?.length > 0 ? name : `Stream ${nextStreamID}`
@@ -387,6 +433,15 @@ export const createNewStream = (name?:string) => {
   setWriterTargetID(newStream.id); // Automatically switch to the new stream
 };
 
+export const updateChainTitle = (chainID: number, newTitle: string) => {
+  if (newTitle.trim()) {
+    setSparkChains(
+      (chain) => chain.id === chainID,
+      'title',
+      newTitle.trim()
+    );
+  }
+};
 export const updateStreamTitle = (streamID: number, newTitle: string) => {
   if (newTitle.trim()) {
     setAllStreams(

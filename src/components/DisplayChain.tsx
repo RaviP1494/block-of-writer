@@ -1,53 +1,31 @@
-import { type Component, createMemo, createSignal, Show, For, Match, Switch } from 'solid-js';
-import { EditTitle } from './EditTitle';
-import {
-  allStreams, updateStreamTitle,
-  groupedFlashIDs,
-  deleteStream,
-  chainAttStreamIDs,
-  setChainAttStreamIDs
-} from '../store';
-import { DisplayFlash } from './DisplayFlash';
+import { type Component, createSignal, Show, For } from "solid-js";
+import { allFlickers, deleteChain, sparkChains, updateChainTitle } from "../store";
+import { EditTitle } from "./EditTitle";
+import { DisplayFlash } from "./DisplayFlash";
 
-export interface DisplayStreamProps {
+export interface DisplayChainProps {
   id: number;
-  innerClickMode?: string;
 }
 
-export const DisplayStream: Component<DisplayStreamProps> = (props) => {
-  const [streamBG, setStreamBG] = createSignal(true);
+export const DisplayChain: Component<DisplayChainProps> = (props) => {
   const [deleteClicked, setDeleteClicked] = createSignal(false);
   const [flashSpacing, setFlashSpacing] = createSignal(false);
-  const [showTimes, setShowTimes] = createSignal(false);
   const [flowUp, setFlowUp] = createSignal(false);
+  const [showTimes, setShowTimes] = createSignal(false);
   const [isEditingTitle, setIsEditingTitle] = createSignal(false);
 
-  const stream = () => allStreams.find((stream) => stream.id === props.id);
-
-  const groupedContent = createMemo(() => {
-    let groups = [...groupedFlashIDs(props.id)];
-    if (flowUp()) {
-      groups.reverse();
-      groups = groups.map(group => {
-        if (flashSpacing()) {
-          return { ...group, flashIDs: [...group.flashIDs].reverse() };
-        }
-        return group;
-      });
-    }
-    return groups;
-  });
+  const chain = () => sparkChains.find((chain) => chain.id === props.id);
 
   return (
-    <Show when={stream()}>
-      <div class={streamBG() ? 'stream-box white-bg' : 'stream-box parchment-bg'}>
+    <Show when={chain()}>
+      <div class='stream-box white-bg'>
         <div class='stream-title'>
           <Show when={!isEditingTitle()}
             fallback={
               <EditTitle
-                initialValue={stream()!.title}
+                initialValue={chain()!.title}
                 onSave={(title: string) => {
-                  updateStreamTitle(stream()!.id, title);
+                  updateChainTitle(chain()!.id, title);
                   setIsEditingTitle(false);
                 }}
                 onCancel={() => setIsEditingTitle(false)} />
@@ -60,15 +38,10 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 position: 'relative'
               }}>
               <h1>
-                {stream()?.title}
+                {chain()?.title}
               </h1>
 
               <div class='tiny-fun flex-wide'>
-                <button
-                  onClick={() => setStreamBG(p => !p)}
-                >
-                  ⬚
-                </button>
                 <button
                   class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
                   onClick={() => {
@@ -95,9 +68,6 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   ⏲
                 </button>
               </div>
-
-              <Switch>
-              <Match when={props.innerClickMode === 'focus'}>
               <div onMouseLeave={() => setDeleteClicked(false)}
                 class='display-top-box'
                 style={{
@@ -114,7 +84,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   ? 'delete-reveal' : 'delete-hide'}
                   onClick={() =>
                     deleteClicked()
-                      ? deleteStream(stream()!.id)
+                      ? deleteChain(chain()!.id)
                       && setDeleteClicked(false)
                       : ''}
                 >
@@ -127,47 +97,37 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   X
                 </button>
               </div>
-              </Match>
-              <Match when={props.innerClickMode === 'chain'}>
-              <div class='display-top-box'>
-              <button
-                  onClick={() => setChainAttStreamIDs(() => chainAttStreamIDs.filter(id => id !== stream()?.id))}
-                  class='delete-reveal'>
-                  -
-                </button>
-              </div>
-              </Match>
-              </Switch>
             </div>
           </Show>
-          </div>
-          <br />
-          <div class='stream-text'>
-            <For each={groupedContent()}>
-              {(group) => (
-                <div
-                  class={
-                    flashSpacing() ?
-                      'flicker' :
-                      'paragraph flicker'
-                  }>
-                  <For each={group.flashIDs}>
+        </div>
+        <br />
+        <div class='stream-text'>
+          <For each={chain()?.sparkIDs}>
+            {(sparkID) => {
+              if (sparkID > 0) {
+                return (
+                  <DisplayFlash
+                    id={sparkID}
+                    showTimes={() => showTimes()}
+                    isSpaced={() => flashSpacing()}
+                  />);
+              } else {
+                const flicker = allFlickers.find(f => f.id === sparkID);
+                return (
+                  <For each={flicker?.contentIDs}>
                     {(flashID, index) => {
-                      const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
+                      const prevID = index() > 0 ? flicker?.contentIDs[index() - 1] : null;
                       return <DisplayFlash id={flashID}
                         prevID={prevID}
                         showTimes={() => showTimes()}
-                        isSpaced={() => flashSpacing()}
-                        clickDo={props.innerClickMode} />;
+                        isSpaced={() => flashSpacing()} />;
                     }}
-                  </For>
-                </div>
-              )}
-            </For>
-          </div>
+                  </For>);
+              }
+            }}
+          </For>
         </div>
+      </div>
     </Show>
   );
 };
-
-

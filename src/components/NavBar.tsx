@@ -1,5 +1,6 @@
 import { type Component } from 'solid-js';
 import {
+    setUserMode,
   userMode,
 } from '../store';
 
@@ -7,8 +8,7 @@ export const NavBar: Component = () => {
 
   return (
       <div 
-      style={{'margin-top': '10px'}}
-      class='finger'>
+      class='finger navbar'>
         <div class='knuckle flex-down'>
           <button style={{
             'flex-grow': '1'
@@ -23,17 +23,16 @@ export const NavBar: Component = () => {
             FocusWrite
           </button>
           <button 
-          style={{margin: '0 10px'}} 
+          onClick={()=>setUserMode('ReadWrite')}
           class={userMode() === 'ReadWrite' ? 'hidden' : ''}>
             ReadWrite
           </button>
           <button 
-          style={{margin: '0 10px'}} 
           class={userMode() === 'ReadArrange' ? 'hidden' : ''}>
             ReadArrange
           </button>
           <button 
-          style={{margin: '0 5px'}} 
+          onClick={()=>setUserMode('SparkScrape')}
           class={userMode() === 'SparkScrape' ? 'hidden' : ''}>
             SparkScrape
           </button>

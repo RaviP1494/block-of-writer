@@ -1,11 +1,13 @@
-import { type Component, Show } from 'solid-js';
+import { type Component, Show, Match, Switch, For } from 'solid-js';
 import {
-  focusedStreamID
+  focusedStreamID,
+  sparkChains,
+  userMode
 } from '../store';
 import { DisplayStream } from './DisplayStream';
 
 
-export const FocusReader: Component = () => {
+export const SideReader: Component = () => {
   // const renderSpace = () => {
   //   const activeSpace = createMemo(() => viewSpaces.find(vs => vs.id === activeViewSpaceID()));
   //   const nonStreams = () => activeSpace()?.tentsInSpace?.filter((e) => e.entityType === 'flicker' || e.entityType === 'flash') || [];
@@ -69,13 +71,20 @@ export const FocusReader: Component = () => {
 
 
   return (
-    <Show when={focusedStreamID()} fallback={(
-      <div class='focus-right'>Y'ello</div>
-    )}>
-    <div class='focus-right flex-col'>
-      <DisplayStream id={focusedStreamID()} />
-    </div>
-    </Show>
+    <Switch>
+      <Match when={userMode() === 'ReadWrite'}>
+        <Show when={focusedStreamID()}>
+          <DisplayStream id={focusedStreamID()} />
+        </Show>
+      </Match>
+      <Match when={userMode() === 'SparkScrape'}>
+        <For each={sparkChains}>
+        {(stream) =>
+          <DisplayStream id={stream.id} />
+        }
+        </For>
+      </Match>
+    </Switch>
   );
 };
 

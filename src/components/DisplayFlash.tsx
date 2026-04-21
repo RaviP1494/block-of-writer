@@ -1,11 +1,12 @@
 import { type Component, Show, createMemo } from "solid-js";
-import { allFlashes } from "../store";
+import { addToChain, allFlashes } from "../store";
 
 interface DisplayFlashProps {
   id: number;
-  prevID: number | null;
   showTimes: () => boolean;
   isSpaced: () => boolean;
+  prevID?: number | null;
+  clickDo?: string;
 }
 
 export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
@@ -13,12 +14,20 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
   const showTimes = createMemo(() => props.showTimes());
   const isSpaced = createMemo(() => props.isSpaced());
 
+  const handleClick = () => {
+    if(props.clickDo === 'chain'){
+      addToChain(flash()!.id);
+    }
+  }
+
   return (
     <Show when={flash()}>
     <Show
           when={showTimes()}
           fallback={
-            <span class={isSpaced() ? 'paragraph' : ''}
+            <span 
+            onClick={()=>handleClick()}
+            class={isSpaced() ? 'paragraph' : ''}
               title={(flash()!.tSpan / 1000).toString() + ' seconds'}>
               {flash()!.textContents}&nbsp;
             </span>
@@ -49,6 +58,7 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
           <div
             class='paragraph flash'
             title={(flash()!.tSpan / 1000).toString() + ' seconds'}
+            onClick={()=>handleClick()}
             style={{ 'color': '#000000' }}>
             {flash()!.textContents}&nbsp
           </div>
