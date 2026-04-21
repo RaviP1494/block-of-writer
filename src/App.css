@@ -166,7 +166,7 @@
   position: absolute;
   left: 0px;
 }
-.delete-hide {
+.display-top-box button.delete-hide {
   position: absolute;
   background-color: #400000;
   transform: scale(0.1) translateX(20px);
@@ -178,7 +178,7 @@
   right: 0px;
   transition: all 0.5s ease;
 }
-.delete-reveal {
+.display-top-box button.delete-reveal {
   position: absolute;
   background-color: #ff0030;
   border: 2px solid black;
@@ -378,17 +378,24 @@ div.delay-set > span {
 
 .tiny-fun {
   color: white;
-  position: relative;
+  position: relatiev;
   min-width: 50%;
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
+
 .tiny-fun button {
   height: 20px;
-  background-color: #141414;
   font-size: 10px;
   min-width: 3ch;
   box-sizing: border-box;
-  box-shadow: none;
+}
+.parchment-bg button {
+  background-color: #905030;
+  color: white;
+}
+.white-bg button {
+  background-color: #ffffff;
+  color: black;
 }
 .tog-off {
   border: 2px solid #a00000;

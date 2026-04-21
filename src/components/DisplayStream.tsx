@@ -62,13 +62,12 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
                 <div class='tiny-fun flex-wide'>
                   <button
-                    class={streamBG() ? 'tog-on' : 'tog-off'}
                     onClick={() => setStreamBG(p => !p)}
                   >
 ⬚
                   </button>
                   <button
-                    class={flowUp() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
+                    class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
                     onClick={() => {
                       setFlowUp(!flowUp())
                       setShowTimes(false)
@@ -77,15 +76,15 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   </button>
                   <button
                     class={
-                      showTimes() ? 'tog-on anim-spacing inactivated'
-                        : flashSpacing() ? 'tog-on anim-spacing' : 'tog-off anim-spacing-off'}
+                      showTimes() ? 'anim-spacing inactivated'
+                        : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off'}
                     onClick={() =>
                       setFlashSpacing(!flashSpacing())}>
 ⟣⟢
                   </button>
                   <button
-                    class={flowUp() ? 'tog-off anim-flip-off inactivated'
-                      : showTimes() ? 'tog-on anim-flip-on' : 'tog-off anim-flip-off'}
+                    class={flowUp() ? 'anim-flip-off inactivated'
+                      : showTimes() ? 'anim-flip-on' : 'anim-flip-off'}
                     onClick={() => {
                       setFlashSpacing(true)
                       setShowTimes(!showTimes())
