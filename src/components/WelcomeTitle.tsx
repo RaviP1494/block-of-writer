@@ -1,6 +1,7 @@
 import { type Component } from 'solid-js';
 import { NavBar } from './NavBar';
 import { manualSaveApp, loadSavedApp } from '../store';
+import { setSpawnDots, spawnDots } from '../App';
 
 export const WelcomeTitle: Component = () => {
   return (
@@ -16,7 +17,14 @@ export const WelcomeTitle: Component = () => {
           Load
         </button>
       </div>
-      <h1 style={{margin: '5px 10px'}}>Writer's Block</h1>
+      <h1 
+      onClick={()=>setSpawnDots(!spawnDots())} 
+      style={{
+        margin: '5px 10px',
+        'text-shadow': spawnDots() ? '-2px 0 10px #ff0000' : 'inherit'
+      }}>
+        Writer's Block
+      </h1>
       <NavBar />
     </div>
   );

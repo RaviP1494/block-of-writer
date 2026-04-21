@@ -14,6 +14,7 @@ import {
   writerTargetID,
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
+import { spawnDots } from '../App';
 
 export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
@@ -40,23 +41,34 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
   // const radius = Math.floor(Math.random() * 3) + 1;
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
-  const textA = document.querySelector('.focus-writer textarea');
+  // const textA = document.querySelector('.focus-writer textarea');
+  // const streamList = document.querySelector('.streamlist');
+  // const listRect = streamList?.getBoundingClientRect();
 
-  const txtARect = textA?.getBoundingClientRect();
-  const gravPt:PointTuple = 
-    [txtARect!.top + txtARect!.height, 
-      (txtARect!.left + txtARect!.width) / 2];
-  const startPt: PointTuple = 
-    [txtARect!.top, 
-      (txtARect!.left + txtARect!.width) / 2];
+  // const startPt: PointTuple = 
+  //   [listRect!.top + listRect!.height, 
+  //     listRect!.left + listRect!.width];
 
-  spawnParticle(gravPt, startPt, text, timeSpan);
+  // const gravPt: PointTuple = 
+  //   [(listRect!.top + listRect!.height) / 2, 
+  //     (listRect!.left + listRect!.width) / 2];
+  const newStreamBtn = document.querySelector('button.new-stream-btn');
+  const newStrBtnRect = newStreamBtn?.getBoundingClientRect();
+  // const txtARect = textA?.getBoundingClientRect();
+  // const startPt:PointTuple = 
+  //   [txtARect!.top + txtARect!.height, 
+  //     (txtARect!.left + txtARect!.width) / 2];
+  const gravPt: PointTuple = 
+    [newStrBtnRect!.top + newStrBtnRect!.height / 2, 
+      (newStrBtnRect!.left + newStrBtnRect!.width) / 2];
+
+  spawnParticle(gravPt, text, timeSpan);
 };
 
 // Example: Arcing it to the StreamList to destroy it
 const killMyParticle = () => {
   const targetElement = focusedStreamID() 
-    ? document.querySelector('.stream-title')
+    ? document.querySelector('.stream-title h1')
     : writerTargetID()
     ? document.querySelector(`#stream${writerTargetID()}`)
     : document.querySelector('.streamlist');
@@ -81,7 +93,7 @@ export const FocusWriter: Component = () => {
     } else if (e.data.type === 'flash_timeout') {
       initFlash();
     } else if (e.data.type === 'flicker_timeout') {
-      killMyParticle();
+      if(spawnDots()) killMyParticle();
       setIsFlickerOpen(false);
       setIsActiveTimer(false);
     }
@@ -108,7 +120,7 @@ export const FocusWriter: Component = () => {
       delayTSpan: delayT // Convert UI seconds to MS
     };
     sendFlash(newFlash);
-    if (text) spawnMyParticle((now-start)/1000, text);
+    if (text && spawnDots()) spawnMyParticle((now-start)/1000, text);
     setCurrentText("    ");
     setTypingStartTime(null);
     worker.postMessage({ type: 'stop_flash' });

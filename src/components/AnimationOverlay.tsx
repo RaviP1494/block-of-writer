@@ -4,6 +4,7 @@ import { textWordCount } from '../store';
 // We use [top, left] to match your tuple requirement
 export type PointTuple = [number, number]; 
 
+
 interface ActiveParticle {
   id: number;
   radius: number;
@@ -45,31 +46,38 @@ export function getGroupIndexFast(char: string): number {
   return -1; // Character not in any group (like numbers, punctuation, or 't')
 }
 export const spawnParticle = (
-  gravPoint: PointTuple,
-  startPt: PointTuple,
+  gravPt: PointTuple,
   text: string, 
   timeSpan: number
 ) => {
 
-  const mass = text.length;
-  const radius = Math.sqrt(mass) + 5;
+  const mass = text.length * 500;
+  const radius = Math.sqrt(text.length) + 3;
 
   const wordsPerSecond = textWordCount(text) / timeSpan;
-  let initialVx = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond * 10;
-  let initialVy = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond * 10;
+  // let initialVx = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond / 2;
+  // let initialVy = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond / 2;
+  const initialVx = ((Math.random() * 3) - 1) * wordsPerSecond * 3;
+  const initialVy = wordsPerSecond * (-3);
 
-  console.log('id:' + nextParticleID + ',density:' + ',radius:' + radius + ',mass:' + mass + ',x:' + startPt[1] + ',y:' + startPt[0] + ',vx:' + + initialVx + ',vy:' + initialVy + ',gravX:' + gravPoint[1] + ',gravY:' + gravPoint[0]);
+  console.log('id:' + nextParticleID + 
+              ',density:' + ',radius:' +
+              radius + ',mass:' + mass +
+              ',x:' + ',y:' +
+               ',vx:' + + initialVx +
+              ',vy:' + initialVy + ',gravX:' +
+              gravPt[1] + ',gravY:' + gravPt[0]);
 
   particles.push({
     id: nextParticleID++,
     radius,
     mass,
-    x: gravPoint[1],
-    y: gravPoint[0],
+    x: window.innerWidth / 2,
+    y: window.innerHeight,
     vx: initialVx,
     vy: initialVy,
-    gravX: gravPoint[1],
-    gravY: gravPoint[0],
+    gravX: gravPt[1],
+    gravY: gravPt[0],
     isDespawning: false
   });
   return nextParticleID;
@@ -81,7 +89,7 @@ export const triggerDespawn = (targetTuple: PointTuple) => {
       p.isDespawning = true;
       p.despawnTarget = targetTuple;
 
-      p.mass *= 1.5;
+      p.mass *= 5;
     }
   });
 };
@@ -106,45 +114,53 @@ export const AnimationOverlay: Component = () => {
     }
     ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
 
+    // const streamList = document.querySelector('.streamlist');
+    // const listRect = streamList?.getBoundingClientRect();
+    // const leftBound = listRect!.left;
+    // const topBound = listRect!.top;
+    // const rightBound = listRect!.left + listRect!.width;
+    // const botBound = listRect!.top + listRect!.height;;
+
     if (!particles.length) nextParticleID = 1;
      // Iterate backwards so we can safely splice out despawned particles
      for (let i = particles.length - 1; i >= 0; i--) {
        const p = particles[i];
        let gravX: number;
        let gravY: number;
-       let pull: number;
    
-       if(p.x > canvasRef.width) p.vx = 0 - (Math.abs(p.vx) * 9 / 10);
-       else if(p.x < 0) p.vx = Math.abs(p.vx * 9 / 10);
-       if(p.y > canvasRef.height) p.vy = 0 - (Math.abs(p.vy) * 9 / 10);
-       else if(p.y < 0) p.vy = Math.abs(p.vy * 9 / 10);
+       if (p.x < 0) p.vx = Math.abs(p.vx);
+       else if (p.x > canvasRef.width) p.vx = Math.abs(p.vx) * (-1);
+       if (p.y < 0) p.vy = Math.abs(p.vy);
+       else if (p.y > canvasRef.height) p.vy = Math.abs(p.vy) * (-1);
 
        // 1. Determine Target
        if (p.isDespawning && p.despawnTarget) {
          gravY = p.despawnTarget[0];
          gravX = p.despawnTarget[1];
-         pull = p.mass * 300;
     
-         p.radius -= .02;
+         p.radius -= .1;
          // If it gets close enough to the despawn point, kill it
-         if (Math.hypot(gravX - p.x, gravY - p.y) < 140 || p.radius < 0.5) {
+         if (Math.hypot(gravX - p.x, gravY - p.y) < 200 || p.radius < 0.5) {
            particles.splice(i, 1);
            continue;
          }
        } else {
          gravX = p.gravX;
          gravY = p.gravY;
-         pull = p.mass * 100;
        }
 
-       const d = Math.max(Math.hypot(gravX - p.x, gravY - p.y), 0.1);
-       const ax = Math.min(20,pull * p.x / (d * d * d));
-       const ay = Math.min(20,pull * p.y / (d * d * d));
+       const d = Math.max(Math.hypot(gravX - p.x, gravY - p.y), 40);
+       const a = p.mass / (d * d);
+       const propX = (gravX - p.x) / d;
+       const propY = (gravY - p.y) / d;
 
 
-       // console.log('vx:' + p.vx + '+ax:(' + ax + ')vy:' + p.vy + '+ay:(' + ay + ')');
-       p.vx += ax;
-       p.vy += ay;
+       console.log('vx:' + p.vx + ' ' + 'vy' + p.vy);
+       p.vx += (a * propX); 
+       p.vy += (a * propY);
+
+       p.vx = p.vx < 0 ? Math.max(p.vx, -10) : Math.min(p.vx, 10);
+       p.vy = p.vy < 0 ? Math.max(p.vy, -10) : Math.min(p.vy, 10);
 
       p.x += p.vx;
       p.y += p.vy;

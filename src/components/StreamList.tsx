@@ -36,14 +36,7 @@ const handleCreateStream = () => {
           onKeyDown={(e) => { e.key === 'Enter' ? handleCreateStream() : null }}
         />
         <button onClick={() => handleCreateStream()}
-        style={{
-          'box-shadow': 'none',
-          'border-radius': '20px',
-          'min-width': '6ch',
-  'overflow': 'hidden',
-          'background-color': '#408040',
-          'max-height': '3ch',
-        'flex-grow': '1'}}>
+        class='new-stream-btn'>
           New Stream</button>
       </div>
       <button style={{
