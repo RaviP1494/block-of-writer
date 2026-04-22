@@ -97,75 +97,74 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
               </div>
 
               <Switch>
-              <Match when={props.innerClickMode === 'focus'}>
-              <div onMouseLeave={() => setDeleteClicked(false)}
-                class='display-top-box'
-                style={{
-                  border: deleteClicked() ? '1px dashed #003004' : 'none',
-                  transition: 'border 0.5s ease'
-                }}>
-                <button style={{ position: 'absolute', left: '0px' }}
-                  class='transparent'
-                  onClick={() => setIsEditingTitle(true)}>
-                  Rename
-                </button>
+                <Match when={props.innerClickMode === 'focus'}>
+                  <div onMouseLeave={() => setDeleteClicked(false)}
+                    class='display-top-box'
+                    style={{
+                      border: deleteClicked() ? '1px dashed #003004' : 'none',
+                      transition: 'border 0.5s ease'
+                    }}>
+                    <button style={{ position: 'absolute', left: '0px' }}
+                      class='transparent'
+                      onClick={() => setIsEditingTitle(true)}>
+                      Rename
+                    </button>
 
-                <button class={deleteClicked()
-                  ? 'delete-reveal' : 'delete-hide'}
-                  onClick={() =>
-                    deleteClicked()
-                      ? deleteStream(stream()!.id)
-                      && setDeleteClicked(false)
-                      : ''}
-                >
-                  Confirm?
-                </button>
-                <button
-                  onClick={() => setDeleteClicked(true)}
-                  class={deleteClicked() ?
-                    'delete-hide' : 'delete-reveal'}>
-                  X
-                </button>
-              </div>
-              </Match>
-              <Match when={props.innerClickMode === 'chain'}>
-              <div class='display-top-box'>
-              <button
-                  onClick={() => setChainAttStreamIDs(() => chainAttStreamIDs.filter(id => id !== stream()?.id))}
-                  class='delete-reveal'>
-                  -
-                </button>
-              </div>
-              </Match>
+                    <button class={deleteClicked()
+                      ? 'delete-reveal' : 'delete-hide'}
+                      onClick={() =>
+                        deleteClicked()
+                          ? deleteStream(stream()!.id)
+                          && setDeleteClicked(false)
+                          : ''}
+                    >
+                      Confirm?
+                    </button>
+                    <button
+                      onClick={() => setDeleteClicked(true)}
+                      class={deleteClicked() ?
+                        'delete-hide' : 'delete-reveal'}>
+                      X
+                    </button>
+                  </div>
+                </Match>
+                <Match when={props.innerClickMode === 'chain'}>
+                  <div class='display-top-box'>
+                    <button
+                      onClick={() => setChainAttStreamIDs(() => chainAttStreamIDs.filter(id => id !== stream()?.id))}
+                      class='delete-reveal'>
+                      -
+                    </button>
+                  </div>
+                </Match>
               </Switch>
             </div>
           </Show>
-          </div>
-          <br />
-          <div class='stream-text'>
-            <For each={groupedContent()}>
-              {(group) => (
-                <div
-                  class={
-                    flashSpacing() ?
-                      'flicker' :
-                      'paragraph flicker'
-                  }>
-                  <For each={group.flashIDs}>
-                    {(flashID, index) => {
-                      const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
-                      return <DisplayFlash id={flashID}
-                        prevID={prevID}
-                        showTimes={() => showTimes()}
-                        isSpaced={() => flashSpacing()}
-                        clickDo={props.innerClickMode} />;
-                    }}
-                  </For>
-                </div>
-              )}
-            </For>
-          </div>
         </div>
+        <div class='stream-text'>
+          <For each={groupedContent()}>
+            {(group) => (
+              <div
+                class={
+                  flashSpacing() ?
+                    'flicker' :
+                    'paragraph flicker'
+                }>
+                <For each={group.flashIDs}>
+                  {(flashID, index) => {
+                    const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
+                    return <DisplayFlash id={flashID}
+                      prevID={prevID}
+                      showTimes={() => showTimes()}
+                      isSpaced={() => flashSpacing()}
+                      clickDo={props.innerClickMode} />;
+                  }}
+                </For>
+              </div>
+            )}
+          </For>
+        </div>
+      </div>
     </Show>
   );
 };

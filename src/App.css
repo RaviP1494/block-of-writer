@@ -132,32 +132,32 @@
               inset -50px 0px 100px -50px #303000;
 }
 .stream-box {
-  max-height: 100%;
   position: relative;
   width: 36ch;
   padding: 2ch 2ch;
-  min-height: 300px;
-  max-height: 100%;
-  overflow-x: auto;
-  overflow-y: clip;
   inset: 0;
   margin: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
 }
 .stream-text{
   position: relative;
-  width: 100%;
   font-size: 12px;
-  max-height: 100%;
+  min-height: 300px;
   padding: 2ch 2ch;
   overflow-y: auto;
   word-spacing: 3px;
   letter-spacing: -0.14ch;
   word-break: break-word;
+  flex-grow: 1;
 }
 .stream-title {
+  flex-shrink: 0;
   position: relative;
   text-align: center;
   border-bottom: 2px double black;
+  z-index: 10; 
 }
 .stream-title h1 {
   position: relative;
