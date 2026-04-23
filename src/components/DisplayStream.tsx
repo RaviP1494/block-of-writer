@@ -5,7 +5,8 @@ import {
   groupedFlashIDs,
   deleteStream,
   setOpenStreams,
-  openStreams
+  openStreams,
+  setFocusedStreamID
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -25,7 +26,11 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
   const stream = () => allStreams.find((stream) => stream.id === props.id);
 
   const handleMinimize = () => {
-    setOpenStreams(() => [...openStreams.filter(id => id !== stream()?.id)])
+    props.innerClickMode === 'multi' 
+      ? setOpenStreams(() => [...openStreams.filter(id => id !== stream()?.id)])
+      : props.innerClickMode === 'focus' 
+        ? setFocusedStreamID(0) 
+        : null;
   }
 
   const groupedContent = createMemo(() => {
