@@ -212,7 +212,8 @@ export const FocusWriter: Component = () => {
   return (
     <div class='focus-writer'>
       <div style={{
-        color: 'white',
+        'background-color': '#a9a9a9',
+        color: 'black',
         'text-align': 'center'
       }}>Sending To {targetName()}
       </div>
