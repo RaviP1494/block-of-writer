@@ -9,7 +9,7 @@ export const NavBar: Component = () => {
   return (
       <div 
       class='finger navbar'>
-        <div class='knuckle flex-down'>
+        <div class='knuckle'>
           <button style={{
             'flex-grow': '1'
           }}>
@@ -39,7 +39,5 @@ export const NavBar: Component = () => {
           </button>
         </div>
       </div>
-
-
   );
 };

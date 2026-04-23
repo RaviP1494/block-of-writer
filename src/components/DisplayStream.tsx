@@ -4,8 +4,8 @@ import {
   allStreams, updateStreamTitle,
   groupedFlashIDs,
   deleteStream,
-  chainAttStreamIDs,
-  setChainAttStreamIDs
+  setOpenStreams,
+  openStreams
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -23,6 +23,10 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
   const [isEditingTitle, setIsEditingTitle] = createSignal(false);
 
   const stream = () => allStreams.find((stream) => stream.id === props.id);
+
+  const handleMinimize = () => {
+    setOpenStreams(() => [...openStreams.filter(id => id !== stream()?.id)])
+  }
 
   const groupedContent = createMemo(() => {
     let groups = [...groupedFlashIDs(props.id)];
@@ -104,12 +108,22 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       border: deleteClicked() ? '1px dashed #003004' : 'none',
                       transition: 'border 0.5s ease'
                     }}>
-                    <button style={{ position: 'absolute', left: '0px' }}
+                    <button
                       class='transparent'
+                      style={{
+                        width: 'fit-content',
+                        position: 'absolute', 
+                        left: '0px' 
+                      }}
+                      onClick={() => handleMinimize()}>
+                      Hide
+                    </button>
+                    <button 
+                      class='transparent'
+                      style={{width: 'fit-content'}}
                       onClick={() => setIsEditingTitle(true)}>
                       Rename
                     </button>
-
                     <button class={deleteClicked()
                       ? 'delete-reveal' : 'delete-hide'}
                       onClick={() =>
@@ -131,7 +145,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 <Match when={props.innerClickMode === 'chain'}>
                   <div class='display-top-box'>
                     <button
-                      onClick={() => setChainAttStreamIDs(() => chainAttStreamIDs.filter(id => id !== stream()?.id))}
+                      onClick={() => handleMinimize()}
                       class='delete-reveal'>
                       -
                     </button>

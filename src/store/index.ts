@@ -70,6 +70,7 @@ export const [typingStartTime, setTypingStartTime] = createSignal<number | null>
 
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
+export const [chainTargetID, setChainTargetID] = createSignal<number | null>(null); 
 export const [focusedChainID, setFocusedChainID] = createSignal<number>(0); 
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
 export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
@@ -86,10 +87,11 @@ export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
-  { id: 1, name: 'Space', tentsInSpace: [] }
+  { id: 1, name: 'Initial Cluster', tentsInSpace: [] }
 ]);
 export const [sparkChains, setSparkChains] = createStore<SparkChain[]>([]);
-export const [chainAttStreamIDs, setChainAttStreamIDs] = createStore<number[]>([]);
+export const [openStreams, setOpenStreams] = createStore<number[]>([]);
+export const [openChains, setOpenChains] = createStore<number[]>([]);
 
 // ==========================================
 // 4. HELPER ACTIONS
@@ -401,10 +403,11 @@ export const addToChain = (id: number) => {
   }
 }
 
-export const createNewChain = () => {
+export const createNewChain = (name?:string) => {
+  const chainName = name && name?.length > 0 ? name : `Chain ${nextChainID}`
   const newChain: SparkChain = {
     id: nextChainID++,
-    title: `Chain ${nextChainID}`,
+    title: chainName,
     sparkIDs: []
   };
   setSparkChains((prev)=> [...prev, newChain]);
@@ -544,7 +547,7 @@ export const getStreamTSpan = (streamID:number) => {
   const ms = streamFlashes(streamID).reduce((total, f) => total + f.tSpan, 0);
   const sec = ms / 1000;
   const hours = Math.floor(sec / 3600);
-  const minutes = Math.floor(sec / 60);
+  const minutes = Math.floor(sec / 60) - hours;
   const seconds = Math.floor(sec % 60);
   let retStr = '';
   hours ? retStr+=hours.toString() + 'h:' : '';

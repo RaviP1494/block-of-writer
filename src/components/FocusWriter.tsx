@@ -12,6 +12,9 @@ import {
   inflectionOn,
   focusedStreamID,
   writerTargetID,
+  allStreams,
+  viewSpaces,
+  activeViewSpaceID,
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
@@ -83,6 +86,12 @@ export const FocusWriter: Component = () => {
   let textareaRef: HTMLTextAreaElement | undefined;
   const [currentText, setCurrentText] = createSignal("    ");
   // const [particlesSpawned, setParticlesSpawned] = createSignal(0);
+  const targetName = () => writerTargetID()
+    ? 'Stream: ' + allStreams.find(s => s.id === writerTargetID())?.title
+    : activeViewSpaceID()
+      ? 'Null Space of ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.name
+      : 'none';
+
   const worker = new TimerWorker();
 
   worker.onmessage = (e) => {
@@ -138,11 +147,11 @@ export const FocusWriter: Component = () => {
 
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (text.trim().length > 0) {
+      if (text.trim()) {
         initFlash();
         if (flickerModeOn()) setIsActiveTimer(true);
       } else if (inflecTents()) {
-        killMyParticle();
+        if(spawnDots()) killMyParticle();
         flickFlash();
         setTypingStartTime(null);
         worker.postMessage({
@@ -160,7 +169,7 @@ export const FocusWriter: Component = () => {
       return;
     }
 
-    // 3. Ignore control keys (Shift, Ctrl, etc.)
+    if([27,91,16,17,18,20].includes(e.keyCode)) return;
     // 4. Valid character typed: start/reset timer
     if (!typingStartTime()) {
       setTypingStartTime(Date.now());
@@ -201,7 +210,12 @@ export const FocusWriter: Component = () => {
 
 
   return (
-    <div class='focus focus-writer'>
+    <div class='focus-writer'>
+      <div style={{
+        color: 'white',
+        'text-align': 'center'
+      }}>Sending To {targetName()}
+      </div>
       <textarea
         ref={textareaRef}
         value={currentText()}

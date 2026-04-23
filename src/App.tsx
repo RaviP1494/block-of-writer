@@ -3,16 +3,15 @@ import './App.css'
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { focusedStreamID, userMode, focusedChainID, chainAttStreamIDs, showStats } from './store';
+import { focusedStreamID, userMode, focusedChainID, showStats, openStreams } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
-import { StreamList } from './components/StreamList';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
 import { DisplayStream } from './components/DisplayStream';
 import { DisplayChain } from './components/DisplayChain';
-import { ChainList } from './components/ChainList';
 import { DisplayStats } from './components/DisplayStats';
 import { DisplaySpace } from './components/DisplaySpace';
+import { Lister } from './components/Lister';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -29,38 +28,53 @@ const App: Component = () => {
           <WelcomeTitle />
         </div>
 
-        <Switch>
-          <Match when={userMode() === 'ReadWrite'}>
-
+        <div class='handbar' style={{display: 'flex'}}>
             <WritersHandBar />
+            </div>
+        <Switch>
+          <Match 
+          when={userMode() === 'ReadWrite'}>
 
             <div class='focus-left'>
-              <StreamList clickDo='focus' />
+              <Lister 
+              of='streams' 
+              clickAct='focus' />
             </div>
 
+            <div class='focus'>
             <FocusWriter />
+            </div>
 
             <div class='focus-right'>
-              <DisplayStream id={focusedStreamID()} innerClickMode='focus' />
+              <DisplayStream 
+              id={focusedStreamID()} 
+              innerClickMode='focus' />
             </div>
           </Match>
 
-
-          <Match when={userMode() === 'SparkScrape'}>
+          <Match 
+          when={userMode() === 'SparkScrape'}>
             <div class='focus-left'>
-              <StreamList clickDo='sparkcatch' />
+              <Lister 
+              of='streams' 
+              clickAct='multi' />
             </div>
 
             <div class='focus multi-stream'>
-              <For each={chainAttStreamIDs}>
+              <For each={openStreams}>
                 {(id) => (
-                  <DisplayStream id={id} innerClickMode='chain' />)}
+                  <DisplayStream 
+                  id={id} 
+                  innerClickMode='chain' />)}
               </For>
             </div>
 
             <div class='focus-right'>
-              <ChainList clickDo='focus' />
-              <DisplayChain id={focusedChainID()} />
+              <Lister 
+              of='chains' 
+              clickAct='focus' />
+              <DisplayChain 
+              id={focusedChainID()} />
             </div>
           </Match>
 
@@ -78,16 +92,23 @@ const App: Component = () => {
             </div>
 
             <div class='focus multi-stream'>
-              <StreamList clickDo='sparkcatch' />
-              <For each={chainAttStreamIDs}>
+              <Lister 
+              of='streams' 
+              clickAct='multi' />
+              <For each={openStreams}>
                 {(id) => (
-                  <DisplayStream id={id} innerClickMode='chain' />)}
+                  <DisplayStream 
+                  id={id} 
+                  innerClickMode='chain' />)}
               </For>
             </div>
 
             <div class='focus-right'>
-              <ChainList clickDo='focus' />
-              <DisplayChain id={focusedChainID()} />
+              <Lister 
+              of='chains' 
+              clickAct='focus' />
+              <DisplayChain 
+              id={focusedChainID()} />
             </div>
 
           </Match>

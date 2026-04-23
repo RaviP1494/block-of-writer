@@ -6,20 +6,25 @@
 .welcomer {
   position: relative;
   background-color: #202020;
-  margin: 0 auto;
+  margin-top: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 20px;
   padding: 0 50px;
   width: fit-content;
+  height: 150px;
   border-radius: 40px;
   text-align: center;
   gap: 4px;
 }
 .welcomer h1 {
   padding: 0;
-  margin: 0;
+  margin: auto;
 }
 
 .navbar {
-  margin-top: 15px;
+  position: absolute;
+  bottom: 35px;
 }
 
 .focus {
@@ -27,10 +32,13 @@
   grid-row: 2 / span 1;
   grid-column: 2 / span 1;
   width: 40dvw;
+  height: 100%;
 }
 .focus-left {
   grid-row: 2 / span 1;
   grid-column: 1 / span 1;
+  min-height: 0;
+  height: 100%;
 }
 .focus-right {
   grid-row: 1 / span 2;
@@ -56,7 +64,7 @@
   display: grid;
   grid-template-columns: 30dvw 40dvw 30dvw;
   grid-template-rows: 150px 1fr;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .cache-actions {
@@ -66,16 +74,15 @@
   align-self: center;
   border-radius: 100px;
   width: 200px;
-  height: 35px;
+  height: 15px;
   box-sizing: border-box;
-  margin-top: 0;
+  margin-top: 5px;
   padding-top: 0;
   font-family: 'Caveat', cursive;
 }
 .cache-actions > div {
     text-align: center;
     background-color: #000000;
-    margin-top: 4px;
     padding: 5px 10px;
     border-radius: 20px;
     color: #ffffff;
@@ -181,99 +188,109 @@
   width: 100%;
   height: 50px;
 }
-.display-stream-buttons{
-  position: absolute;
-  left: 0px;
+.display-top-box button {
+  height: 20px;
+  width: 100px;
 }
 .display-top-box button.delete-hide {
   position: absolute;
+  right: 0px;
   background-color: #400000;
   transform: scale(0.1) translateX(20px);
   border: 2px solid black;
   opacity: 0;
   pointer-events: none;
   width: max-content;
-  top: 2px;
-  right: 0px;
   transition: all 0.5s ease;
 }
 .display-top-box button.delete-reveal {
   position: absolute;
+  right: 0px;
   background-color: #ff0030;
   border: 2px solid black;
   transform: scale(1.0) translateX(0px);
   pointer-events: all;
   opacity: 1;
   width: max-content;
-  top: 2px;
-  right: 0px;
   transition: all 0.5s ease;
 }
-.delete-box .knuckle{
-  background-color: #500000;
-  right: 5px;
+
+.new-maker {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+}
+.new-maker > input {
+  min-width: 8ch;
+  max-width: 20ch;
+  flex-grow: 1;
+}
+.new-maker > button {
+  width: fit-content;
+  background-color: #408040;
 }
 
-button.new-stream-btn {
-    box-shadow: none;
-    border-radius: 20px;
-    min-width: 6ch;
-    overflow: hidden;
-    background-color: #408040;
-    max-height: 3ch;
-    flex-grow: 1;
-}
-
-.streamlist-box {
+.lister-box {
+  display: flex;
+  position: relative;
   box-sizing: border-box;
   max-height: 100%;
-  display: flex;
-  width: 100%;
-  max-width: 750px;
   padding: 10px;
   flex-direction: column;
-  margin: auto;
+  justify-content: center;
   text-align: center;
 }
-.streamlist {
-  flex-grow: 1;
+.lister-list {
+  position: relative;
+  min-height: 0px;
+  justify-content: center;
+  display: flex;
+  gap: 10px;
+  flex: 1;
   flex-direction: row-reverse;
   flex-wrap: wrap-reverse;
-  overflow: auto;
+  overflow-y: auto;
 }
-.streambtn {
-  padding: 2ch 1ch;
-  margin: 0px 2ch;
-  border-radius: 4ch;
-  font-family: 'Caveat', cursive;
-  font-size: 20px;
-  box-shadow: inset 0 0 10px -4px #000040;
-  border: 1px solid #004040;
-  transition: border 1.0s ease;
-}
-.streambtn:hover {
-  border: 1px solid #00ffff;
-  box-shadow: 0 0 20px -4px #004040;
-  transition: border box-shadow 0.4s ease;
-}
-.streamlist-box > button {
+.lister-btn {
   box-sizing: border-box;
   min-height: 50px;
-  align-content: stretch;
   border-radius: 10px;
   margin: 3px;
-  flex: 1 1 14ch;
-  overflow: hidden;
+  min-width: 14ch;
   white-space: nowrap;
   text-overflow: ellipsis;
+  overflow: hidden;
+  background-color: transparent;
 }
-.streamlist-box input {
-  max-height: 3ch;
-  background-color: rgba(200,200,200,0.4);
-  text-align: center;
-  flex: 1 1 70%;
-  border-radius: 5px;
+.focused-lister-btn {
+  box-sizing: border-box;
+  min-height: 50px;
+  border-radius: 10px;
+  margin: 3px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
+  flex: unset;
+  order: 1;
+  background-color: #0040ff;
 }
+.targeted-lister-btn {
+  box-sizing: border-box;
+  min-height: 50px;
+  border-radius: 10px;
+  margin: 3px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 100%;
+  flex: unset;
+  order: 1;
+  background-color: #a0a0ff
+}
+
 .paragraph{
   text-indent: 4ch;
   display: block;
@@ -281,7 +298,7 @@ button.new-stream-btn {
 
 .focus-writer {
   box-sizing: border-box;
-  height: calc (100dvh - 150px);
+  height: 100%;
   display: flex;
   width: 100%;
   min-width: 28ch;
@@ -308,27 +325,58 @@ button.new-stream-btn {
 .handbar {
   grid-row: 1; 
   grid-column: 1;
-  width: fit-content;
+  height: 100%;
+}
+
+.writers-handbar {
   box-sizing: border-box;
-  border: 1px dashed white;
   display: flex;
   flex-direction: column;
   position: relative;
+  margin: auto;
+  box-shadow: unset;
+  width: 150px;
+  height: 70px;
   font-family: 'Caveat', cursive;
+  transition: height 0.8s ease-out;
 }
-
+.writers-handbar:has(.timers:focus-within) {
+  height: 110px;
+}
+.writers-handbar .knuckle, .writers-handbar .nail {
+  top: 0;
+}
+.toggles {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  align-items: flex-end;
+}
+.toggles span{
+  text-shadow: 0px 0px 5px #000000;
+  color: #a9a9a9
+}
+.checktog {
+  box-sizing: border-box;
+  display: flex;
+  width: fit-content;
+  align-items: center;
+}
+.checktog input{
+  accent-color: transparent;
+  opacity: 0.5;
+}
 .timers {
-  margin-top: 10px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  height: 100px;
-  width: 250px;
+  height: fit-content;
+  width: 150px;
 }
 .delay-set-holder {
   display: flex;
+  height: 3ch;
   flex-direction: row;
   justify-content: space-between;
+  font-family: 'Caveat', cursive;
 }
 .delay-set {
   min-width: 40%;
@@ -359,27 +407,6 @@ button.new-stream-btn {
 div.delay-set > span {
   font-family: 'Syne Mono', monospace;
   flex-grow: 1;
-}
-.toggles {
-  display: flex;
-  justify-content: space-between;
-}
-.toggles span{
-  text-shadow: 0px 0px 5px #000000;
-  color: #a9a9a9
-}
-.checktog {
-  box-sizing: border-box;
-  display: flex;
-  flex: 1 1 0px;
-  width: fit-content;
-  align-self: flex-end;
-  align-items: center;
-  justify-content: space-between;
-}
-.checktog input{
-  accent-color: transparent;
-  opacity: 0.5;
 }
 
 .finger {
@@ -570,11 +597,6 @@ h1 {
 }
 .background-one > div{
   box-shadow: 0 0 25px -10px rgba(0,0,0,0.5);
-}
-div.streamlist{
-  background-color: black;
-  box-shadow: inset 0 0px 80px rgba(255,255,255,0.2),
-              inset 0 0px 80px rgba(255,255,255,0.2);
 }
 button.transparent{ 
   background-color: transparent;
