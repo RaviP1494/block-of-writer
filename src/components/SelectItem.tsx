@@ -1,21 +1,21 @@
-import { For, Show, type Component } from 'solid-js'
-import { activeViewSpaceID, allFlashes, allStreams, focusedEntity, getFlickerTSpan, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, textWordCount, viewSpaces, writerTargetID, type MultEnt } from '../store';
+import { createMemo, For, Show, type Component } from 'solid-js'
+import { activeViewSpaceID, focusedEntity, getFlash, getFlickerTSpan, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, textWordCount, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface SelectItemProps {
   of: string;
   clickAct: string;
 };
-export const Lister: Component<SelectItemProps> = (props) => {
+export const SelectItem: Component<SelectItemProps> = (props) => {
   const activeVS = () => viewSpaces.find(vs => vs.id === activeViewSpaceID());
   
   const collection = 
-    () => props.of === 'viewspace' 
+    createMemo(() => props.of === 'viewspace' 
       ?  activeVS()?.tentsInSpace 
       : props.of === 'space-floaters' 
         ? activeVS()?.tentsInSpace.filter(ent => ent.entityType !== 'stream') 
         : props.of === 'space-streams' 
           ? activeVS()?.tentsInSpace.filter(ent => ent.entityType === 'stream')
-          : null;
+          : null);
 
 
   const handleClick = (ent:MultEnt) => {
@@ -62,14 +62,13 @@ export const Lister: Component<SelectItemProps> = (props) => {
 
   const renderEntBtn = (ent: MultEnt) => {
     if(ent.entityType === 'stream') {
-      const stream = allStreams.find(s => s.id === ent.refID);
       return (
             <button
             id={'stream' + 
               ent.refID.toString()}
             onClick={() =>  handleClick(ent)}
             class={buttonClass(ent)}>
-              {stream?.title}
+              {getStream(ent.refID)?.title}
             </button>
           );
     } else if(ent.entityType === 'flicker') {
@@ -79,18 +78,17 @@ export const Lister: Component<SelectItemProps> = (props) => {
               ent.refID.toString()}
             onClick={() =>  handleClick(ent)}
             class={buttonClass(ent)}>
-              {getFlickerTSpan(ent.refID)}
+              {getFlickerTSpan(ent.refID).toString() + ' ' + ent.entityType}
             </button>
           );
     } else if(ent.entityType === 'flash') {
-      const flash = allFlashes.find(f => f.id === ent.refID);
       return (
             <button
             id={'flash' + 
               ent.refID.toString()}
             onClick={() =>  handleClick(ent)}
             class={buttonClass(ent)}>
-              {textWordCount(flash!.textContents)}
+              {textWordCount(getFlash(ent.refID)?.textContents || 'many many many words').toString() + ' ' + ent.entityType}
             </button>
           );
     }

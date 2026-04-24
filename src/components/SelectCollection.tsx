@@ -1,5 +1,5 @@
 import { createSignal, For, Show, type Component } from 'solid-js'
-import { activeViewSpaceID, allStreams, chainTargetID, createNewChain, createNewStream, focusedChainID, focusedStreamID, openChains, openStreams, setChainTargetID, setFocusedChainID, setFocusedStreamID, setOpenChains, setOpenStreams, setWriterTargetID, sparkChains, viewSpaces, writerTargetID } from '../store';
+import { activeViewSpaceID, allStreams, chainTargetID, createNewChain, createNewStream, focusedChainID, focusedStreamID, openChains, openStreams, setChainTargetID, setFocusedChainID, setFocusedStreamID, setOpenChains, setOpenStreams, setWriterTargetID, sparkChains, viewSpaces, writerTargetID, type SparkChain, type Stream, type ViewSpace } from '../store';
 
 interface SelectCollectionProps {
   of: string;
@@ -8,14 +8,6 @@ interface SelectCollectionProps {
 export const SelectCollection: Component<SelectCollectionProps> = (props) => {
   const [createName, setCreateName] = createSignal('');
 
-  const collection = 
-    () => props.of === 'all-chains' 
-      ? sparkChains 
-      : props.of === 'all-streams' 
-        ? allStreams 
-        : props.of === 'all-spaces' 
-          ? viewSpaces 
-          : [{id: 1, title: 'selectOver of null', contentIDs: [1]}];
 
 
   const handleClick = (id:number) => {

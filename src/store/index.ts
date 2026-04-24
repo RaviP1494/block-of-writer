@@ -70,9 +70,13 @@ export const [typingStartTime, setTypingStartTime] = createSignal<number | null>
 
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
+
 export const [chainTargetID, setChainTargetID] = createSignal<number | null>(null); 
 export const [focusedChainID, setFocusedChainID] = createSignal<number>(0); 
+
+export const [focusedEntity, setFocusedEntity] = createSignal<MultEnt | null>(null);
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
+
 export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 
 
@@ -83,8 +87,11 @@ export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 
 
 export const [allFlashes, setAllFlashes] = createStore<Flash[]>([]);
+export const getFlash = (flashID: number) => allFlashes.find(f => f.id === flashID);
 export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
+export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
+export const getFlickers = (flickerID: number) => allFlickers.find(f => f.id === flickerID);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
   { id: 1, title: 'Initial Cluster', tentsInSpace: [] }
@@ -92,6 +99,7 @@ export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
 export const [sparkChains, setSparkChains] = createStore<SparkChain[]>([]);
 export const [openStreams, setOpenStreams] = createStore<number[]>([]);
 export const [openChains, setOpenChains] = createStore<number[]>([]);
+export const [openFloaters, setOpenFloaters] = createStore<MultEnt[]>([]);
 
 // ==========================================
 // 4. HELPER ACTIONS
@@ -118,7 +126,11 @@ export const sendFlash = (flash: Flash) => {
     } else {
       if (holder) flickFlash(); 
       
-      const newFlicker: Flicker = { id: nextFlickerID--, delayTSpan: flickerDelayT(), createDT: Date.now(), contentIDs: [finalFlash.id] };
+      const newFlicker: Flicker = { 
+        id: nextFlickerID--, 
+        delayTSpan: flickerDelayT(), 
+        createDT: Date.now(), 
+        contentIDs: [finalFlash.id] };
       setAllFlickers(prev => [...prev, newFlicker]);
       setInflecTents(newFlicker);
       setIsFlickerOpen(true);
@@ -144,6 +156,8 @@ export const sendFlash = (flash: Flash) => {
       sendToViewSpace('flash', finalFlash.id);
     }
   }
+  console.log('Flashes:');
+  console.log(allFlashes);
 };
 
 export const flickFlash = () => {
@@ -184,6 +198,8 @@ export const flickFlash = () => {
   }
 
   setInflecTents(null);
+  console.log('Flickers:'); 
+  console.log(allFlickers);
 };
 
 export const makeStreamFrom = (entityType: EntityType, refID: number) => {
@@ -424,16 +440,18 @@ export const createNewStream = (name?:string) => {
   };
   
   setAllStreams((prev) => [...prev, newStream]);
-  const activeID = activeViewSpaceID();
-  setViewSpaces(vs => vs.id === activeID, 
-                'tentsInSpace',
-                  (prev) => [...prev, {
-                            entityType: 'stream',
-                            refID: newStream.id 
-                            } as MultEnt
-                  ]
-               );
+  // const activeID = activeViewSpaceID();
+  // setViewSpaces(vs => vs.id === activeID, 
+  //               'tentsInSpace',
+  //                 (prev) => [...prev, {
+  //                           entityType: 'stream',
+  //                           refID: newStream.id 
+  //                           } as MultEnt
+  //                 ]
+  //              );
   setWriterTargetID(newStream.id); // Automatically switch to the new stream
+  console.log('Streams:');
+  console.log(allStreams);
 };
 
 export const createNewViewSpace = (name?: string) => {

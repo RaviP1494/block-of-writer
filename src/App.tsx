@@ -3,20 +3,18 @@ import './App.css'
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { focusedStreamID, userMode, focusedChainID, showStats, openStreams } from './store';
+import { focusedStreamID, userMode, focusedChainID, openStreams, focusedEntity } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
 import { DisplayStream } from './components/DisplayStream';
 import { DisplayChain } from './components/DisplayChain';
-import { DisplayStats } from './components/DisplayStats';
-import { DisplaySpace } from './components/DisplaySpace';
 import { Lister } from './components/Lister';
+import { SelectItem } from './components/SelectItem';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
 const App: Component = () => {
-
 
   return (
     <>
@@ -75,33 +73,14 @@ const App: Component = () => {
           </Match>
 
           <Match when={userMode() === 'ReadArrange'}>
-            <div class='focus-left'>
-              <div
-                style={{ color: '#ff0000' }}
-                class='flex-top-down'>
-                <Show when={showStats()}>
-                  <DisplayStats />
-                </Show>
-              </div>
-              <DisplaySpace id={1} />
+            <div class='focus-left flex-down'>
+            <SelectItem of='viewspace' clickAct='focus' />
             </div>
-            <div class='focus multi-stream'>
-              <Lister
-                of='streams'
-                clickAct='multi' />
-              <For each={openStreams}>
-                {(id) => (
-                  <DisplayStream
-                    id={id}
-                    innerClickMode='chain' />)}
-              </For>
+            <div class='focus'>
+            {focusedEntity()?.refID + ': ' + focusedEntity()?.entityType}
             </div>
-            <div class='focus-right'>
-              <Lister
-                of='chains'
-                clickAct='focus' />
-              <DisplayChain
-                id={focusedChainID()} />
+            <div class='focus-right flex-down'>
+            <SelectItem of='space-floaters' clickAct='focus' />
             </div>
           </Match>
         </Switch>
