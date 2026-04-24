@@ -39,7 +39,7 @@ export interface MultEnt {
 
 export interface ViewSpace {
   id: number;
-  name: string;
+  title: string;
   tentsInSpace: MultEnt[];
 }
 
@@ -87,7 +87,7 @@ export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
-  { id: 1, name: 'Initial Cluster', tentsInSpace: [] }
+  { id: 1, title: 'Initial Cluster', tentsInSpace: [] }
 ]);
 export const [sparkChains, setSparkChains] = createStore<SparkChain[]>([]);
 export const [openStreams, setOpenStreams] = createStore<number[]>([]);
@@ -436,6 +436,17 @@ export const createNewStream = (name?:string) => {
   setWriterTargetID(newStream.id); // Automatically switch to the new stream
 };
 
+export const createNewViewSpace = (name?: string) => {
+  const vsName = name && name.trim().length > 0 ? name.trim() : `ViewSpace ${nextViewSpaceID}`;
+  const newVS: ViewSpace = {
+    id: nextViewSpaceID++,
+    title: vsName,
+    tentsInSpace: [],
+  };
+  setViewSpaces(prev => [...prev, newVS]);
+  setActiveViewSpaceID(newVS.id);
+};
+
 export const updateChainTitle = (chainID: number, newTitle: string) => {
   if (newTitle.trim()) {
     setSparkChains(
@@ -459,7 +470,7 @@ export const updateSpaceName = (spaceID: number, newName: string) => {
   if (newName.trim()) {
     setViewSpaces(
       (space) => space.id === spaceID,
-      'name',
+      'title',
       newName.trim()
     );
   }
@@ -678,7 +689,7 @@ export const loadSavedApp = async () => {
         layoutMode: vs.layoutMode || 'spreadmixed'
       }));
       setViewSpaces(safeViewSpaces.length > 0 ? safeViewSpaces : [
-        { id: 1, name: 'Initial Space', tentsInSpace: [], layoutMode: 'spreadmixed' }
+        { id: 1, title: 'Initial Space', tentsInSpace: [], layoutMode: 'spreadmixed' }
       ]);
       
 

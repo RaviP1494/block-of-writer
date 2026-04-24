@@ -89,7 +89,7 @@ export const FocusWriter: Component = () => {
   const targetName = () => writerTargetID()
     ? 'Stream: ' + allStreams.find(s => s.id === writerTargetID())?.title
     : activeViewSpaceID()
-      ? 'Null Space of ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.name
+      ? 'Null Space of ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
       : 'none';
 
   const worker = new TimerWorker();

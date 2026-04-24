@@ -1,20 +1,22 @@
 import { createSignal, For, Show, type Component } from 'solid-js'
 import { activeViewSpaceID, allStreams, chainTargetID, createNewChain, createNewStream, focusedChainID, focusedStreamID, openChains, openStreams, setChainTargetID, setFocusedChainID, setFocusedStreamID, setOpenChains, setOpenStreams, setWriterTargetID, sparkChains, viewSpaces, writerTargetID } from '../store';
 
-interface ListerProps {
+interface SelectCollectionProps {
   of: string;
   clickAct: string;
 };
-export const Lister: Component<ListerProps> = (props) => {
+export const SelectCollection: Component<SelectCollectionProps> = (props) => {
   const [createName, setCreateName] = createSignal('');
-  const activeVS = () => viewSpaces.find(vs => vs.id === activeViewSpaceID());
 
-  const handleCreate = () => {
-    props.of === 'streams' ? createNewStream(createName()) : null;
-    props.of === 'chains' ? createNewChain(createName()) : null;
-    props.of === 'viewspace' ? createNewStream(createName()) : null;
-    setCreateName('');
-  };
+  const collection = 
+    () => props.of === 'all-chains' 
+      ? sparkChains 
+      : props.of === 'all-streams' 
+        ? allStreams 
+        : props.of === 'all-spaces' 
+          ? viewSpaces 
+          : [{id: 1, title: 'selectOver of null', contentIDs: [1]}];
+
 
   const handleClick = (id:number) => {
     if(props.of === 'streams'){

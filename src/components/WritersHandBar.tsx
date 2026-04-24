@@ -108,7 +108,6 @@ export const WritersHandBar: Component = () => {
           </div>
         </div>
       </div>
-
       <div
         class='toggles'>
         <div
