@@ -7,7 +7,6 @@ import {
   backspaceDisabled, inflecTents,
   typingStartTime, setTypingStartTime,
   setIsWritersBlockEmpty,
-  sendFlash, flickFlash,
   setIsFlickerOpen,
   inflectionOn,
   focusedStreamID,
@@ -15,6 +14,8 @@ import {
   allStreams,
   viewSpaces,
   activeViewSpaceID,
+  addFlash,
+  outFlect,
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
@@ -23,44 +24,10 @@ export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
 export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
 
-  // const textArea = document.querySelector('.focus-writer textarea');
-  // const streamBtn = writerTargetID() ? document.querySelector(`#stream${writerTargetID()}`) : document.querySelector('.focus-left');
-  //   const textRect = textArea?.getBoundingClientRect();
-  //   const targetRect = streamBtn?.getBoundingClientRect();
-  //   const topW = textRect?.top ? textRect.top : 10;
-  //   const leftW = textRect?.left ? textRect.left : 10;
-  //   const heightW = textRect?.height ? textRect.height : 10;
-  //   const widthW = textRect?.width ? textRect.width : 10;
-  //   const topS = targetRect?.top ? targetRect.top : 10;
-  //   const leftS = targetRect?.left ? targetRect.left : 10;
-  //   const widthS = targetRect?.width ? targetRect.width : 10;
-  //   const targets: PointTuple[] = [];
-  //   targets.push([topW, leftW]);
-  //   targets.push([topS, leftS+widthS]);
-  //   targets.push([topW + heightW, leftW + widthW]);
-  //   targets.push([topW + heightW * 2, leftW]);
-  // id: 1, speed: 5, radius: 8, density: 10
-  // const speed = Math.floor(Math.random() * 6) + 3;
-  // const radius = Math.floor(Math.random() * 3) + 1;
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
-  // const textA = document.querySelector('.focus-writer textarea');
-  // const streamList = document.querySelector('.streamlist');
-  // const listRect = streamList?.getBoundingClientRect();
-
-  // const startPt: PointTuple = 
-  //   [listRect!.top + listRect!.height, 
-  //     listRect!.left + listRect!.width];
-
-  // const gravPt: PointTuple = 
-  //   [(listRect!.top + listRect!.height) / 2, 
-  //     (listRect!.left + listRect!.width) / 2];
   const newStreamBtn = document.querySelector('button.new-stream-btn');
   const newStrBtnRect = newStreamBtn?.getBoundingClientRect();
-  // const txtARect = textA?.getBoundingClientRect();
-  // const startPt:PointTuple = 
-  //   [txtARect!.top + txtARect!.height, 
-  //     (txtARect!.left + txtARect!.width) / 2];
   const gravPt: PointTuple = 
     [newStrBtnRect!.top + newStrBtnRect!.height / 2, 
       (newStrBtnRect!.left + newStrBtnRect!.width) / 2];
@@ -85,7 +52,7 @@ const killMyParticle = () => {
 export const FocusWriter: Component = () => {
   let textareaRef: HTMLTextAreaElement | undefined;
   const [currentText, setCurrentText] = createSignal("    ");
-  // const [particlesSpawned, setParticlesSpawned] = createSignal(0);
+
   const targetName = () => writerTargetID()
     ? 'Stream: ' + allStreams.find(s => s.id === writerTargetID())?.title
     : activeViewSpaceID()
@@ -109,9 +76,9 @@ export const FocusWriter: Component = () => {
   };
 
   onCleanup(() => {
+    if (inflecTents() && inflecTents()!.length > 0) outFlect();
     worker.terminate();
   });
-
 
   const initFlash = () => {
     const text = currentText().trim();
@@ -126,9 +93,9 @@ export const FocusWriter: Component = () => {
       createDT: now,
       textContents: text,
       tSpan: now - start,
-      delayTSpan: delayT // Convert UI seconds to MS
+      delayTSpan: delayT
     };
-    sendFlash(newFlash);
+    addFlash(newFlash);
     if (text && spawnDots()) spawnMyParticle((now-start)/1000, text);
     setCurrentText("    ");
     setTypingStartTime(null);
@@ -138,13 +105,11 @@ export const FocusWriter: Component = () => {
 
   const handleKeyDown = (e: KeyboardEvent) => {
     const text = currentText();
-
     if (backspaceDisabled() && e.key === 'Backspace') {
       e.preventDefault();
       if (text.trim().length > 0) initFlash();
       return;
     }
-
     if (e.key === 'Enter') {
       e.preventDefault();
       if (text.trim()) {
@@ -152,7 +117,7 @@ export const FocusWriter: Component = () => {
         if (flickerModeOn()) setIsActiveTimer(true);
       } else if (inflecTents()) {
         if(spawnDots()) killMyParticle();
-        flickFlash();
+        outFlect();
         setTypingStartTime(null);
         worker.postMessage({
           type: 'stop',
@@ -168,26 +133,11 @@ export const FocusWriter: Component = () => {
       }
       return;
     }
-
     if([27,91,16,17,18,20].includes(e.keyCode)) return;
-    // 4. Valid character typed: start/reset timer
     if (!typingStartTime()) {
       setTypingStartTime(Date.now());
       setIsActiveTimer(true);
-    }{/* else {
-      
-        const elapsedMS = Date.now() - typingStartTime()!;
-        const expectedParticles = Math.floor(elapsedMS / 5000); 
-
-      if (expectedParticles > particlesSpawned()) {
-        console.log(expectedParticles + '<e a>' + particlesSpawned());
-        spawnMyParticle(e.key);
-        setParticlesSpawned(expectedParticles); 
-      */}
-      
-    
-
-
+    }
     worker.postMessage({
       type: 'reset',
       flashDelay: flashDelayT() * 1000,
@@ -206,8 +156,6 @@ export const FocusWriter: Component = () => {
     }
     setIsWritersBlockEmpty(currentText().trim().length === 0);
   });
-
-
 
   return (
     <div class='focus-writer'>

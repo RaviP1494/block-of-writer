@@ -60,7 +60,7 @@ export const [flickerModeOn, setFlickerModeOn] = createSignal<boolean>(true);
 export const [flickerDelayT, setFlickerDelayT] = createSignal<number>(6); 
 export const [isFlickerOpen, setIsFlickerOpen] = createSignal<boolean>(false);
 
-export const [inflecTents, setInflecTents] = createSignal<Flash | Flicker | null>(null);
+export const [inflecTents, setInflecTents] = createSignal<Flash[] | null>(null);
 export const [inflectionOn, setInflectionOn] = createSignal<boolean>(false);
 export const [backspaceDisabled, setBackspaceDisabled] = createSignal<boolean>(false);
 
@@ -88,10 +88,10 @@ export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 
 export const [allFlashes, setAllFlashes] = createStore<Flash[]>([]);
 export const getFlash = (flashID: number) => allFlashes.find(f => f.id === flashID);
-export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
-export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
 export const getFlickers = (flickerID: number) => allFlickers.find(f => f.id === flickerID);
+export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
+export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
   { id: 1, title: 'Initial Cluster', tentsInSpace: [] }
@@ -112,94 +112,65 @@ let nextChainID = 1;
 let nextViewSpaceID = 1;
 
 
-export const sendFlash = (flash: Flash) => {
-  const finalFlash = { ...flash, id: nextFlashID++ };
-  setAllFlashes(prev => [...prev, finalFlash]);
+export const addFlash = (flash: Flash) => {
+  const newFlash: Flash = { ...flash, id: nextFlashID++ };
 
-  const holder = inflecTents();
-  const targetId = writerTargetID();
-
-  if (flickerModeOn()) {
-    if (isFlickerOpen() && holder && 'contentIDs' in holder) {
-      setAllFlickers(b => b.id === holder.id, 'contentIDs', prev => [...prev, finalFlash.id]);
-      setInflecTents(allFlickers.find(b => b.id === holder.id)!);
+  if (!flickerModeOn()) {
+    if (!inflectionOn()) {
+      sendFlash(newFlash);
     } else {
-      if (holder) flickFlash(); 
-      
-      const newFlicker: Flicker = { 
-        id: nextFlickerID--, 
-        delayTSpan: flickerDelayT(), 
-        createDT: Date.now(), 
-        contentIDs: [finalFlash.id] };
-      setAllFlickers(prev => [...prev, newFlicker]);
-      setInflecTents(newFlicker);
-      setIsFlickerOpen(true);
-
-      if (!inflectionOn() && targetId !== null) {
-        setAllStreams(s => s.id === targetId, 'contentIDs', prev => [...prev, newFlicker.id]);
-      }
-      else if (!inflectionOn() && targetId === null){
-        sendToViewSpace('flicker', newFlicker.id);
-      }
-    }
-  } 
-  else if (inflectionOn()) {
-    if (holder) flickFlash();
-    setInflecTents(finalFlash);
-  } 
-  else {
-    if (holder) flickFlash();
-    if (targetId !== null) {
-      setAllStreams(stream => stream.id === targetId, 'contentIDs', prev => [...prev, finalFlash.id]);
-    }
-    else {
-      sendToViewSpace('flash', finalFlash.id);
-    }
-  }
-  console.log('Flashes:');
-  console.log(allFlashes);
-};
-
-export const flickFlash = () => {
-  const holder = inflecTents();
-  if (!holder) return;
-
-  const targetID = writerTargetID();
-  
-  const isFlash = !('contentIDs' in holder);
-  const isSingleFlashFlicker = !isFlash && holder.contentIDs.length === 1;
-  const finalID = isSingleFlashFlicker ? holder.contentIDs[0] : holder.id;
-
-  if (inflectionOn()) {
-    if (targetID !== null) {
-      setAllStreams(s => s.id === targetID, 'contentIDs', prev => [...prev, finalID]);
-    } else{
-      sendToViewSpace(isFlash || isSingleFlashFlicker ? 'flash' : 'flicker', finalID); 
+      if (inflecTents()) outFlect();
+      setInflecTents([newFlash]); 
     }
   } else {
-    if (isSingleFlashFlicker) {
-      if (targetID !== null) {
-        setAllStreams(s => s.id === targetID, 'contentIDs', prev => 
-          prev.map(id => id === holder.id ? finalID : id)
-        );
-      } else {
-        setViewSpaces(vs => vs.id === activeViewSpaceID()! , 'tentsInSpace', prev => prev.map(item => 
-          (item.entityType === 'flicker' && item.refID === holder.id)
-            ? { ...item, entityType: 'flash', refId: finalID }
-            : item
-        ));
-        sendToViewSpace('flash',finalID);
-        setIsFlickerOpen(false);
-      }
+    if (!isFlickerOpen()) {
+      if (inflecTents()) outFlect();
+      setIsFlickerOpen(true);
+      setInflecTents([newFlash]);
+    } else {
+      setInflecTents(prev => prev ? [...prev, newFlash] : [newFlash]);
     }
   }
-  if (isSingleFlashFlicker) {
-    setAllFlickers(prev => prev.filter(b => b.id !== holder.id));
+};
+
+export const outFlect = () => {
+  const current = inflecTents();
+  
+  if (!current || current.length === 0) return;
+
+  if (current.length > 1) {
+    const newFlicker: Flicker = {
+      id: nextFlickerID--,
+      createDT: current[0].createDT,
+      contentIDs: current.map(f => f.id),
+      delayTSpan: flickerDelayT()
+    };
+    
+    setAllFlashes(prev => [...prev, ...current]);
+    setAllFlickers(prev => [...prev, newFlicker]);
+    sendFlickOrFlash('flicker', newFlicker.id);
+  } 
+  else {
+    sendFlash(current[0]);
   }
 
   setInflecTents(null);
-  console.log('Flickers:'); 
-  console.log(allFlickers);
+  setIsFlickerOpen(false);
+};
+
+const sendFlash = (flash: Flash) => {
+  setAllFlashes(prev => [...prev, flash]);
+  sendFlickOrFlash('flash', flash.id);
+};
+
+const sendFlickOrFlash = (entityType: 'flash' | 'flicker', entityId: number) => {
+  const targetId = writerTargetID();
+  
+  if (targetId !== null) {
+    setAllStreams(s => s.id === targetId, 'contentIDs', prev => [...prev, entityId]);
+  } else {
+    sendToViewSpace(entityType, entityId);
+  }
 };
 
 export const makeStreamFrom = (entityType: EntityType, refID: number) => {
@@ -330,6 +301,7 @@ export const sendToViewSpace = (entityType: EntityType, refID: number) => {
 
 
 export const deleteFlash = (flashID: number) => {
+  if (!allFlashes.some(f=> f.id === flashID)) return 0;
   setAllFlashes(prev => prev.filter(flash => flash.id !== flashID));
 
   setAllFlickers(
@@ -347,11 +319,12 @@ export const deleteFlash = (flashID: number) => {
                 prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
 
   setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
+  return 1;
 };
 
 export const deleteFlicker = (flickerID: number) => {
   const flicker = allFlickers.find(b => b.id === flickerID);
-  if (!flicker) return;
+  if (!flicker) return 0;
 
   const flashesToDelete = [...flicker.contentIDs];
   flashesToDelete.forEach(flashID => deleteFlash(flashID));
@@ -368,11 +341,12 @@ export const deleteFlicker = (flickerID: number) => {
   setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flicker' && e.refID === flickerID)));
 
   setAllFlickers(prev => prev.filter(b => b.id !== flickerID));
+  return 1;
 };
 
 export const deleteStream = (streamID: number) => {
   const stream = allStreams.find(s => s.id === streamID);
-  if (!stream) return null;
+  if (!stream) return 0;
   const contentsToDelete = [...stream.contentIDs];
   contentsToDelete.forEach(id => {
     if (id > 0) {
@@ -438,17 +412,16 @@ export const createNewStream = (name?:string) => {
     createDT: Date.now(),
     contentIDs: []
   };
-  
   setAllStreams((prev) => [...prev, newStream]);
-  // const activeID = activeViewSpaceID();
-  // setViewSpaces(vs => vs.id === activeID, 
-  //               'tentsInSpace',
-  //                 (prev) => [...prev, {
-  //                           entityType: 'stream',
-  //                           refID: newStream.id 
-  //                           } as MultEnt
-  //                 ]
-  //              );
+  const activeID = activeViewSpaceID();
+  setViewSpaces(vs => vs.id === activeID, 
+                 'tentsInSpace',
+                   (prev) => [...prev, {
+                             entityType: 'stream',
+                             refID: newStream.id 
+                             } as MultEnt
+                   ]
+                );
   setWriterTargetID(newStream.id); // Automatically switch to the new stream
   console.log('Streams:');
   console.log(allStreams);

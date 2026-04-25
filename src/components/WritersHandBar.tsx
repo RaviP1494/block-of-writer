@@ -5,6 +5,8 @@ import {
   setFlashDelayT, flashDelayT,
   setFlickerDelayT, flickerDelayT,
   backspaceDisabled, setBackspaceDisabled,
+  inflecTents,
+  outFlect,
 } from '../store';
 import { isActiveTimer } from './FocusWriter'
 
@@ -45,7 +47,10 @@ export const WritersHandBar: Component = () => {
           <div
             class='flex-down'>
             <button
-              onClick={() => setFlickerModeOn(!flickerModeOn())}>
+              onClick={() => {
+                if (inflecTents() && inflecTents()!.length > 0) outFlect();
+                setFlickerModeOn(!flickerModeOn())
+              }}>
               {flickerModeOn() ? 'Flicker On' : 'Flicker Off'}
             </button>
           </div>
@@ -124,8 +129,10 @@ export const WritersHandBar: Component = () => {
             Inflection Point</span>
           <input type='checkbox'
             checked={inflectionOn()}
-            onChange={() =>
-              setInflectionOn(!inflectionOn())} />
+            onChange={() =>{
+              if (inflecTents() && inflecTents()!.length > 0) outFlect();
+              setInflectionOn(!inflectionOn())
+            }} />
         </div>
       </div>
     </div>

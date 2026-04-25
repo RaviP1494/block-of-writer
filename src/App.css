@@ -41,8 +41,9 @@
   height: 100%;
 }
 
-
-
+.floater-flash, .floater-flicker {
+  width: 42ch;
+}
 
 .multi-stream {
   display: flex;
@@ -58,7 +59,7 @@
   background-repeat: repeat-y;
 }
 .white-bg {
-  background-color: #708090;
+  background-color: #ffffff;
   box-shadow: inset 50px 0px 100px -50px #000000,
               inset -50px 0px 100px -50px #000000;
 }

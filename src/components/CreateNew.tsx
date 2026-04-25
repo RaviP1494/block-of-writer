@@ -4,7 +4,6 @@ import { createNewStream, createNewChain, createNewViewSpace } from "../store";
 
 interface CreateNewProps {
   of: string;
-  clickAct: string;
 };
 
 

@@ -3,7 +3,7 @@ import './App.css'
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { focusedStreamID, userMode, focusedChainID, openStreams, focusedEntity } from './store';
+import { userMode, focusedChainID, openStreams, focusedEntity } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
@@ -11,6 +11,8 @@ import { DisplayStream } from './components/DisplayStream';
 import { DisplayChain } from './components/DisplayChain';
 import { Lister } from './components/Lister';
 import { SelectItem } from './components/SelectItem';
+import { CreateNew } from './components/CreateNew';
+import { ViewAnyItem } from './components/ViewAnyItem';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -34,16 +36,17 @@ const App: Component = () => {
           <Match
             when={userMode() === 'ReadWrite'}>
             <div class='focus-left'>
-              <Lister
-                of='streams'
+              <SelectItem
+                of='viewspace'
                 clickAct='focus' />
             </div>
             <div class='focus'>
+              <CreateNew of='streams' />
               <FocusWriter />
             </div>
-            <div class='focus-right'>
-              <DisplayStream
-                id={focusedStreamID()}
+            <div class='focus-right flex-down'
+             style={{'align-items': 'center'}}>
+              <ViewAnyItem
                 innerClickMode='focus' />
             </div>
           </Match>

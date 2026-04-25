@@ -78,7 +78,7 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
               ent.refID.toString()}
             onClick={() =>  handleClick(ent)}
             class={buttonClass(ent)}>
-              {getFlickerTSpan(ent.refID).toString() + ' ' + ent.entityType}
+              {ent.entityType + '(' + getFlickerTSpan(ent.refID).toString() + 'sec)'}
             </button>
           );
     } else if(ent.entityType === 'flash') {
@@ -88,7 +88,7 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
               ent.refID.toString()}
             onClick={() =>  handleClick(ent)}
             class={buttonClass(ent)}>
-              {textWordCount(getFlash(ent.refID)?.textContents || 'many many many words').toString() + ' ' + ent.entityType}
+              {ent.entityType + '(' + textWordCount(getFlash(ent.refID)?.textContents || 'many many many words').toString() + 'w)'}
             </button>
           );
     }
@@ -96,18 +96,20 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
 
   return (
     <div class="lister-box"> 
-      <Show when={props.of === 'streams'}>
-        <button style={{
+      <div class="lister-list">
+      <Show when={props.of !== 'viewspace'}>
+        <button 
+        onClick={() =>setWriterTargetID(0)}
+        style={{
           'background-color':
             writerTargetID() ? '#404040' : '#141414',
           'max-height': '4ch',
           width: '100%',
           'flex-shrink': '0'
         }}>
-          Space
+          Free Stream
         </button>
       </Show>
-      <div class="lister-list">
         <For each={collection()}>
           {(item) => renderEntBtn(item)}
         </For>
