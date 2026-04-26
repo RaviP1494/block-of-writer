@@ -4,7 +4,7 @@ html, body {
   max-height: 100dvh;
   box-sizing: border-box;
   background-color: #000000;
-  color: #404040;
+  color: #a9a9a9;
 }
 *, *::before, *::after {
   box-sizing: inherit;

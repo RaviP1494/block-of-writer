@@ -1,4 +1,4 @@
-import { createMemo, For, Show, type Component } from 'solid-js'
+import { createMemo, createSignal, For, type Component } from 'solid-js'
 import { activeViewSpaceID, focusedEntity, getFlash, getFlickerTSpan, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, textWordCount, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface SelectItemProps {
@@ -6,108 +6,122 @@ interface SelectItemProps {
   clickAct: string;
 };
 export const SelectItem: Component<SelectItemProps> = (props) => {
+  const [viewFilter, setViewFilter] = createSignal(0);
+
   const activeVS = () => viewSpaces.find(vs => vs.id === activeViewSpaceID());
-  
-  const collection = 
-    createMemo(() => props.of === 'viewspace' 
-      ?  activeVS()?.tentsInSpace 
-      : props.of === 'space-floaters' 
-        ? activeVS()?.tentsInSpace.filter(ent => ent.entityType !== 'stream') 
-        : props.of === 'space-streams' 
-          ? activeVS()?.tentsInSpace.filter(ent => ent.entityType === 'stream')
-          : null);
 
+  const collection =
+    createMemo(
+      () => viewFilter() === 0
+        ? activeVS()?.tentsInSpace
+        : viewFilter() === 1
+          ? activeVS()?.tentsInSpace
+            .filter(ent => ent.entityType
+              === 'stream')
+          : viewFilter() === 2
+            ? activeVS()?.tentsInSpace
+              .filter(ent => ent.entityType
+                !== 'stream')
+            : null);
 
-  const handleClick = (ent:MultEnt) => {
-    if(props.of === 'space-streams' && props.clickAct === 'focus'){
-        writerTargetID() === ent.refID 
+  const handleClick = (ent: MultEnt) => {
+    if (ent.entityType === 'stream' && props.clickAct === 'focus') {
+      writerTargetID() === ent.refID
         ? setFocusedEntity(ent)
         : setWriterTargetID(ent.refID);
-    } else if(props.clickAct === 'focus'){
+    } else if (props.clickAct === 'focus') {
       focusedEntity() !== ent &&
         setFocusedEntity(ent);
-    } else if (props.clickAct === 'multi'){
+    } else if (props.clickAct === 'multi') {
       !openFloaters.includes(ent) &&
         setOpenFloaters(prev => [...prev, ent]);
     }
-
-    if(focusedEntity() === ent)
+    if (focusedEntity() === ent)
       requestAnimationFrame(() => {
         const btnId = ent.entityType + ent.refID.toString();
         const targetBtn = document.getElementById(btnId);
-        
+
         if (targetBtn) {
-          // Tell the exact button to scroll to the top ('start') of the visible window
           targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
   };
 
-  const buttonClass = 
-    (ent: MultEnt) => {
-    if (props.of === 'viewspace'){
-      if (props.clickAct === 'focus') {
-        return (focusedEntity() === ent
-          ? 'focused-' : '') + ent.entityType + '-btn';
-      }
-      else if (props.clickAct === 'multi') {
-        return (openFloaters.some(e => e === ent) 
-          ? 'opened-' : '') + ent.entityType + '-btn';
-      }
-    }
-  }
-
-
   const renderEntBtn = (ent: MultEnt) => {
-    if(ent.entityType === 'stream') {
+
+    if (ent.entityType === 'stream') {
       return (
-            <button
-            id={'stream' + 
-              ent.refID.toString()}
-            onClick={() =>  handleClick(ent)}
-            class={buttonClass(ent)}>
-              {getStream(ent.refID)?.title}
-            </button>
-          );
-    } else if(ent.entityType === 'flicker') {
+        <button
+          id={'stream' +
+            ent.refID.toString()}
+          onClick={() => handleClick(ent)}
+          classList={{
+            ['stream-btn']: true,
+            [`focused-stream-btn`]:
+              props.clickAct === 'focus' && focusedEntity() === ent,
+            [`targeted-stream-btn`]:
+              props.clickAct === 'focus' && writerTargetID() === ent.refID,
+            [`opened-stream-btn`]:
+              props.clickAct === 'multi' && openFloaters.includes(ent)
+          }}>
+          {getStream(ent.refID)?.title}
+        </button>
+      );
+    } else if (ent.entityType === 'flicker') {
       return (
-            <button
-            id={'flicker' + 
-              ent.refID.toString()}
-            onClick={() =>  handleClick(ent)}
-            class={buttonClass(ent)}>
-              {ent.entityType + '(' + getFlickerTSpan(ent.refID).toString() + 'sec)'}
-            </button>
-          );
-    } else if(ent.entityType === 'flash') {
+        <button
+          id={'flicker' +
+            ent.refID.toString()}
+          onClick={() => handleClick(ent)}
+          classList={{
+            ['flicker-btn']: true,
+            [`focused-flicker-btn`]:
+              props.clickAct === 'focus' && focusedEntity() === ent,
+            [`opened-flicker-btn`]:
+              props.clickAct === 'multi' && openFloaters.includes(ent),
+          }}>
+          {ent.entityType + '(' + getFlickerTSpan(ent.refID).toString() + 'sec)'}
+        </button>
+      );
+    } else if (ent.entityType === 'flash') {
       return (
-            <button
-            id={'flash' + 
-              ent.refID.toString()}
-            onClick={() =>  handleClick(ent)}
-            class={buttonClass(ent)}>
-              {ent.entityType + '(' + textWordCount(getFlash(ent.refID)?.textContents || 'many many many words').toString() + 'w)'}
-            </button>
-          );
+        <button
+          id={'flash' +
+            ent.refID.toString()}
+          onClick={() => handleClick(ent)}
+          classList={{
+            ['flash-btn']: true,
+            [`focused-flash-btn`]:
+              props.clickAct === 'focus' && focusedEntity() === ent,
+            [`opened-flash-btn`]:
+              props.clickAct === 'multi' && openFloaters.includes(ent),
+          }}>
+          {ent.entityType + '(' + textWordCount(getFlash(ent.refID)?.textContents || 'many many many words').toString() + 'w)'}
+        </button>
+      );
     }
   }
 
   return (
-    <div class="lister-box"> 
+    <div class="lister-box">
+    <div class='lister-header'>
+    View
+      <div class='lister-modes'>
+        <button
+          onClick={
+            () => setViewFilter(1)}>
+          Streams</button>
+        <button
+          onClick={
+            () => setViewFilter(0)}>
+          All</button>
+        <button
+          onClick={
+            () => setViewFilter(2)}>
+          Floaters</button>
+      </div>
+    </div>
       <div class="lister-list">
-      <Show when={props.of !== 'viewspace'}>
-        <button 
-        onClick={() =>setWriterTargetID(0)}
-        style={{
-          'background-color':
-            writerTargetID() ? '#404040' : '#141414',
-          'max-height': '4ch',
-          width: '100%',
-          'flex-shrink': '0'
-        }}>
-          Free Stream
-        </button>
-      </Show>
         <For each={collection()}>
           {(item) => renderEntBtn(item)}
         </For>

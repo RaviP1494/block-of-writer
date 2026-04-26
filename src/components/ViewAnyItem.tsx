@@ -1,46 +1,47 @@
 import { Match, Show, Switch, type Component } from "solid-js";
-import { focusedEntity } from "../store";
+import { type MultEnt } from "../store";
 import { DisplayStream } from "./DisplayStream";
 import { FloaterFlash } from "./FloaterFlash";
 import { FloaterFlicker } from "./FloaterFlicker";
 
 export interface ViewAnyItemProps {
+  ent: MultEnt | null;
   innerClickMode: string;
 }
 
 export const ViewAnyItem: Component<ViewAnyItemProps> = (props) => {
 
   return (
-    <Show when={focusedEntity()}>
+    <Show when={props.ent}>
     <Switch>
     <Match 
     when=
-      {focusedEntity()!.entityType 
+      {props.ent!.entityType 
         === 'stream'}>
-    return <DisplayStream 
+    <DisplayStream 
     id=
-      {focusedEntity()!.refID} 
+      {props.ent!.refID} 
     innerClickMode=
       {props.innerClickMode} />
     </Match>
 
     <Match when=
-      {focusedEntity()!.entityType 
+      {props.ent!.entityType 
         === 'flicker'}>
-    return <FloaterFlicker 
+    <FloaterFlicker 
     id=
-      {focusedEntity()!.refID} 
+      {props.ent!.refID} 
     innerClickMode=
       {props.innerClickMode} />
     </Match>
 
     <Match 
     when=
-      {focusedEntity()!.entityType 
+      {props.ent!.entityType 
         === 'flash'}>
-    return <FloaterFlash 
+    <FloaterFlash 
     id=
-      {focusedEntity()!.refID} 
+      {props.ent!.refID} 
     innerClickMode=
       {props.innerClickMode} />
     </Match>

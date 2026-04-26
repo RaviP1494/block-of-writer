@@ -202,6 +202,7 @@
 .lister-list button {
   box-sizing: border-box;
   min-height: 50px;
+  border: 1px solid #a9a9a9;
   border-radius: 10px;
   margin: 3px;
   min-width: 14ch;
@@ -216,9 +217,8 @@
   background-color: #a0a0ff;
   width: 100%;
 }
-.targeted-stream-btn {
+.lister-list button.targeted-stream-btn {
   flex: unset;
-  order: 1;
   background-color: #0040ff;
 }
 .lister-list button.focused-flicker-btn {
@@ -232,6 +232,13 @@
   color: black;
   background-color: #a0a000;
   width: 100%;
+}
+.lister-header {
+  background-color: #505050;
+}
+.lister-modes {
+  display: grid;
+  grid-template-columns: 33% 34% 33%;
 }
 
 .focus-writer {
@@ -259,6 +266,14 @@
   resize: none;
   overflow: hidden;
   line-height: 1.5;
+}
+.inflection {
+  text-align: center;
+  color: #141414;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  transition: all 0.2s ease;
 }
 
 .writers-handbar {

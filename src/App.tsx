@@ -3,16 +3,15 @@ import './App.css'
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { userMode, focusedChainID, openStreams, focusedEntity } from './store';
+import { userMode, focusedChainID, focusedEntity, openFloaters } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
-import { DisplayStream } from './components/DisplayStream';
 import { DisplayChain } from './components/DisplayChain';
-import { Lister } from './components/Lister';
 import { SelectItem } from './components/SelectItem';
 import { CreateNew } from './components/CreateNew';
 import { ViewAnyItem } from './components/ViewAnyItem';
+import { DotView } from './components/DotView';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -28,13 +27,14 @@ const App: Component = () => {
           <WelcomeTitle />
         </div>
 
-        <div class='handbar' style={{ display: 'flex' }}>
-          <WritersHandBar />
-        </div>
 
         <Switch>
           <Match
             when={userMode() === 'ReadWrite'}>
+            <div class='handbar' 
+            style={{ display: 'flex' }}>
+              <WritersHandBar />
+            </div>
             <div class='focus-left'>
               <SelectItem
                 of='viewspace'
@@ -44,32 +44,23 @@ const App: Component = () => {
               <CreateNew of='streams' />
               <FocusWriter />
             </div>
-            <div class='focus-right flex-down'
-             style={{'align-items': 'center'}}>
-              <ViewAnyItem
-                innerClickMode='focus' />
+            <div class='focus-right' style={{position: 'relative'}}>
+              <DotView
+              ent= {focusedEntity()} />
             </div>
           </Match>
 
           <Match
             when={userMode() === 'SparkScrape'}>
-            <div class='focus-left'>
-              <Lister
-                of='streams'
-                clickAct='multi' />
-            </div>
             <div class='focus multi-stream'>
-              <For each={openStreams}>
-                {(id) => (
-                  <DisplayStream
-                    id={id}
-                    innerClickMode='chain' />)}
+              <For each={openFloaters}>
+                {(floater) => (
+                  <ViewAnyItem
+                    ent= {floater}
+                    innerClickMode='multi' />)}
               </For>
             </div>
             <div class='focus-right'>
-              <Lister
-                of='chains'
-                clickAct='focus' />
               <DisplayChain
                 id={focusedChainID()} />
             </div>
