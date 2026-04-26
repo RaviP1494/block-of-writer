@@ -26,7 +26,7 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
 
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
-  const newStreamBtn = document.querySelector('button.new-stream-btn');
+  const newStreamBtn = document.querySelector('.new-maker > button');
   const newStrBtnRect = newStreamBtn?.getBoundingClientRect();
   const gravPt: PointTuple = 
     [newStrBtnRect!.top + newStrBtnRect!.height / 2, 
@@ -41,7 +41,7 @@ const killMyParticle = () => {
     ? document.querySelector('.stream-title h1')
     : writerTargetID()
     ? document.querySelector(`#stream${writerTargetID()}`)
-    : document.querySelector('.streamlist');
+    : document.querySelector('.welcomer');
   const targetRect = targetElement?.getBoundingClientRect();
   const target: PointTuple = 
     [targetRect!.top + targetRect!.height / 2, 

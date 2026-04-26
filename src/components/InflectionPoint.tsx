@@ -72,7 +72,7 @@ export const InflectionPoint: Component = () => {
                     const flash = allFlashes.find(f => f.id === flashID);
                     return (
                         <Show when={flash}>
-                        <div style={{ color: '#141414', flex: "1 1 0%"}}>{flash!.textContents}</div>
+                        <div style={{ color: '#a9a9a9', flex: "1 1 0%"}}>{flash!.textContents}</div>
                         </Show>
                     );
                 }}

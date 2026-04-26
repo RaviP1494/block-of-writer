@@ -32,7 +32,6 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
     }
 
     if(focusedEntity() === ent)
-    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const btnId = ent.entityType + ent.refID.toString();
         const targetBtn = document.getElementById(btnId);
@@ -42,19 +41,18 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
           targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
-    });
   };
 
   const buttonClass = 
     (ent: MultEnt) => {
     if (props.of === 'viewspace'){
       if (props.clickAct === 'focus') {
-        return focusedEntity() === ent
-          ? 'focused-' : '' + ent.entityType;
+        return (focusedEntity() === ent
+          ? 'focused-' : '') + ent.entityType + '-btn';
       }
       else if (props.clickAct === 'multi') {
-        return openFloaters.some(e => e === ent) 
-          ? 'opened-' : '' + ent.entityType;
+        return (openFloaters.some(e => e === ent) 
+          ? 'opened-' : '') + ent.entityType + '-btn';
       }
     }
   }

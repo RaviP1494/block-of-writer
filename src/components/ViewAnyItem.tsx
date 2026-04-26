@@ -13,14 +13,36 @@ export const ViewAnyItem: Component<ViewAnyItemProps> = (props) => {
   return (
     <Show when={focusedEntity()}>
     <Switch>
-    <Match when={focusedEntity()!.entityType === 'stream'}>
-    return <DisplayStream id={focusedEntity()!.refID} innerClickMode={props.innerClickMode} />
+    <Match 
+    when=
+      {focusedEntity()!.entityType 
+        === 'stream'}>
+    return <DisplayStream 
+    id=
+      {focusedEntity()!.refID} 
+    innerClickMode=
+      {props.innerClickMode} />
     </Match>
-    <Match when={focusedEntity()!.entityType === 'flicker'}>
-    return <FloaterFlicker id={focusedEntity()!.refID} innerClickMode={props.innerClickMode} />
+
+    <Match when=
+      {focusedEntity()!.entityType 
+        === 'flicker'}>
+    return <FloaterFlicker 
+    id=
+      {focusedEntity()!.refID} 
+    innerClickMode=
+      {props.innerClickMode} />
     </Match>
-    <Match when={focusedEntity()!.entityType === 'flash'}>
-    return <FloaterFlash id={focusedEntity()!.refID} innerClickMode={props.innerClickMode} />
+
+    <Match 
+    when=
+      {focusedEntity()!.entityType 
+        === 'flash'}>
+    return <FloaterFlash 
+    id=
+      {focusedEntity()!.refID} 
+    innerClickMode=
+      {props.innerClickMode} />
     </Match>
     </Switch>
     </Show >

@@ -15,8 +15,6 @@
   box-shadow: 0 0 25px -10px rgba(0,0,0,0.5);
 }
 
-
-
 .focus {
   box-sizing: border-box;
   grid-row: 2 / span 1;
@@ -28,21 +26,19 @@
   grid-row: 2 / span 1;
   grid-column: 1 / span 1;
   min-height: 0;
+  width: 100%;
   height: 100%;
 }
 .focus-right {
   grid-row: 1 / span 2;
   grid-column: 3 / span 1;
+  width: 100%;
   height: 100%;
 }
 .handbar {
   grid-row: 1; 
   grid-column: 1;
   height: 100%;
-}
-
-.floater-flash, .floater-flicker {
-  width: 42ch;
 }
 
 .multi-stream {
@@ -64,6 +60,26 @@
               inset -50px 0px 100px -50px #000000;
 }
 .stream-box {
+  position: relative;
+  width: 36ch;
+  padding: 2ch 2ch;
+  inset: 0;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+.floater-flicker {
+  position: relative;
+  width: 36ch;
+  padding: 2ch 2ch;
+  inset: 0;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+.floater-flash {
   position: relative;
   width: 36ch;
   padding: 2ch 2ch;
@@ -183,7 +199,7 @@
   flex-wrap: wrap-reverse;
   overflow-y: auto;
 }
-.lister-btn {
+.lister-list button {
   box-sizing: border-box;
   min-height: 50px;
   border-radius: 10px;
@@ -194,32 +210,28 @@
   overflow: hidden;
   background-color: transparent;
 }
-.focused-lister-btn {
-  box-sizing: border-box;
-  min-height: 50px;
-  border-radius: 10px;
-  margin: 3px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  width: 100%;
-  flex: unset;
+.lister-list button.focused-stream-btn {
   order: 1;
   color: black;
   background-color: #a0a0ff;
-}
-.targeted-lister-btn {
-  box-sizing: border-box;
-  min-height: 50px;
-  border-radius: 10px;
-  margin: 3px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
   width: 100%;
+}
+.targeted-stream-btn {
   flex: unset;
   order: 1;
   background-color: #0040ff;
+}
+.lister-list button.focused-flicker-btn {
+  order: 1;
+  color: black;
+  background-color: #ff8000;
+  width: 100%;
+}
+.lister-list button.focused-flash-btn {
+  order: 1;
+  color: black;
+  background-color: #a0a000;
+  width: 100%;
 }
 
 .focus-writer {
@@ -377,6 +389,7 @@ div.delay-set > span {
 
 .tiny-fun {
   color: white;
+  z-index: 10;
   position: relatiev;
   min-width: 50%;
   margin-top: 20px;
