@@ -126,7 +126,7 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
       <div class="lister-list">
       <Show when=
         {(userMode() === 'ReadWrite' 
-          || userMode() === 'FocusWrite')}>
+          || userMode() === 'FocusWrite') && writerTargetID()}>
         <button
           id='null-btn' 
           onClick={() => setWriterTargetID(null)}
