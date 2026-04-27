@@ -11,7 +11,6 @@ import { DisplayChain } from './components/DisplayChain';
 import { SelectItem } from './components/SelectItem';
 import { CreateNew } from './components/CreateNew';
 import { ViewAnyItem } from './components/ViewAnyItem';
-import { DotView } from './components/DotView';
 import { SelectChain } from './components/SelectChain';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
@@ -45,10 +44,8 @@ const App: Component = () => {
               <CreateNew of='stream' />
               <FocusWriter />
             </div>
-            <div class='focus-right' style={{position: 'relative'}}>
+            <div class='focus-right'>
             <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
-              <DotView
-              ent= {focusedEntity()} />
             </div>
           </Match>
 
