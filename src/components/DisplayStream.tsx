@@ -4,9 +4,9 @@ import {
   allStreams, updateStreamTitle,
   groupedFlashIDs,
   deleteStream,
-  setOpenStreams,
-  openStreams,
-  setFocusedStreamID
+  setFocusedEntity,
+  openFloaters,
+  setOpenFloaters,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -27,9 +27,12 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
   const handleMinimize = () => {
     props.innerClickMode === 'multi' 
-      ? setOpenStreams(() => [...openStreams.filter(id => id !== stream()?.id)])
+      ? setOpenFloaters(() => [
+        ...openFloaters.filter(
+          ent => ent.refID !== stream()?.id 
+            || ent.entityType !== 'stream')])
       : props.innerClickMode === 'focus' 
-        ? setFocusedStreamID(0) 
+        ? setFocusedEntity(null) 
         : null;
   }
 
@@ -64,7 +67,6 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
             <div
               class='flex-top-down'
-              onClick={(e) => console.log(e)}
               style={{
                 position: 'relative'
               }}>
@@ -147,7 +149,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     </button>
                   </div>
                 </Match>
-                <Match when={props.innerClickMode === 'chain'}>
+                <Match when={props.innerClickMode === 'multi'}>
                   <div class='display-top-box'>
                     <button
                       onClick={() => handleMinimize()}

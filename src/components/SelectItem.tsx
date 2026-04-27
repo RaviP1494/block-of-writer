@@ -36,17 +36,17 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
       !openFloaters.includes(ent) &&
         setOpenFloaters(prev => [...prev, ent]);
     }
-    if (focusedEntity() === ent)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const btnId = ent.entityType + ent.refID.toString();
-          const targetBtn = document.getElementById(btnId);
-
-          if (targetBtn) {
-            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        });
-      });
+    // if (focusedEntity() === ent)
+      // requestAnimationFrame(() => {
+      //   requestAnimationFrame(() => {
+      //     const btnId = ent.entityType + ent.refID.toString();
+      //     const targetBtn = document.getElementById(btnId);
+      //
+      //     if (targetBtn) {
+      //       targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      //     }
+      //   });
+      // });
   };
 
   const renderEntBtn = (ent: MultEnt) => {

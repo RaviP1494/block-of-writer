@@ -19,18 +19,18 @@ export const SelectChain: Component<SelectChainProps> = (props) => {
           : !openChains.includes(id) 
           && setOpenChains(prev => [...prev, id]);
     }
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        // Construct the ID of the button we just clicked
-        const btnId = 'chain' + id;
-        const targetBtn = document.getElementById(btnId);
-        
-        if (targetBtn) {
-          // Tell the exact button to scroll to the top ('start') of the visible window
-          targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-    });
+    // requestAnimationFrame(() => {
+    //   requestAnimationFrame(() => {
+    //     // Construct the ID of the button we just clicked
+    //     const btnId = 'chain' + id;
+    //     const targetBtn = document.getElementById(btnId);
+    //
+    //     if (targetBtn) {
+    //       // Tell the exact button to scroll to the top ('start') of the visible window
+    //       targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    //     }
+    //   });
+    // });
   };
 
   return (

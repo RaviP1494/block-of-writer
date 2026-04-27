@@ -46,7 +46,7 @@ const App: Component = () => {
               <FocusWriter />
             </div>
             <div class='focus-right' style={{position: 'relative'}}>
-            <ViewAnyItem ent= {focusedEntity()} innerClickMode='focus' />
+            <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
               <DotView
               ent= {focusedEntity()} />
             </div>

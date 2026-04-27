@@ -13,39 +13,41 @@ export const ViewAnyItem: Component<ViewAnyItemProps> = (props) => {
 
   return (
     <Show when={props.ent}>
+    {(entity) =>
     <Switch>
     <Match 
     when=
-      {props.ent!.entityType 
+      {entity()!.entityType 
         === 'stream'}>
     <DisplayStream 
     id=
-      {props.ent!.refID} 
+      {entity()!.refID} 
     innerClickMode=
       {props.innerClickMode} />
     </Match>
 
     <Match when=
-      {props.ent!.entityType 
+      {entity()!.entityType 
         === 'flicker'}>
     <FloaterFlicker 
     id=
-      {props.ent!.refID} 
+      {entity()!.refID} 
     innerClickMode=
       {props.innerClickMode} />
     </Match>
 
     <Match 
     when=
-      {props.ent!.entityType 
+      {entity()!.entityType 
         === 'flash'}>
     <FloaterFlash 
     id=
-      {props.ent!.refID} 
+      {entity()!.refID} 
     innerClickMode=
       {props.innerClickMode} />
     </Match>
     </Switch>
+    }
     </Show >
   )
 }
