@@ -1,5 +1,5 @@
 import { type Component, Show, createMemo } from "solid-js";
-import { addToChain, allFlashes } from "../store";
+import { addToChain, allFlashes, userMode } from "../store";
 
 interface DisplayFlashProps {
   id: number;
@@ -15,7 +15,7 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
   const isSpaced = createMemo(() => props.isSpaced());
 
   const handleClick = () => {
-    if(props.clickDo === 'chain'){
+    if(userMode() === 'SparkScrape') {
       addToChain(flash()!.id);
     }
   }

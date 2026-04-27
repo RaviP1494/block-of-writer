@@ -12,6 +12,7 @@ import { SelectItem } from './components/SelectItem';
 import { CreateNew } from './components/CreateNew';
 import { ViewAnyItem } from './components/ViewAnyItem';
 import { DotView } from './components/DotView';
+import { SelectChain } from './components/SelectChain';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -41,10 +42,11 @@ const App: Component = () => {
                 clickAct='focus' />
             </div>
             <div class='focus'>
-              <CreateNew of='streams' />
+              <CreateNew of='stream' />
               <FocusWriter />
             </div>
             <div class='focus-right' style={{position: 'relative'}}>
+            <ViewAnyItem ent= {focusedEntity()} innerClickMode='focus' />
               <DotView
               ent= {focusedEntity()} />
             </div>
@@ -52,6 +54,9 @@ const App: Component = () => {
 
           <Match
             when={userMode() === 'SparkScrape'}>
+            <div class='focus-left'>
+            <SelectItem of='viewspace' clickAct='multi' />
+            </div>
             <div class='focus multi-stream'>
               <For each={openFloaters}>
                 {(floater) => (
@@ -61,20 +66,9 @@ const App: Component = () => {
               </For>
             </div>
             <div class='focus-right'>
+            <SelectChain clickAct='focus' />
               <DisplayChain
                 id={focusedChainID()} />
-            </div>
-          </Match>
-
-          <Match when={userMode() === 'ReadArrange'}>
-            <div class='focus-left flex-down'>
-            <SelectItem of='viewspace' clickAct='focus' />
-            </div>
-            <div class='focus'>
-            {focusedEntity()?.refID + ': ' + focusedEntity()?.entityType}
-            </div>
-            <div class='focus-right flex-down'>
-            <SelectItem of='space-floaters' clickAct='focus' />
             </div>
           </Match>
         </Switch>

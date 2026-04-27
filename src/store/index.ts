@@ -377,19 +377,20 @@ export const addToChain = (id: number) => {
   if(id > 0){
     const focusedChain = sparkChains.find(c=>c.id === focusedChainID());
     if (!focusedChain) return;
-    if (focusedChain.sparkIDs.includes(id)){
-      setSparkChains(
-      (chain) => chain.id === focusedChainID(),
-        'sparkIDs',
-      (prev) => [...prev.filter(sparkID => sparkID !== id)]
-      );
-    } else{
+    if (!focusedChain.sparkIDs.includes(id)){
     setSparkChains(
       (chain) => chain.id === focusedChainID(),
         'sparkIDs',
       (prev) => [...prev, id]
     );
-    }
+    } 
+    // else{
+    //   setSparkChains(
+    //   (chain) => chain.id === focusedChainID(),
+    //     'sparkIDs',
+    //   (prev) => [...prev.filter(sparkID => sparkID !== id)]
+    //   );
+    // }
   }
 }
 

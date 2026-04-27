@@ -19,18 +19,9 @@ export const NavBar: Component = () => {
         <div 
         class='nail flex-wide'>
           <button 
-          class={userMode() === 'FocusWrite' ? 'hidden' : ''}>
-            FocusWrite
-          </button>
-          <button 
           onClick={()=>setUserMode('ReadWrite')}
           class={userMode() === 'ReadWrite' ? 'hidden' : ''}>
             ReadWrite
-          </button>
-          <button 
-          onClick={()=>setUserMode('ReadArrange')}
-          class={userMode() === 'ReadArrange' ? 'hidden' : ''}>
-            ReadArrange
           </button>
           <button 
           onClick={()=>setUserMode('SparkScrape')}

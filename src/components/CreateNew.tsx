@@ -11,8 +11,8 @@ export const CreateNew: Component<CreateNewProps> = (props) => {
   const [createName, setCreateName] = createSignal('');
 
   const handleCreate = () => {
-    props.of === 'streams' ? createNewStream(createName()) : null;
-    props.of === 'chains' ? createNewChain(createName()) : null;
+    props.of === 'stream' ? createNewStream(createName()) : null;
+    props.of === 'chain' ? createNewChain(createName()) : null;
     props.of === 'viewspace' ? createNewViewSpace(createName()) : null;
     setCreateName('');
   };

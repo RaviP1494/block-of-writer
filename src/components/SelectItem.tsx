@@ -1,5 +1,5 @@
-import { createMemo, createSignal, For, type Component } from 'solid-js'
-import { activeViewSpaceID, focusedEntity, getFlash, getFlickerTSpan, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, textWordCount, viewSpaces, writerTargetID, type MultEnt } from '../store';
+import { createMemo, createSignal, For, Show, type Component } from 'solid-js'
+import { activeViewSpaceID, focusedEntity, getFlash, getFlickerTSpan, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, textWordCount, userMode, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface SelectItemProps {
   of: string;
@@ -38,12 +38,14 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
     }
     if (focusedEntity() === ent)
       requestAnimationFrame(() => {
-        const btnId = ent.entityType + ent.refID.toString();
-        const targetBtn = document.getElementById(btnId);
+        requestAnimationFrame(() => {
+          const btnId = ent.entityType + ent.refID.toString();
+          const targetBtn = document.getElementById(btnId);
 
-        if (targetBtn) {
-          targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+          if (targetBtn) {
+            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
       });
   };
 
@@ -56,7 +58,7 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
             ent.refID.toString()}
           onClick={() => handleClick(ent)}
           classList={{
-            ['stream-btn']: true,
+            ['stream-btn']: ent.refID !== 0,
             [`focused-stream-btn`]:
               props.clickAct === 'focus' && focusedEntity() === ent,
             [`targeted-stream-btn`]:
@@ -122,6 +124,20 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
       </div>
     </div>
       <div class="lister-list">
+      <Show when=
+        {(userMode() === 'ReadWrite' 
+          || userMode() === 'FocusWrite')}>
+        <button
+          id='null-btn' 
+          onClick={() => setWriterTargetID(null)}
+          classList={{
+            ['null-btn']: true,
+            [`targeted-stream-btn`]:
+              props.clickAct === 'focus' && !writerTargetID(),
+          }}>
+          Flash Out of Stream
+        </button>
+        </Show>
         <For each={collection()}>
           {(item) => renderEntBtn(item)}
         </For>
