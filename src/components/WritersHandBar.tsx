@@ -117,22 +117,21 @@ export const WritersHandBar: Component = () => {
         class='toggles'>
         <div
           class='checktog'>
-          <span>Disable Backspace</span>
           <input type='checkbox'
             checked={backspaceDisabled()}
             onChange={() =>
               setBackspaceDisabled(!backspaceDisabled())} />
+          <span>Disable Backspace</span>
         </div>
         <div
           class='checktog'>
-          <span>
-            Inflection Point</span>
           <input type='checkbox'
             checked={inflectionOn()}
             onChange={() =>{
               if (inflecTents() && inflecTents()!.length > 0) outFlect();
               setInflectionOn(!inflectionOn())
             }} />
+          <span>Inflection Point</span>
         </div>
       </div>
     </div>

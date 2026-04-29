@@ -1,45 +1,110 @@
-.background-one {
+.background {
   box-sizing: border-box;
-  background-color: #303030;
-  inset: 0;
-  margin: auto;
+  padding: 1ch;
+  background-color: #a9a9a9;
   width: 100dvw;
-  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100dvh;
   display: grid;
-  grid-template-columns: 30dvw 40dvw 30dvw;
-  grid-template-rows: 150px 1fr;
-  overflow-y: auto;
+  grid-template-rows: 20ch minmax(0, 1fr);
+  grid-template-columns: 1fr 40dvw 1fr;
 }
 
-.background-one > div{
-  box-shadow: 0 0 25px -10px rgba(0,0,0,0.5);
+.background div{
+  border-radius: 14px;
 }
 
-.focus {
+.floater-box {
   box-sizing: border-box;
-  grid-row: 2 / span 1;
-  grid-column: 2 / span 1;
-  width: 40dvw;
-  height: 100%;
-}
-.focus-left {
-  grid-row: 2 / span 1;
-  grid-column: 1 / span 1;
-  min-height: 0;
+  padding: 4ch;
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   height: 100%;
 }
-.focus-right {
-  grid-row: 1 / span 2;
-  grid-column: 3 / span 1;
+.floater-top {
+  width: 100%;
+  display: flex;
+  border-top: 1px solid black;
+  justify-content: space-between;
+}
+.floater-top > h3 {
+  color: #707070;
+  font-family: 'Caveat', cursive;
+  margin-bottom: 1ch;
+}
+.floater-top > div {
+  display: flex;
+  align-items: center;
+}
+.floater-circles {
   width: 100%;
   height: 100%;
+  max-height:100%;
+  border-radius: 10px;
+  border: 1px solid black;
+  box-sizing: border-box;
+}
+
+.welcomer {
+  grid-row: 1;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  background-color: #202020;
+  padding: 0 50px;
+  width: 30ch;
+  height: 150px;
+  border-radius: 40px;
+  text-align: center;
+  gap: 4px;
+}
+.welcomer h1 {
+  padding: 0;
+  margin: auto;
+}
+.navbar {
+  bottom: 35px;
 }
 .handbar {
-  grid-row: 1; 
+  grid-row: 1;
   grid-column: 1;
-  height: 100%;
+  margin: auto;
+  position: relative;
+  display: flex;
+  height: fit-content;
+  flex-direction: column;
+  background-color: #202020;
+  padding: 10px;
+  border-radius: 30px;
+  width: fit-content;
+  font-family: 'Caveat', cursive;
 }
+
+/* .focus { */
+/*   box-sizing: border-box; */
+/*   grid-row: 2 / span 1; */
+/*   grid-column: 2 / span 1; */
+/*   width: 40dvw; */
+/*   height: 100%; */
+/* } */
+/* .focus-left { */
+/*   grid-row: 2 / span 1; */
+/*   grid-column: 1 / span 1; */
+/*   min-height: 0; */
+/*   width: 100%; */
+/*   height: 100%; */
+/* } */
+/* .focus-right { */
+/*   grid-row: 1 / span 2; */
+/*   grid-column: 3 / span 1; */
+/*   width: 100%; */
+/*   height: 100%; */
+/* } */
 
 .multi-stream {
   display: flex;
@@ -91,6 +156,7 @@
 }
 .stream-text{
   position: relative;
+  box-shadow: 0;
   font-size: 12px;
   min-height: 300px;
   padding: 2ch 2ch;
@@ -102,6 +168,7 @@
 }
 .stream-title {
   flex-shrink: 0;
+  box-shadow: 0;
   position: relative;
   text-align: center;
   border-bottom: 2px double black;
@@ -156,6 +223,7 @@
   transition: all 0.5s ease;
 }
 .paragraph{
+  padding-top: 1ch;
   text-indent: 4ch;
   display: block;
 }
@@ -184,7 +252,7 @@
   box-sizing: border-box;
   min-width: 30ch;
   max-width: 80ch;
-  max-height: 500px;
+  max-height: min(500px, 100%);
   padding: 10px;
   flex-direction: column;
   justify-content: center;
@@ -250,14 +318,15 @@
 }
 
 .focus-writer {
+  grid-column: 2;
+  grid-row: 2;
   box-sizing: border-box;
   height: 100%;
   margin-top: 10px;
   display: flex;
-  width: 100%;
-  min-width: 28ch;
+  width: fit-content;
   flex-direction: column;
-  justify-content: flex-start;
+  align-items: center;
 }
 .focus-writer textarea {
   z-index: 25;
@@ -285,22 +354,20 @@
 }
 
 .writers-handbar {
-  box-sizing: border-box;
-  background-color: #202020;
-  padding: 10px;
-  border-radius: 10px;
   display: flex;
-  flex-direction: column;
-  position: relative;
   margin: auto;
-  box-shadow: unset;
-  width: 185px;
-  height: 100px;
-  font-family: 'Caveat', cursive;
+  flex-direction: column;
+  border-top: 1px solid;
+  padding: 1ch 2ch;
+  margin-top: 1ch;
+  position: relative;
+  height: 12ch;
   transition: height 0.8s ease-out;
+  background-color: #141414;
+  border-radius: 5px;
 }
 .writers-handbar:has(.timers:focus-within) {
-  height: 140px;
+  height: 18ch;
 }
 .writers-handbar .knuckle, .writers-handbar .nail {
   top: 0;
@@ -310,7 +377,6 @@
   display: flex;
   flex-direction: column;
   margin-top: auto;
-  align-items: flex-end;
 }
 .toggles span{
   text-shadow: 0px 0px 5px #000000;
@@ -579,77 +645,53 @@ h1 {
   margin-bottom: 1rem;
 }
 
-.title {
-  grid-column: 2 / span 1;
-  grid-row: 1 / span 1;
-  text-align: center;
-}
-.welcomer {
-  position: relative;
-  background-color: #202020;
-  margin-top: 0px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 20px;
-  padding: 0 50px;
-  width: fit-content;
-  height: 150px;
-  border-radius: 40px;
-  text-align: center;
-  gap: 4px;
-}
-.welcomer h1 {
-  padding: 0;
-  margin: auto;
-}
-.navbar {
-  bottom: 35px;
-}
 
 .cache-actions {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  align-self: center;
   border-radius: 100px;
-  width: 200px;
-  height: 15px;
+  width: fit-content;
+  gap: 2ch;
   box-sizing: border-box;
-  margin-top: 5px;
-  padding-top: 0;
   font-family: 'Caveat', cursive;
+  border-bottom: 2px solid;
 }
 .cache-actions > div {
     text-align: center;
-    background-color: #000000;
-    padding: 5px 10px;
+    background-color: #101010;
+    padding: 0 1ch;
     border-radius: 20px;
     color: #ffffff;
     text-shadow: 0px 0px 15px #ffd700;
 }
 .cache-actions button {
-  margin: 0px -5px;
-  border-radius: 10px;
-  outline-color: transparent;
-  background-color: transparent;
+  margin: 0px;
+  border-radius: 20px;
+  outline-color: #000000;
 }
 .cache-actions button.save {
   box-shadow: inset 0 0;
-  transition: all 0.1s ease;
+  background-color: #a9a900;
+  transition: all 0.3s ease;
 }
 .cache-actions button.save:hover {
-  box-shadow: inset 0 0 5px #ffffff;
+  box-shadow: inset 0 0 20px -15px #000000;
+  color: #ffffff;
 }
 .cache-actions button.save:active {
-  box-shadow: inset 0 0 20px -5px #ffffff;
+  box-shadow: inset 0 0 20px -5px #000000;
+  color: #ffffff;
 }
 .cache-actions button.load {
   box-shadow: 0 0;
-  transition: all 0.1s ease;
+  background-color: #49a929;
+  transition: all 0.3s ease;
 }
 .cache-actions button.load:hover {
-  box-shadow: 0 0 5px #ffffff;
+  box-shadow: 0 0 10px #ffffff;
+  color: #ffffff;
 }
 .cache-actions button.load:active {
-  box-shadow: 0 0 20px -5px #ffffff;
+  box-shadow: 0 0 20px #ffffff;
+  color: #ffffff;
 }

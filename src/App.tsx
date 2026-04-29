@@ -3,7 +3,7 @@ import './App.css'
 import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { userMode, focusedChainID, focusedEntity, openFloaters } from './store';
+import { userMode, focusedChainID, focusedEntity, openFloaters, activeViewSpaceID } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
@@ -12,6 +12,9 @@ import { SelectItem } from './components/SelectItem';
 import { CreateNew } from './components/CreateNew';
 import { ViewAnyItem } from './components/ViewAnyItem';
 import { SelectChain } from './components/SelectChain';
+import { PersistHandBar } from './components/PersistHandBar';
+import { VSListFloaters } from './components/VSListFloaters';
+import { VSListStreams } from './components/VSListStreams';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -22,13 +25,26 @@ const App: Component = () => {
       <Show when={spawnDots()}>
         <AnimationOverlay />
       </Show>
-      <div class="background-one">
-        <div class='title'>
-          <WelcomeTitle />
+      <div class="background">
+      <WelcomeTitle />
+        <div class='handbar'>
+          <PersistHandBar />
+          <Show when={userMode() === 'ReadWrite'}>
+            <WritersHandBar />
+          </Show>
         </div>
 
 
-        <Switch>
+        <div style={{'max-height': '100%'}}>
+          <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
+          <CreateNew of='stream'/>
+        </div>
+        <Show when={userMode() === 'ReadWrite'}>
+          <FocusWriter />
+        <VSListFloaters id={activeViewSpaceID()} clickAct='ope' />
+        <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
+        </Show>
+{/*     <Switch>
           <Match
             when={userMode() === 'ReadWrite'}>
             <div class='handbar' 
@@ -69,6 +85,7 @@ const App: Component = () => {
             </div>
           </Match>
         </Switch>
+        */}
 
       </div>
     </>

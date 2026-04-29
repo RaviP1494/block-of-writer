@@ -89,7 +89,7 @@ export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 export const [allFlashes, setAllFlashes] = createStore<Flash[]>([]);
 export const getFlash = (flashID: number) => allFlashes.find(f => f.id === flashID);
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
-export const getFlickers = (flickerID: number) => allFlickers.find(f => f.id === flickerID);
+export const getFlicker = (flickerID: number) => allFlickers.find(f => f.id === flickerID);
 export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
 export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
@@ -541,6 +541,17 @@ export const flickerWordCount = (flickerID:number) => {
     
     const wordCount = f.textContents.trim().split(/\s+/).filter(w => w.length > 0).length;
     return total + wordCount;
+  }, 0);
+};
+
+export const flickerCharCount = (flickerID:number) => {
+  const flicker = allFlickers.find((f) => f.id === flickerID);
+  return flicker?.contentIDs?.reduce((total, id) => {
+    const f = allFlashes.find((flash) => flash.id === id);
+    if (!f) return total;
+    
+    const charCount = f.textContents.length;
+    return total + charCount;
   }, 0);
 };
 

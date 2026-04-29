@@ -2,7 +2,6 @@ import { createMemo, createSignal, For, Show, type Component } from 'solid-js'
 import { activeViewSpaceID, focusedEntity, getFlash, getFlickerTSpan, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, textWordCount, userMode, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface SelectItemProps {
-  of: string;
   clickAct: string;
 };
 export const SelectItem: Component<SelectItemProps> = (props) => {
@@ -36,17 +35,17 @@ export const SelectItem: Component<SelectItemProps> = (props) => {
       !openFloaters.includes(ent) &&
         setOpenFloaters(prev => [...prev, ent]);
     }
-    // if (focusedEntity() === ent)
-      // requestAnimationFrame(() => {
-      //   requestAnimationFrame(() => {
-      //     const btnId = ent.entityType + ent.refID.toString();
-      //     const targetBtn = document.getElementById(btnId);
-      //
-      //     if (targetBtn) {
-      //       targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      //     }
-      //   });
-      // });
+    if (focusedEntity() === ent)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const btnId = ent.entityType + ent.refID.toString();
+          const targetBtn = document.getElementById(btnId);
+
+          if (targetBtn) {
+            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
   };
 
   const renderEntBtn = (ent: MultEnt) => {
