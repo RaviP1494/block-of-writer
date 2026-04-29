@@ -35,7 +35,7 @@ const App: Component = () => {
             style={{ display: 'flex' }}>
               <WritersHandBar />
             </div>
-            <div class='focus-left'>
+            <div class='focus-left flex-down'>
               <SelectItem
                 of='viewspace'
                 clickAct='focus' />
