@@ -1,4 +1,4 @@
-import { createMemo, For, Show, type Component } from 'solid-js'
+import { createEffect, createMemo, For, Show, type Component } from 'solid-js'
 import { focusedEntity, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, userMode, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface VSListStreamsProps {
@@ -22,17 +22,36 @@ export const VSListStreams: Component<VSListStreamsProps> = (props) => {
     }
   };
 
-      return (
+createEffect(() => {
+    const currentFocus = focusedEntity();
+    
+    // Only attempt to scroll if the focused entity is actually a stream
+    if (currentFocus && currentFocus.entityType === 'stream') {
+      const btnId = 'stream' + currentFocus.refID.toString();
+      
+      requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const targetBtn = document.getElementById(btnId);
+          if (targetBtn) {
+            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+        });
+      });
+    }
+  });
+  return (
     <div class="lister-box">
-    <div class='lister-header'>
-    ViewSpace Streams
-    </div>
+      <div class='lister-header'>
+        ViewSpace Streams
+      </div>
       <div class="lister-list">
-      <Show when=
-        {(userMode() === 'ReadWrite' 
-          || userMode() === 'FocusWrite') && writerTargetID()}>
-        <button
-          id='null-btn' 
+        <Show when=
+          {(userMode() === 'ReadWrite'
+            || userMode() === 'FocusWrite') && writerTargetID()}>
+          <button
+          id='null-btn'
           onClick={() => setWriterTargetID(null)}
           classList={{
             ['null-btn']: true,

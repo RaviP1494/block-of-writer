@@ -1,17 +1,14 @@
 import './App.css'
 
-import { createSignal, For, Match, Show, Switch } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { userMode, focusedChainID, focusedEntity, openFloaters, activeViewSpaceID } from './store';
+import { userMode, focusedEntity, activeViewSpaceID } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
-import { DisplayChain } from './components/DisplayChain';
-import { SelectItem } from './components/SelectItem';
 import { CreateNew } from './components/CreateNew';
 import { ViewAnyItem } from './components/ViewAnyItem';
-import { SelectChain } from './components/SelectChain';
 import { PersistHandBar } from './components/PersistHandBar';
 import { VSListFloaters } from './components/VSListFloaters';
 import { VSListStreams } from './components/VSListStreams';
@@ -25,8 +22,17 @@ const App: Component = () => {
       <Show when={spawnDots()}>
         <AnimationOverlay />
       </Show>
+      <div style={{
+        'position': 'absolute',
+        'background-color': 'red',
+        width: '4px',
+        height: '4px',
+        top: '274px',
+        left: '840px',
+        'z-index': '50'
+      }}></div>
       <div class="background">
-      <WelcomeTitle />
+        <WelcomeTitle />
         <div class='handbar'>
           <PersistHandBar />
           <Show when={userMode() === 'ReadWrite'}>
@@ -35,16 +41,28 @@ const App: Component = () => {
         </div>
 
 
-        <div style={{'max-height': '100%'}}>
-          <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
-          <CreateNew of='stream'/>
-        </div>
         <Show when={userMode() === 'ReadWrite'}>
           <FocusWriter />
-        <VSListFloaters id={activeViewSpaceID()} clickAct='ope' />
-        <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
+          <div style={{
+            'grid-column': '1',
+            'grid-row': '2'
+          }}>
+            <CreateNew of='stream' />
+            <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
+          </div>
+          <div class='flex-down' style={{
+            'max-height': '100%',
+            'grid-column': '3',
+            'grid-row': '2',
+          }}>
+            <Show when={focusedEntity()} fallback={
+              <VSListFloaters id={activeViewSpaceID()} clickAct='focus' />
+            }>
+              <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
+            </Show>
+          </div>
         </Show>
-{/*     <Switch>
+        {/*     <Switch>
           <Match
             when={userMode() === 'ReadWrite'}>
             <div class='handbar' 

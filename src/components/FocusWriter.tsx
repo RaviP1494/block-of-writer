@@ -9,13 +9,13 @@ import {
   setIsWritersBlockEmpty,
   setIsFlickerOpen,
   inflectionOn,
-  focusedStreamID,
   writerTargetID,
   allStreams,
   viewSpaces,
   activeViewSpaceID,
   addFlash,
   outFlect,
+  focusedEntity,
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
@@ -26,26 +26,27 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
 
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
-  const newStreamBtn = document.querySelector('.new-maker > button');
+  const newStreamBtn = document.getElementById('spinny');
   const newStrBtnRect = newStreamBtn?.getBoundingClientRect();
+  console.log(newStrBtnRect);
   const gravPt: PointTuple = 
-    [newStrBtnRect!.top + newStrBtnRect!.height / 2, 
-      (newStrBtnRect!.left + newStrBtnRect!.width) / 2];
+    [(newStrBtnRect!.top + newStrBtnRect!.bottom) / 2, 
+      (newStrBtnRect!.left + newStrBtnRect!.right) / 2];
 
   spawnParticle(gravPt, text, timeSpan);
 };
 
 // Example: Arcing it to the StreamList to destroy it
 const killMyParticle = () => {
-  const targetElement = focusedStreamID() 
+  const targetElement = focusedEntity()?.entityType === 'stream'
     ? document.querySelector('.stream-title h1')
     : writerTargetID()
     ? document.querySelector(`#stream${writerTargetID()}`)
-    : document.querySelector('.welcomer');
-  const targetRect = targetElement?.getBoundingClientRect();
+    : document.querySelector('.floater-circles');
+  const targetRect = targetElement ? targetElement.getBoundingClientRect() : document.querySelector('.welcomer')?.getBoundingClientRect();
   const target: PointTuple = 
-    [targetRect!.top + targetRect!.height / 2, 
-      (targetRect!.left + targetRect!.width) / 2];
+    [(targetRect!.top + targetRect!.bottom) / 2, 
+      (targetRect!.left + targetRect!.right) / 2];
     triggerDespawn(target);
 }
 
@@ -56,7 +57,7 @@ export const FocusWriter: Component = () => {
   const targetName = () => writerTargetID()
     ? 'Stream: ' + allStreams.find(s => s.id === writerTargetID())?.title
     : activeViewSpaceID()
-      ? 'Null Space of ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
+      ? 'Free Floaters of ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
       : 'none';
 
   const worker = new TimerWorker();
@@ -163,7 +164,7 @@ export const FocusWriter: Component = () => {
         'background-color': '#a9a9a9',
         color: 'black',
         'text-align': 'center'
-      }}>Sending To {targetName()}
+      }}><div style={{'border-bottom':'1px solid white'}}>Sending To</div> <div id='spinny' style={{padding: '2ch'}}>{targetName()}</div>
       </div>
       <textarea
         ref={textareaRef}

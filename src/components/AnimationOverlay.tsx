@@ -57,8 +57,8 @@ export const spawnParticle = (
   const wordsPerSecond = textWordCount(text) / timeSpan;
   // let initialVx = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond / 2;
   // let initialVy = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond / 2;
-  const initialVx = ((Math.random() * 3) - 1) * wordsPerSecond * 3;
-  const initialVy = wordsPerSecond * (-3);
+  const initialVx = ((Math.random() * 3) - 1) * wordsPerSecond * -5;
+  const initialVy = wordsPerSecond * (-5);
 
   console.log('id:' + nextParticleID + 
               ',density:' + ',radius:' +
@@ -89,7 +89,7 @@ export const triggerDespawn = (targetTuple: PointTuple) => {
       p.isDespawning = true;
       p.despawnTarget = targetTuple;
 
-      p.mass *= 5;
+      p.mass *= 10;
     }
   });
 };
@@ -138,9 +138,8 @@ export const AnimationOverlay: Component = () => {
          gravY = p.despawnTarget[0];
          gravX = p.despawnTarget[1];
     
-         p.radius -= .1;
          // If it gets close enough to the despawn point, kill it
-         if (Math.hypot(gravX - p.x, gravY - p.y) < 200 || p.radius < 0.5) {
+         if (Math.hypot(gravX - p.x, gravY - p.y) < 50) {
            particles.splice(i, 1);
            continue;
          }
@@ -155,12 +154,12 @@ export const AnimationOverlay: Component = () => {
        const propY = (gravY - p.y) / d;
 
 
-       console.log('vx:' + p.vx + ' ' + 'vy' + p.vy);
+       //console.log('vx:' + p.vx + ' ' + 'vy' + p.vy);
        p.vx += (a * propX); 
        p.vy += (a * propY);
 
-       p.vx = p.vx < 0 ? Math.max(p.vx, -10) : Math.min(p.vx, 10);
-       p.vy = p.vy < 0 ? Math.max(p.vy, -10) : Math.min(p.vy, 10);
+       p.vx = p.vx < 0 ? Math.max(p.vx, -20) : Math.min(p.vx, 20);
+       p.vy = p.vy < 0 ? Math.max(p.vy, -20) : Math.min(p.vy, 20);
 
       p.x += p.vx;
       p.y += p.vy;
