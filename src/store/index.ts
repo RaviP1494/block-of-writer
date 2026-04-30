@@ -53,7 +53,7 @@ export interface SparkChain {
 // 2. GLOBAL SIGNALS (Transient State)
 // ==========================================
 
-export const [userMode, setUserMode] = createSignal<string> ('ReadWrite');
+export const [userMode, setUserMode] = createSignal<string> ('Write');
 export const [flashDelayT, setFlashDelayT] = createSignal<number>(2);
 
 export const [flickerModeOn, setFlickerModeOn] = createSignal<boolean>(true);

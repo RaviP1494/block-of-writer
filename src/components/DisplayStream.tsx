@@ -36,6 +36,11 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
         : null;
   }
 
+  const handleDelete = () => {
+    handleMinimize();
+    deleteStream(stream()!.id);
+  }
+
   const groupedContent = createMemo(() => {
     let groups = [...groupedFlashIDs(props.id)];
     if (flowUp()) {
@@ -135,8 +140,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       ? 'delete-reveal' : 'delete-hide'}
                       onClick={() =>
                         deleteClicked()
-                          ? deleteStream(stream()!.id)
-                          && setDeleteClicked(false)
+                          ? handleDelete()
                           : ''}
                     >
                       Confirm?

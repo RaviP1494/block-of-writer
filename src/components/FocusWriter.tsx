@@ -19,6 +19,7 @@ import {
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
+import { CreateNew } from './CreateNew';
 
 export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
@@ -55,9 +56,9 @@ export const FocusWriter: Component = () => {
   const [currentText, setCurrentText] = createSignal("    ");
 
   const targetName = () => writerTargetID()
-    ? 'Stream: ' + allStreams.find(s => s.id === writerTargetID())?.title
+    ? allStreams.find(s => s.id === writerTargetID())?.title
     : activeViewSpaceID()
-      ? 'Free Floaters of ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
+      ? 'float free in ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
       : 'none';
 
   const worker = new TimerWorker();
@@ -161,11 +162,30 @@ export const FocusWriter: Component = () => {
   return (
     <div class='focus-writer'>
       <div style={{
-        'background-color': '#a9a9a9',
+        'background-color': '#000000',
         color: 'black',
-        'text-align': 'center'
-      }}><div style={{'border-bottom':'1px solid white'}}>Sending To</div> <div id='spinny' style={{padding: '2ch'}}>{targetName()}</div>
+        'text-align': 'center',
+        'border-radius': '4ch',
+        'box-shadow': '0 2ch 4ch #000000, inset 0 2ch 7ch #ffffff',
+        padding: '0 3ch'
+      }}>
+        <div
+          style={{
+            'font-size': '12px',
+            'border-bottom': '1px solid white'
+          }}>
+          Sending To
+        </div>
+        <div id='spinny'
+          style={{
+            'color': writerTargetID() ? 'blue' : 'white',
+            'font-family': '"Caveat", cursive',
+            padding: '2ch'
+          }}>
+          {targetName()}
+        </div>
       </div>
+      <CreateNew of='stream' />
       <textarea
         ref={textareaRef}
         value={currentText()}

@@ -28,39 +28,18 @@ createEffect(() => {
     // Only attempt to scroll if the focused entity is actually a stream
     if (currentFocus && currentFocus.entityType === 'stream') {
       const btnId = 'stream' + currentFocus.refID.toString();
-      
-      requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const targetBtn = document.getElementById(btnId);
-          if (targetBtn) {
-            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        });
-        });
-      });
+      const targetBtn = document.getElementById(btnId);
+      if (targetBtn) {
+        targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   });
   return (
     <div class="lister-box">
       <div class='lister-header'>
-        ViewSpace Streams
+        <h4>ViewSpace</h4>
       </div>
       <div class="lister-list">
-        <Show when=
-          {(userMode() === 'ReadWrite'
-            || userMode() === 'FocusWrite') && writerTargetID()}>
-          <button
-          id='null-btn'
-          onClick={() => setWriterTargetID(null)}
-          classList={{
-            ['null-btn']: true,
-            [`targeted-stream-btn`]:
-              props.clickAct === 'focus' && !writerTargetID(),
-          }}>
-          Flash Out of Stream
-        </button>
-        </Show>
         <For each={streams()}>
           {(s) => (
         <button

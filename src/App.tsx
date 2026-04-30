@@ -3,11 +3,10 @@ import './App.css'
 import { createSignal, Show } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { userMode, focusedEntity, activeViewSpaceID } from './store';
+import { userMode, activeViewSpaceID } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
-import { CreateNew } from './components/CreateNew';
 import { ViewFocused } from './components/ViewFocused';
 import { PersistHandBar } from './components/PersistHandBar';
 import { VSListFloaters } from './components/VSListFloaters';
@@ -25,35 +24,43 @@ const App: Component = () => {
         <WelcomeTitle />
         <div class='handbar'>
           <PersistHandBar />
-          <Show when={userMode() === 'ReadWrite'}>
+          <Show when={userMode() === 'Write'}>
             <WritersHandBar />
           </Show>
         </div>
 
 
-        <Show when={userMode() === 'ReadWrite'}>
-          <FocusWriter />
+        <Show when={userMode() === 'Write'}>
           <div style={{
-            'grid-column': '1',
+              'max-height': '98dvh',
+              'grid-column': '1',
+              'grid-row': '1 / span 2'
+            }}>
+            <div class='flex-down'
+            style={{
+              'height': '100%',
+              'overflow-y': 'auto'
+            }}>
+              <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
+              <VSListFloaters id
+                ={activeViewSpaceID()}
+                clickAct='focus' />
+            </div>
+          </div>
+          <div style={{
+            'grid-column': '2',
             'grid-row': '2'
           }}>
-            <CreateNew of='stream' />
-            <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
-          </div>
+            <FocusWriter />
+            </div>
           <div class='flex-down' style={{
             'max-height': '100%',
             'grid-column': '3',
             'grid-row': '2',
           }}>
-          <Show when={focusedEntity()} fallback={
-              <VSListFloaters id
-                ={activeViewSpaceID()}
-                clickAct='focus' />
-            }>
               <ViewFocused
                 innerClickMode=
                 'focus' />
-            </Show>
           </div>
         </Show>
         {/*     <Switch>

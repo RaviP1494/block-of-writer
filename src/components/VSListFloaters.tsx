@@ -1,5 +1,5 @@
 import { createSignal, createMemo, For, Show, type Component } from 'solid-js'
-import { flickerCharCount, focusedEntity, getFlash, setFocusedEntity, viewSpaces, type MultEnt } from '../store';
+import { flickerCharCount, focusedEntity, getFlash, setFocusedEntity, setWriterTargetID, viewSpaces, type MultEnt } from '../store';
 
 interface VSListFloatersProps {
   id: number | null;
@@ -20,16 +20,16 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
   return (
     <div class='floater-box'>
       <div class='floater-top'>
-        <h3> Free Floaters </h3>
+        <h4> Free Floaters </h4>
         <div>
           <button 
-            class='transparent'
+            class='floater-button'
             onClick={() => setOrdered(!ordered())}>
             {ordered() ? 'Disorder' : 'Order'}
           </button>
           <Show when={!ordered()}>
             <button 
-            class='transparent'
+            class='floater-button'
             onClick={() => {
               setShuffleTick(t => t+1);
             }}>
@@ -38,7 +38,9 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
           </Show>
         </div>
       </div>
-      <svg class='floater-circles'>
+      <svg 
+      onClick={() => setWriterTargetID(null)}
+      class='floater-circles'>
         <For each={floaters()}>
           {(ent, index) => {
             const radius = () => ent.entityType === 'flash'
@@ -67,7 +69,6 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                     onClick={() => handleClick(ent)}
                   >
                     <circle
-                      class='flash-floater-dot'
                       style={{
                         transition: 'all 0.3s ease',
                         r: `${hoverEnt() === ent ? radius() * 2 : radius()}`,
@@ -106,7 +107,6 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                   onClick={() => handleClick(ent)}
                 >
                   <circle
-                    class='flicker-floater-dot'
                     style={{
                       transition: 'all 0.4s ease',
                       r: `${hoverEnt() === ent ? radius() * 2 : radius()}`,
