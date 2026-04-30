@@ -1,5 +1,5 @@
-import { createEffect, createMemo, For, Show, type Component } from 'solid-js'
-import { focusedEntity, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, userMode, viewSpaces, writerTargetID, type MultEnt } from '../store';
+import { createEffect, createMemo, For, type Component } from 'solid-js'
+import { focusedEntity, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface VSListStreamsProps {
   id: number | null;
