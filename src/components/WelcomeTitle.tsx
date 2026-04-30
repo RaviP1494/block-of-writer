@@ -11,7 +11,6 @@ export const WelcomeTitle: Component = () => {
       style={{
         'margin-top': '10px',
         'text-shadow': spawnDots() ? '-2px 0 10px #ff0000' : 'inherit',
-        width: '8ch'
       }}>
         Writer's Block
       </h1>

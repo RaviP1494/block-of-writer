@@ -24,6 +24,11 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
       : setFocusedEntity(null);
   }
 
+  const handleDelete = () => {
+    handleMinimize();
+    deleteFlicker(flicker()!.id);
+  }
+
   return (
     <Show when={flicker()}>
       <div class={bg() ? 'floater-flicker white-bg' : 'floater-flicker parchment-bg'}>
@@ -88,8 +93,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                     ? 'delete-reveal' : 'delete-hide'}
                     onClick={() =>
                       deleteClicked()
-                        ? deleteFlicker(flicker()!.id)
-                        && setDeleteClicked(false)
+                        ? handleDelete()
                         : ''}
                   >
                     Confirm?

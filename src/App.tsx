@@ -8,7 +8,7 @@ import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
 import { CreateNew } from './components/CreateNew';
-import { ViewAnyItem } from './components/ViewAnyItem';
+import { ViewFocused } from './components/ViewFocused';
 import { PersistHandBar } from './components/PersistHandBar';
 import { VSListFloaters } from './components/VSListFloaters';
 import { VSListStreams } from './components/VSListStreams';
@@ -16,21 +16,11 @@ import { VSListStreams } from './components/VSListStreams';
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
 const App: Component = () => {
-
   return (
     <>
       <Show when={spawnDots()}>
         <AnimationOverlay />
       </Show>
-      <div style={{
-        'position': 'absolute',
-        'background-color': 'red',
-        width: '4px',
-        height: '4px',
-        top: '274px',
-        left: '840px',
-        'z-index': '50'
-      }}></div>
       <div class="background">
         <WelcomeTitle />
         <div class='handbar'>
@@ -55,10 +45,14 @@ const App: Component = () => {
             'grid-column': '3',
             'grid-row': '2',
           }}>
-            <Show when={focusedEntity()} fallback={
-              <VSListFloaters id={activeViewSpaceID()} clickAct='focus' />
+          <Show when={focusedEntity()} fallback={
+              <VSListFloaters id
+                ={activeViewSpaceID()}
+                clickAct='focus' />
             }>
-              <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
+              <ViewFocused
+                innerClickMode=
+                'focus' />
             </Show>
           </div>
         </Show>
