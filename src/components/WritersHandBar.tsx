@@ -36,9 +36,13 @@ export const WritersHandBar: Component = () => {
       ? 'writers-handbar inactivated' 
       : 'writers-handbar'}>
       <div
-        class='finger timers'>
+        class={isActiveTimer() 
+      ? 'finger timers inactivated' 
+      : 'finger timers'}>
         <button
-          class='knuckle'>
+          class={isActiveTimer() 
+      ? 'knuckle inactivated' 
+      : 'knuckle'}>
           Adjust Timers
         </button>
 
@@ -48,7 +52,8 @@ export const WritersHandBar: Component = () => {
             class='flex-down'>
             <button
               onClick={() => {
-                if (inflecTents() && inflecTents()!.length > 0) outFlect();
+                if (inflecTents()
+                  && inflecTents()!.length > 0) outFlect();
                 setFlickerModeOn(!flickerModeOn())
               }}>
               {flickerModeOn() ? 'Flicker On' : 'Flicker Off'}

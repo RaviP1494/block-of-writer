@@ -282,7 +282,7 @@
   text-align: center;
 }
 .paragraph{
-  padding-top: 1ch;
+  padding-top: 2px;
   text-indent: 4ch;
   display: block;
 }
@@ -394,6 +394,7 @@
 .lister-header {
   box-sizing: border-box;
   width: 100%;
+  padding-top: 0;
   font-family: 'Caveat', cursive;
   height: 4ch;
   position: relative;
@@ -474,6 +475,15 @@
   font-family: 'Caveat', cursive;
   background-color: #141414;
   border-radius: 5px;
+}
+.writers-handbar .knuckle {
+  background-color: #a9a9a9;
+  color: #141414;
+  transition: all 0.4s ease;
+}
+.writers-handbar .knuckle:hover {
+  background-color: #d9c900;
+  font-size: 2ch;
 }
 .writers-handbar:has(.timers:focus-within) {
   height: 18ch;
@@ -667,10 +677,6 @@ div.delay-set > span {
 
 
 
-.inactivated {
-  pointer-events: none;
-  opacity: 0.5;
-}
 .hidden {
   display: none;
 }
@@ -796,6 +802,7 @@ h1 {
   color: #ffffff;
 }
 .cache-actions button.load {
+  margin: 0px;
   box-shadow: 0 0;
   background-color: #49a929;
   transition: all 0.3s ease;
@@ -814,4 +821,8 @@ h1 {
   height: 100%;
   background-color: #ff0000;
   color: #000000;
+}
+.inactivated {
+  pointer-events: none;
+  opacity: 0.5;
 }

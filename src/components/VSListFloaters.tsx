@@ -6,7 +6,7 @@ interface VSListFloatersProps {
   clickAct: string;
 };
 export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
-  const [activated, setActivated] = createSignal(false);
+  const [activated, setActivated] = createSignal(true);
   const [ordered, setOrdered] = createSignal(false);
   const [shuffleTick, setShuffleTick] = createSignal(0);
   const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
