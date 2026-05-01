@@ -94,7 +94,7 @@ export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
 export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
-  { id: 1, title: 'Initial Cluster', tentsInSpace: [] }
+  { id: 1, title: 'Initial Space', tentsInSpace: [] }
 ]);
 export const [sparkChains, setSparkChains] = createStore<SparkChain[]>([]);
 export const [openStreams, setOpenStreams] = createStore<number[]>([]);

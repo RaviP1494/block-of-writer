@@ -58,7 +58,7 @@ export const FocusWriter: Component = () => {
   const targetName = () => writerTargetID()
     ? allStreams.find(s => s.id === writerTargetID())?.title
     : activeViewSpaceID()
-      ? 'float free in ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
+      ? 'float in ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
       : 'none';
 
   const worker = new TimerWorker();
@@ -174,19 +174,28 @@ export const FocusWriter: Component = () => {
       <Show when={inflectionOn()}>
         <InflectionPoint />
       </Show>
-        <div id='spinny'
+        <div
+        class='flex-down'
           style={{
+            'max-width': '100%'
+          }}>
+        <div
+          style={{
+            'font-size': '1rch'
+          }}>
+          Sending To
+        </div>
+        <div id='spinny'
+          class={writerTargetID() ? 'stream-targeted' : 'null-targeted'}
+          style={{
+            width: '200%',
+            'text-align': 'center',
             'color': writerTargetID() ? '#00ff7f' : 'white',
             'font-family': '"Caveat", cursive',
             'font-size': '3rch',
           }}>
           {targetName()}
         </div>
-        <div
-          style={{
-            'font-size': '1rch'
-          }}>
-          Sending To
         </div>
     </div>
   );
