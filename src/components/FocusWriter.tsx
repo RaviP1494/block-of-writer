@@ -16,6 +16,7 @@ import {
   addFlash,
   outFlect,
   focusedEntity,
+  setFocusedStreamID,
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
@@ -174,11 +175,11 @@ export const FocusWriter: Component = () => {
       <Show when={inflectionOn()}>
         <InflectionPoint />
       </Show>
-        <div
+      <div
         class='flex-down'
-          style={{
-            'max-width': '100%'
-          }}>
+        style={{
+          'max-width': '100%'
+        }}>
         <div
           style={{
             'font-size': '1rch'
@@ -193,10 +194,12 @@ export const FocusWriter: Component = () => {
             'color': writerTargetID() ? '#00ff7f' : 'white',
             'font-family': '"Caveat", cursive',
             'font-size': '3rch',
-          }}>
+          }}
+          onClick={() => writerTargetID() && setFocusedStreamID(writerTargetID()!)}
+          >
           {targetName()}
         </div>
-        </div>
+      </div>
     </div>
   );
 };

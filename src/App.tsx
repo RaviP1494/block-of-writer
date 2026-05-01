@@ -22,12 +22,6 @@ const App: Component = () => {
       </Show>
       <div class="background">
         <WelcomeTitle />
-        <div class='handbar'>
-          <PersistHandBar />
-          <Show when={userMode() === 'Write'}>
-            <WritersHandBar />
-          </Show>
-        </div>
 
 
         <Show when={userMode() === 'Write'}>
@@ -39,6 +33,10 @@ const App: Component = () => {
               'height': '100%',
               'overflow-y': 'auto'
             }}>
+        <div class='handbar'>
+              <PersistHandBar />
+              <WritersHandBar />
+        </div>
               <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
               <VSListFloaters id
                 ={activeViewSpaceID()}
@@ -49,7 +47,7 @@ const App: Component = () => {
           }}>
             <FocusWriter />
           </div>
-          <div  style={{ 'grid-column': '3', 'grid-row': '2',
+          <div  style={{ 'grid-column': '3', 'grid-row': '1 / span 2',
             'max-height': '100%',
           }}
           class='flex-down'

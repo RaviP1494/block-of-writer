@@ -173,9 +173,9 @@ const sendFlickOrFlash = (entityType: 'flash' | 'flicker', entityId: number) => 
   }
 };
 
-export const makeStreamFrom = (entityType: EntityType, refID: number) => {
-  if( entityType === 'flash' ){
-    const flash = allFlashes.find(f => f.id === refID);
+export const makeStreamFrom = (ent: MultEnt) => {
+  if( ent.entityType === 'flash' ){
+    const flash = allFlashes.find(f => f.id === ent.refID);
     if (!flash) return;
 
     const finalFlash = { ...flash, id: nextFlashID++ };
@@ -190,9 +190,9 @@ export const makeStreamFrom = (entityType: EntityType, refID: number) => {
     };
     setAllStreams(prev => [...prev, newStream]);
     sendToViewSpace('stream', newStreamID);
-  } else if( entityType === 'flicker' ){
+  } else if( ent.entityType === 'flicker' ){
 
-    const flicker = allFlickers.find(b => b.id === refID);
+    const flicker = allFlickers.find(b => b.id === ent.refID);
     if (!flicker) return;
     const clonedFlashIDs: number[] = [];
     const clonedFlashes: Flash[] = [];
@@ -230,8 +230,8 @@ export const makeStreamFrom = (entityType: EntityType, refID: number) => {
     setAllStreams(prev => [...prev, newStream]);
     sendToViewSpace('stream', newStreamID);
     }
-    else if (entityType === 'stream'){
-      const stream = allStreams.find(s => s.id === refID);
+    else if (ent.entityType === 'stream'){
+      const stream = allStreams.find(s => s.id === ent.refID);
       if (!stream) return;
       const newStreamID = nextStreamID++;
       const newStream: Stream = {
@@ -355,10 +355,17 @@ export const deleteStream = (streamID: number) => {
       deleteFlicker(id);  // Negative IDs are Flickers
     }
   });
+
   setViewSpaces(vs => vs.tentsInSpace && vs.tentsInSpace.length > 0,
-                'tentsInSpace',
-                prev => prev.filter(e => !(e.entityType === 'stream' && e.refID === streamID)));
-  setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'stream' && e.refID === streamID)));
+    'tentsInSpace',
+    prev => prev.filter(e =>
+      !(e.entityType === 'stream'
+        && e.refID === streamID)));
+
+  setSuspenBarTents(prev =>
+    prev.filter(e =>
+      !(e.entityType === 'stream'
+        && e.refID === streamID)));
 
   if (writerTargetID() === streamID) {
     setWriterTargetID(null);
@@ -468,7 +475,7 @@ export const updateSpaceName = (spaceID: number, newName: string) => {
   }
 }
 
-export const getDateString = (createDT: number) => {
+export const getEmacsDateString = (createDT: number) => {
       const d = new Date(createDT);
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const day = days[d.getDay()];
@@ -479,6 +486,7 @@ export const getDateString = (createDT: number) => {
 
       return `@<${dateStr} ${day} ${timeStr}>`;
   };
+
 
 
 export const streamFlashes = (streamID:number) => {
@@ -580,7 +588,7 @@ export const getFlickerTSpan = (flickerID: number) => {
   const endT = allFlashes.find((f)=> 
                                f.id === flicker.contentIDs[flicker.contentIDs.length - 1])?.createDT || 0;
   if (!endT || !flicker.createDT) return 0;
-  return (endT - flicker.createDT) / 1000;
+  return (endT - flicker.createDT);
 }
 
 

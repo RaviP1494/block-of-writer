@@ -1,4 +1,4 @@
-import { type Component, createMemo, createSignal, Show, For, Match, Switch } from 'solid-js';
+import { type Component, createMemo, createSignal, Show, For } from 'solid-js';
 import { EditTitle } from './EditTitle';
 import {
   allStreams, updateStreamTitle,
@@ -7,6 +7,8 @@ import {
   openFloaters,
   setOpenFloaters,
   setFocusedStreamID,
+  viewSpaces,
+  getStreamTSpan,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -25,6 +27,15 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
   const stream = () => allStreams.find((stream) => stream.id === props.id);
 
+  const createDateTime = () => new Date(stream()!.createDT);
+
+  const heldBy = () => viewSpaces.find(vs =>
+    vs.tentsInSpace.some(ent =>
+      ent.entityType === 'stream' &&
+      ent.refID === props.id
+    ))
+    ?.title;
+
   const handleMinimize = () => {
     props.innerClickMode === 'multi' 
       ? setOpenFloaters(() => [
@@ -36,10 +47,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
         : null;
   }
 
-  const handleDelete = () => {
-    handleMinimize();
-    deleteStream(stream()!.id);
-  }
+  const handleDelete = () => deleteStream(stream()!.id) && handleMinimize();
 
   const groupedContent = createMemo(() => {
     let groups = [...groupedFlashIDs(props.id)];
@@ -70,50 +78,6 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 onCancel={() => setIsEditingTitle(false)} />
             }>
 
-            <div
-              class='flex-top-down'
-              style={{
-                position: 'relative'
-              }}>
-              <h1>
-                {stream()?.title}
-              </h1>
-
-              <div class='tiny-fun flex-wide'>
-                <button
-                  onClick={() => setStreamBG(p => !p)}
-                >
-                  ⬚
-                </button>
-                <button
-                  class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
-                  onClick={() => {
-                    setFlowUp(!flowUp())
-                    setShowTimes(false)
-                  }}>
-                  🡇
-                </button>
-                <button
-                  class={
-                    showTimes() ? 'anim-spacing inactivated'
-                      : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off'}
-                  onClick={() =>
-                    setFlashSpacing(!flashSpacing())}>
-                  ⟣⟢
-                </button>
-                <button
-                  class={flowUp() ? 'anim-flip-off inactivated'
-                    : showTimes() ? 'anim-flip-on' : 'anim-flip-off'}
-                  onClick={() => {
-                    setFlashSpacing(true)
-                    setShowTimes(!showTimes())
-                  }}>
-                  ⏲
-                </button>
-              </div>
-
-              <Switch>
-                <Match when={props.innerClickMode === 'focus'}>
                   <div onMouseLeave={() => setDeleteClicked(false)}
                     class='display-top-box'
                     style={{
@@ -123,8 +87,9 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     <button 
                       class='transparent'
                       style={{width: 'fit-content'}}
-                      onClick={() => setIsEditingTitle(true)}>
-                      Rename
+                      onClick={()=> console.log('reader-mode')//here be reader mode
+                      }>
+                      Focus
                     </button>
                     <button class={deleteClicked()
                       ? 'delete-reveal' : 'delete-hide'}
@@ -149,17 +114,57 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       X
                     </button>
                   </div>
-                </Match>
-                <Match when={props.innerClickMode === 'multi'}>
-                  <div class='display-top-box'>
-                    <button
-                      onClick={() => handleMinimize()}
-                      class='delete-reveal'>
-                      -
-                    </button>
-                  </div>
-                </Match>
-              </Switch>
+              <h1
+              onClick={() => setIsEditingTitle(true)}>
+                {stream()?.title}
+              </h1>
+                <div class='reader-stats'>
+                <span>{createDateTime().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</span>
+                <span>{heldBy()}</span>
+                <span>{getStreamTSpan(props.id)}</span>
+                </div>
+            <div
+              class='flex-top-down'
+              style={{
+                position: 'relative'
+              }}>
+
+              <div class='tiny-fun flex-wide'>
+                <button
+                title='Change Background'
+                  onClick={() => setStreamBG(p => !p)}
+                >
+                  ⬚
+                </button>
+                <button
+                title='Flip Order'
+                  class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
+                  onClick={() => {
+                    setFlowUp(!flowUp())
+                    setShowTimes(false)
+                  }}>
+                  🡇
+                </button>
+                <button
+                title='Toggle Spacing'
+                  class={
+                    showTimes() ? 'anim-spacing inactivated'
+                      : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off'}
+                  onClick={() =>
+                    setFlashSpacing(!flashSpacing())}>
+                  ⟣⟢
+                </button>
+                <button
+                title='Toggle Timestamps'
+                  class={flowUp() ? 'anim-flip-off inactivated'
+                    : showTimes() ? 'anim-flip-on' : 'anim-flip-off'}
+                  onClick={() => {
+                    setFlashSpacing(true)
+                    setShowTimes(!showTimes())
+                  }}>
+                  ⏲
+                </button>
+              </div>
             </div>
           </Show>
         </div>

@@ -1,5 +1,5 @@
-import { type Component, Show, For, createSignal, Switch, Match } from 'solid-js';
-import { allFlickers, deleteFlicker, openFloaters, setFocusedEntity, setOpenFloaters } from '../store';
+import { type Component, Show, For, createSignal } from 'solid-js';
+import { allFlickers, allStreams, deleteFlicker, getFlickerTSpan, makeStreamFrom, openFloaters, setFocusedEntity, setOpenFloaters, viewSpaces } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
 interface FloaterFlashProps {
@@ -9,6 +9,17 @@ interface FloaterFlashProps {
 
 export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
   const flicker = () => allFlickers.find(f => f.id === props.id);
+  const createDateTime = () => new Date(flicker()!.createDT);
+  const heldBy =
+    () => allStreams.find(s =>
+      s.contentIDs
+        .includes(props.id))?.title
+      || viewSpaces.find(vs =>
+        vs.tentsInSpace.some( ent =>
+            ent.entityType === 'flicker' &&
+            ent.refID === props.id
+          ))
+        ?.title;
 
   const [bg, setBG] = createSignal(true);
   const [deleteClicked, setDeleteClicked] = createSignal(false);
@@ -24,61 +35,36 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
       : setFocusedEntity(null);
   }
 
-  const handleDelete = () => {
-    handleMinimize();
-    deleteFlicker(flicker()!.id);
-  }
+  const handleDelete = 
+    () => deleteFlicker(flicker()!.id) && handleMinimize();
 
   return (
     <Show when={flicker()}>
       <div class={bg() ? 'floater-flicker white-bg' : 'floater-flicker parchment-bg'}>
         <div class='stream-title'>
-          <div
-            class='flex-top-down'
-            style={{
-              position: 'relative'
-            }}>
-            <div class='tiny-fun flex-wide'>
-              <button
-                onClick={() => setBG(p => !p)}
-              >
-                ⬚
-              </button>
-              <button
-                class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
-                onClick={() => {
-                  setFlowUp(!flowUp())
-                  setShowTimes(false)
-                }}>
-                🡇
-              </button>
-              <button
-                class={
-                  showTimes() ? 'anim-spacing inactivated'
-                    : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off'}
-                onClick={() =>
-                  setFlashSpacing(!flashSpacing())}>
-                ⟣⟢
-              </button>
-              <button
-                class={flowUp() ? 'anim-flip-off inactivated'
-                  : showTimes() ? 'anim-flip-on' : 'anim-flip-off'}
-                onClick={() => {
-                  setFlashSpacing(true)
-                  setShowTimes(!showTimes())
-                }}>
-                ⏲
-              </button>
-            </div>
-
-            <Switch>
-              <Match when={props.innerClickMode === 'focus'}>
-                <div onMouseLeave={() => setDeleteClicked(false)}
-                  class='display-top-box'
+        <div onMouseLeave={() => setDeleteClicked(false)}
+                  class='display-top-box flex-wide'
                   style={{
                     border: deleteClicked() ? '1px dashed #003004' : 'none',
                     transition: 'border 0.5s ease'
                   }}>
+                  <div>
+                <button
+                title='"Seed" New Stream with Copy'
+                onClick={
+                  () => makeStreamFrom({entityType: 'flicker', refID: flicker()!.id})
+                }>
+                ⚵
+                </button>
+                <button title='Start Chain (coming soon..)'>☍</button>
+                </div>
+                  <h3 style={{
+                    position: 'absolute', 
+                    inset: 0, 
+                    margin: 'auto'}}>
+                    Flicker
+                  </h3>
+                  <div>
                   <button class={deleteClicked()
                     ? 'delete-reveal' : 'delete-hide'}
                     onClick={() =>
@@ -101,18 +87,55 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                       'delete-hide' : 'delete-reveal'}>
                     X
                   </button>
+                  </div>
                 </div>
-              </Match>
-              <Match when={props.innerClickMode === 'multi'}>
-                <div class='display-top-box'>
-                  <button
-                    onClick={() => handleMinimize()}
-                    class='delete-reveal'>
-                    -
-                  </button>
+                <div class='reader-stats'>
+                <span>{createDateTime().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</span>
+                <span>{heldBy()}</span>
+                <span>{(getFlickerTSpan(flicker()!.id) / 1000).toFixed(1)}s</span>
                 </div>
-              </Match>
-            </Switch>
+          <div
+            class='flex-top-down'
+            style={{
+              position: 'relative'
+            }}>
+            <div class='tiny-fun flex-wide'>
+              <button
+                title='Change Background'
+                onClick={() => setBG(p => !p)}
+              >
+                ⬚
+              </button>
+              <button
+                class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
+                title='Flip Order'
+                onClick={() => {
+                  setFlowUp(!flowUp())
+                  setShowTimes(false)
+                }}>
+                🡇
+              </button>
+              <button
+                title='Toggle Spacing'
+                class={
+                  showTimes() ? 'anim-spacing inactivated'
+                    : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off'}
+                onClick={() =>
+                  setFlashSpacing(!flashSpacing())}>
+                ⟣⟢
+              </button>
+              <button
+                title='Toggle Timestamps'
+                class={flowUp() ? 'anim-flip-off inactivated'
+                  : showTimes() ? 'anim-flip-on' : 'anim-flip-off'}
+                onClick={() => {
+                  setFlashSpacing(true)
+                  setShowTimes(!showTimes())
+                }}>
+                ⏲
+              </button>
+            </div>
+
           </div>
         </div>
         <div class='stream-text'>

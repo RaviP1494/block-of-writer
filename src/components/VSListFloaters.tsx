@@ -6,6 +6,7 @@ interface VSListFloatersProps {
   clickAct: string;
 };
 export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
+  const [activated, setActivated] = createSignal(false);
   const [ordered, setOrdered] = createSignal(false);
   const [shuffleTick, setShuffleTick] = createSignal(0);
   const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
@@ -18,19 +19,24 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
   const handleClick = (ent: MultEnt) => focusedEntity() !== ent ? setFocusedEntity(ent) : null;
 
   return (
-    <div class='floater-box'>
-      <div class='floater-top'>
+    <div class={activated() ? 'floater-box' : 'floater-waitbar'}>
+      <div class='floater-top'
+      onClick={()=>setActivated(!activated())}>
         <h4> Free Floaters </h4>
         <div>
           <button 
             class='floater-button'
-            onClick={() => setOrdered(!ordered())}>
+            onClick={(e) => {
+              e.stopPropagation();
+              setOrdered(!ordered());
+            }}>
             {ordered() ? 'Disorder' : 'Order'}
           </button>
           <Show when={!ordered()}>
             <button 
             class='floater-button'
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setShuffleTick(t => t+1);
             }}>
               Shuffle
@@ -41,6 +47,7 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
       <svg 
       onClick={() => setWriterTargetID(null)}
       class='floater-circles'>
+      <Show when={activated()}>
         <For each={floaters()}>
           {(ent, index) => {
             const radius = () => ent.entityType === 'flash'
@@ -140,6 +147,7 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
               </Show>);
           }}
         </For>
+        </Show>
       </svg>
     </div>
   );

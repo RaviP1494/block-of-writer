@@ -12,6 +12,32 @@
   overflow: hidden;
 }
 
+.floater-waitbar {
+  box-sizing: border-box;
+  padding: 1ch;
+  margin-top: -2ch;
+  min-width: 15ch;
+  width: 100%;
+  background-color: transparent;
+}
+.floater-waitbar .floater-top:hover {
+  border-bottom: 2ch solid blue;
+}
+.floater-waitbar .floater-circles {
+  transform: translateY(-10ch) scale(0.1);
+  pointer-events: none;
+  opacity: 0;
+  flex-grow: 1;
+  width: 100%;
+  border-radius: 0 0 4ch 4ch;
+  box-sizing: border-box;
+  background-color: #000000;
+  box-shadow: inset 0 0 20ch -9ch #007fff, 0 0 6ch -3ch #007fff;
+  transition: all 1s ease;
+}
+.floater-waitbar button{
+  display: none;
+}
 .floater-box {
   box-sizing: border-box;
   padding: 1ch;
@@ -19,7 +45,6 @@
   display: flex;
   margin-top: -2ch;
   flex-grow: 1;
-  max-height: max-content;
   flex-direction: column;
   align-items: center;
   min-width: 15ch;
@@ -32,8 +57,10 @@
   position: relative;
   justify-content: center;
   display: flex;
-  box-shadow: inset 0 1ch 1ch #007fff;
-  background-color: #000000;
+  box-shadow: inset 0 0 1ch #000000;
+  background-color: #007fff;
+  border-bottom: 1px solid blue;
+  transition: all 0.4s ease;
 }
 .floater-top > h4 {
   align-self: center;
@@ -52,15 +79,22 @@
 .floater-button{ 
   background-color: rgba(0,0,0,0.2);
   border: 1px solid;
-  color: #a9a9a9;
+  color: #ffffff;
 }
-.floater-circles {
+.floater-box .floater-circles {
+  opacity: 1;
+  pointer-events: all;
   flex-grow: 1;
+  transform: translateY(0) scale(1);
   width: 100%;
   border-radius: 0 0 4ch 4ch;
   box-sizing: border-box;
   background-color: #000000;
   box-shadow: inset 0 0 20ch -9ch #007fff, 0 0 6ch -3ch #007fff;
+  transition: all 1s ease;
+}
+.floater-top:hover {
+  box-shadow: inset 0 0 2ch #000000;
 }
 
 .welcomer {
@@ -70,7 +104,7 @@
   display: flex;
   flex-direction: column;
   inset: 0;
-  margin: auto;
+  margin: 0 auto;
   width: 20ch;
   border: 4px groove;
   height: 16ch;
@@ -88,8 +122,6 @@
   bottom: 35px;
 }
 .handbar {
-  grid-row: 1;
-  grid-column: 3;
   margin: auto;
   display: flex;
   height: fit-content;
@@ -171,7 +203,7 @@
 }
 .stream-text{
   position: relative;
-  box-shadow: 0;
+  box-shadow: 0 -10px 5px -3px #000000;
   font-size: 12px;
   min-height: 300px;
   padding: 2ch 2ch;
@@ -186,19 +218,17 @@
   box-shadow: 0;
   position: relative;
   text-align: center;
-  border-bottom: 2px double black;
   z-index: 10; 
 }
-.stream-title h1 {
+.stream-title h3,
+.stream-title h1, 
+.stream-title input{
   position: relative;
   margin: auto;
   padding: 0 2ch;
   border: 0.5px double;
   box-shadow: 4px 4px 20px -5px;
-}
-.stream-title h1,
-.stream-title input{
-  margin-top: 30px;
+  margin-top: 1ch;
   font-family: 'Caveat', cursive;
   text-shadow: 0px 0px 4px black;
   color: #000000;
@@ -207,13 +237,12 @@
   text-align: center;
 }
 .stream-title .display-top-box{
-  position: absolute;
-  width: 100%;
-  height: 50px;
+  position: relative;
+  min-height: 20px;
 }
 .display-top-box button {
+  max-width: 10ch;
   height: 20px;
-  width: 100px;
 }
 .display-top-box button.delete-hide {
   position: absolute;
@@ -238,8 +267,19 @@
   transition: all 0.5s ease;
 }
 .display-top-box button.delete-reveal:hover {
-  background-color: #000000;
-  color: #ffffff;
+  border-color: #8000ff;
+  transform: scale(2.0);
+}
+.reader-stats {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1ch;
+  flex-wrap: wrap;
+}
+.reader-stats span {
+  flex: 1 1 0;
+  text-align: center;
 }
 .paragraph{
   padding-top: 1ch;
@@ -248,21 +288,39 @@
 }
 
 .new-maker {
-  margin-top: 1ch;
+  margin-top: 0;
   flex-shrink: 0;
   display: flex;
+  width: 15ch;
+  height: 4ch;
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
+  position: relative;
 }
 .new-maker > input {
+  position: absolute;
+  transform: scale(0.1) translateY(0) rotate(180deg);
+  bottom: 0;
+  opacity: 0;
+  pointer-events: none;
   min-width: 8ch;
   max-width: 20ch;
   flex-grow: 1;
+  transition: all 0.3s ease;
 }
 .new-maker > button {
+  position: absolute;
+  bottom: 0;
   width: fit-content;
   background-color: #408040;
+}
+.new-maker:focus-within > input,
+.new-maker:hover > input{
+  transform: scale(1) translateY(-3ch) rotate(0);
+  opacity: 1;
+  pointer-events: all;
+  z-index: 50;
 }
 
 
@@ -337,7 +395,7 @@
   box-sizing: border-box;
   width: 100%;
   font-family: 'Caveat', cursive;
-  height: 8ch;
+  height: 4ch;
   position: relative;
   justify-content: center;
   align-items: center;
@@ -371,7 +429,7 @@
 
 .focus-writer {
   box-sizing: border-box;
-  margin-top: 10px;
+  margin-top: -2ch;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -403,15 +461,17 @@
 }
 
 .writers-handbar {
+  width: 24ch;
   display: flex;
   margin: auto;
   flex-direction: column;
   border-top: 1px solid;
-  padding: 1ch 2ch;
+  padding: 1ch;
   margin-top: 1ch;
   position: relative;
   height: 12ch;
   transition: height 0.8s ease-out;
+  font-family: 'Caveat', cursive;
   background-color: #141414;
   border-radius: 5px;
 }
@@ -526,17 +586,20 @@ div.delay-set > span {
 }
 
 .tiny-fun {
+  border-top: 2px solid black;
   color: white;
   z-index: 10;
   position: relatiev;
   min-width: 50%;
-  margin-top: 20px;
+  margin-top: 1ch;
+  padding-top: 1ch;
   margin-bottom: 6px;
 }
 .tiny-fun button {
-  height: 20px;
-  font-size: 10px;
+  font-size: 2rch;
   min-width: 3ch;
+  border: 1px solid;
+  flex: 1 1 0;
   box-sizing: border-box;
 }
 .parchment-bg button {

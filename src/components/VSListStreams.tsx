@@ -1,5 +1,5 @@
 import { createEffect, createMemo, For, type Component } from 'solid-js'
-import { focusedEntity, focusedStreamID, getStream, openFloaters, setFocusedStreamID, setOpenFloaters, setWriterTargetID, viewSpaces, writerTargetID, type MultEnt } from '../store';
+import { focusedEntity, focusedStreamID, getStream, openFloaters, setFocusedEntity, setFocusedStreamID, setOpenFloaters, setWriterTargetID, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface VSListStreamsProps {
   id: number | null;
@@ -15,14 +15,16 @@ export const VSListStreams: Component<VSListStreamsProps> = (props) => {
       .reverse() || []);
 
   const handleClick = (ent: MultEnt) => {
-    props.clickAct === 'focus' 
-      ? writerTargetID() === ent.refID
+    if(props.clickAct === 'focus'){
+      writerTargetID() === ent.refID
         ? setFocusedStreamID(ent.refID)
-        : setWriterTargetID(ent.refID) 
-      : props.clickAct === 'multi' 
-        ? !openFloaters.includes(ent) 
-          && setOpenFloaters(prev => [...prev, ent]) 
-        : '';
+        : setWriterTargetID(ent.refID);
+      setFocusedEntity(null);
+    }
+    else if(props.clickAct === 'multi'){
+      !openFloaters.includes(ent) 
+      setOpenFloaters(prev => [...prev, ent]);
+    }
   };
 
 createEffect(() => {
@@ -40,7 +42,7 @@ createEffect(() => {
   return (
     <div class="lister-box">
       <div class='lister-header'>
-        <h4>ViewSpace</h4>
+        <h4>Streams</h4>
       </div>
       <div class="lister-list">
         <For each={streams()}>
