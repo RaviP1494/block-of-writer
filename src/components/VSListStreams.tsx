@@ -1,5 +1,5 @@
 import { createEffect, createMemo, For, type Component } from 'solid-js'
-import { focusedEntity, getStream, openFloaters, setFocusedEntity, setOpenFloaters, setWriterTargetID, viewSpaces, writerTargetID, type MultEnt } from '../store';
+import { focusedEntity, focusedStreamID, getStream, openFloaters, setFocusedStreamID, setOpenFloaters, setWriterTargetID, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface VSListStreamsProps {
   id: number | null;
@@ -9,17 +9,20 @@ export const VSListStreams: Component<VSListStreamsProps> = (props) => {
 
   if (!props.id) return (<div>no viewspace</div>)
   const vs = () => viewSpaces.find(vs => vs.id === props.id);
-  const streams = createMemo(() => vs()?.tentsInSpace.filter((ent) => ent.entityType === 'stream' ).reverse() || []);
+  const streams = createMemo(() =>
+    vs()?.tentsInSpace.filter((ent) =>
+      ent.entityType === 'stream')
+      .reverse() || []);
 
   const handleClick = (ent: MultEnt) => {
-    if (props.clickAct === 'focus') {
-      writerTargetID() === ent.refID
-        ? setFocusedEntity(ent)
-        : setWriterTargetID(ent.refID);
-    } else {
-      !openFloaters.includes(ent) &&
-        setOpenFloaters(prev => [...prev, ent]);
-    }
+    props.clickAct === 'focus' 
+      ? writerTargetID() === ent.refID
+        ? setFocusedStreamID(ent.refID)
+        : setWriterTargetID(ent.refID) 
+      : props.clickAct === 'multi' 
+        ? !openFloaters.includes(ent) 
+          && setOpenFloaters(prev => [...prev, ent]) 
+        : '';
   };
 
 createEffect(() => {
@@ -49,7 +52,7 @@ createEffect(() => {
           classList={{
             ['stream-btn']: s.refID !== 0,
             [`focused-stream-btn`]:
-              props.clickAct === 'focus' && focusedEntity() === s,
+              props.clickAct === 'focus' && focusedStreamID() === s.refID,
             [`targeted-stream-btn`]:
               props.clickAct === 'focus' && writerTargetID() === s.refID,
             [`opened-stream-btn`]:

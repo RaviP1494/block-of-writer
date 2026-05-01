@@ -161,30 +161,6 @@ export const FocusWriter: Component = () => {
 
   return (
     <div class='focus-writer'>
-      <div style={{
-        'background-color': '#000000',
-        color: 'black',
-        'text-align': 'center',
-        'border-radius': '4ch',
-        'box-shadow': '0 2ch 4ch #000000, inset 0 2ch 7ch #ffffff',
-        padding: '0 3ch'
-      }}>
-        <div
-          style={{
-            'font-size': '12px',
-            'border-bottom': '1px solid white'
-          }}>
-          Sending To
-        </div>
-        <div id='spinny'
-          style={{
-            'color': writerTargetID() ? 'blue' : 'white',
-            'font-family': '"Caveat", cursive',
-            padding: '2ch'
-          }}>
-          {targetName()}
-        </div>
-      </div>
       <CreateNew of='stream' />
       <textarea
         ref={textareaRef}
@@ -198,6 +174,20 @@ export const FocusWriter: Component = () => {
       <Show when={inflectionOn()}>
         <InflectionPoint />
       </Show>
+        <div id='spinny'
+          style={{
+            'color': writerTargetID() ? '#00ff7f' : 'white',
+            'font-family': '"Caveat", cursive',
+            'font-size': '3rch',
+          }}>
+          {targetName()}
+        </div>
+        <div
+          style={{
+            'font-size': '1rch'
+          }}>
+          Sending To
+        </div>
     </div>
   );
 };

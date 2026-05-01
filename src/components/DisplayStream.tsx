@@ -7,6 +7,7 @@ import {
   setFocusedEntity,
   openFloaters,
   setOpenFloaters,
+  setFocusedStreamID,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -32,7 +33,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
           ent => ent.refID !== stream()?.id 
             || ent.entityType !== 'stream')])
       : props.innerClickMode === 'focus' 
-        ? setFocusedEntity(null) 
+        ? setFocusedStreamID(0)
         : null;
   }
 
@@ -120,16 +121,6 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       border: deleteClicked() ? '1px dashed #003004' : 'none',
                       transition: 'border 0.5s ease'
                     }}>
-                    <button
-                      class='transparent'
-                      style={{
-                        width: 'fit-content',
-                        position: 'absolute', 
-                        left: '0px' 
-                      }}
-                      onClick={() => handleMinimize()}>
-                      Hide
-                    </button>
                     <button 
                       class='transparent'
                       style={{width: 'fit-content'}}
@@ -145,6 +136,13 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     >
                       Confirm?
                     </button>
+                  <button
+                    class={deleteClicked() ?
+                      'delete-hide' : 'delete-reveal'}
+                    style={{ 'background-color': '#ff8000', right: '20px' }}
+                    onClick={() => handleMinimize()}>
+                    -
+                  </button>
                     <button
                       onClick={() => setDeleteClicked(true)}
                       class={deleteClicked() ?
@@ -182,6 +180,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       prevID={prevID}
                       showTimes={() => showTimes()}
                       isSpaced={() => flashSpacing()}
+                      renderedBy='stream'
                       clickDo={props.innerClickMode} />;
                   }}
                 </For>

@@ -79,16 +79,6 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                     border: deleteClicked() ? '1px dashed #003004' : 'none',
                     transition: 'border 0.5s ease'
                   }}>
-                  <button
-                    class='transparent'
-                    style={{
-                      width: 'fit-content',
-                      position: 'absolute',
-                      left: '0px'
-                    }}
-                    onClick={() => handleMinimize()}>
-                    Hide
-                  </button>
                   <button class={deleteClicked()
                     ? 'delete-reveal' : 'delete-hide'}
                     onClick={() =>
@@ -97,6 +87,13 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                         : ''}
                   >
                     Confirm?
+                  </button>
+                  <button
+                    class={deleteClicked() ?
+                      'delete-hide' : 'delete-reveal'}
+                    style={{ 'background-color': '#ff8000', right: '20px' }}
+                    onClick={() => handleMinimize()}>
+                    -
                   </button>
                   <button
                     onClick={() => setDeleteClicked(true)}
@@ -118,15 +115,20 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
             </Switch>
           </div>
         </div>
+        <div class='stream-text'>
         <For each={flicker()!.contentIDs}>
           {(flashID, index) => {
             const prevID = index() > 0 ? flicker()!.contentIDs[index() - 1] : null;
             return <DisplayFlash id={flashID}
               prevID={prevID}
               showTimes={() => showTimes()}
-              isSpaced={() => flashSpacing()} />;
+              isSpaced={() => flashSpacing()}
+              renderedBy='flicker'
+              clickDo={props.innerClickMode}
+              />;
           }}
         </For>
+          </div>
       </div>
     </Show>
   );

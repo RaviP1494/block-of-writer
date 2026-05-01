@@ -31,10 +31,8 @@ const App: Component = () => {
 
 
         <Show when={userMode() === 'Write'}>
-          <div style={{
+          <div style={{ 'grid-row': '1 / span 2','grid-column': '1',
               'max-height': '98dvh',
-              'grid-column': '1',
-              'grid-row': '1 / span 2'
             }}>
             <div class='flex-down'
             style={{
@@ -47,20 +45,16 @@ const App: Component = () => {
                 clickAct='focus' />
             </div>
           </div>
-          <div style={{
-            'grid-column': '2',
-            'grid-row': '2'
+          <div style={{ 'grid-column': '2', 'grid-row': '2'
           }}>
             <FocusWriter />
-            </div>
-          <div class='flex-down' style={{
+          </div>
+          <div  style={{ 'grid-column': '3', 'grid-row': '2',
             'max-height': '100%',
-            'grid-column': '3',
-            'grid-row': '2',
-          }}>
-              <ViewFocused
-                innerClickMode=
-                'focus' />
+          }}
+          class='flex-down'
+          >
+              <ViewFocused />
           </div>
         </Show>
         {/*     <Switch>

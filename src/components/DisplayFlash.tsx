@@ -1,22 +1,28 @@
-import { type Component, Show, createMemo } from "solid-js";
-import { addToChain, allFlashes, userMode } from "../store";
+import { type Component, Show } from "solid-js";
+import {allFlashes, allFlickers, setFocusedEntity } from "../store";
 
 interface DisplayFlashProps {
   id: number;
   showTimes: () => boolean;
   isSpaced: () => boolean;
+  renderedBy: string;
   prevID?: number | null;
   clickDo?: string;
 }
 
 export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
   const flash = () => allFlashes.find(f => f.id === props.id);
-  const showTimes = createMemo(() => props.showTimes());
-  const isSpaced = createMemo(() => props.isSpaced());
+  const showTimes = () => props.showTimes();
+  const isSpaced = () => props.isSpaced();
+  const holdingFlicker = allFlickers.find(f => f.contentIDs.includes(props.id));
 
   const handleClick = () => {
-    if(userMode() === 'SparkScrape') {
-      addToChain(flash()!.id);
+    if (props.clickDo === 'focus') {
+      props.renderedBy === 'stream' && holdingFlicker
+        ? setFocusedEntity({ refID: holdingFlicker.id, entityType: 'flicker' })
+        : props.renderedBy !== 'flash' 
+          ? setFocusedEntity({ refID: props.id, entityType: 'flash' }) 
+          : null;
     }
   }
 
@@ -32,7 +38,13 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
               {flash()!.textContents}&nbsp;
             </span>
           }>
-          <div style={{ color: '#800000', 'text-align': 'left', 'text-decoration': props.prevID ? 'overline' : 'underline' }}>
+          <div style={{ 
+            color: '#800000',
+            'text-align': 'left',
+            'text-decoration': props.prevID 
+              ? 'overline' 
+              : 'underline' 
+          }}>
             {(() => {
               if (!props.prevID) {
                 // First flash: Show absolute time

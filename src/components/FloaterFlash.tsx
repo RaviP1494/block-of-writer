@@ -1,15 +1,17 @@
 import { type Component, Show, createSignal, Match, Switch } from 'solid-js';
-import { allFlashes, deleteFlash, openFloaters, setFocusedEntity, setOpenFloaters } from '../store';
+import { allFlashes, allFlickers, deleteFlash, openFloaters, setFocusedEntity, setOpenFloaters, type MultEnt } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
 interface FloaterFlashProps {
   id: number;
+  clickSource?: MultEnt;
   innerClickMode?: string;
 }
 
 export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
   const [bg, setBG] = createSignal(true);
   const [deleteClicked, setDeleteClicked] = createSignal(false);
+  const holdingFlicker = allFlickers.find(f => f.contentIDs.includes(props.id));
 
   const flash = () => allFlashes.find(f => f.id === props.id);
 
@@ -19,7 +21,9 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
       ? setOpenFloaters(
         () => [...openFloaters.filter(
           ent => ent.entityType === 'flicker' && ent.refID === props.id)])
-      : setFocusedEntity(null);
+      : holdingFlicker 
+        ? setFocusedEntity({entityType: 'flicker', refID: holdingFlicker.id}) 
+        : setFocusedEntity(null);
   }
 
   const handleDelete = () => {
@@ -52,16 +56,6 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                     border: deleteClicked() ? '1px dashed #003004' : 'none',
                     transition: 'border 0.5s ease'
                   }}>
-                  <button
-                    class='transparent'
-                    style={{
-                      width: 'fit-content',
-                      position: 'absolute',
-                      left: '0px'
-                    }}
-                    onClick={() => handleMinimize()}>
-                    Hide
-                  </button>
                   <button class={deleteClicked()
                     ? 'delete-reveal' : 'delete-hide'}
                     onClick={() =>
@@ -70,6 +64,13 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                         : ''}
                   >
                     Confirm?
+                  </button>
+                  <button
+                    class={deleteClicked() ?
+                      'delete-hide' : 'delete-reveal'}
+                    style={{ 'background-color': '#ff8000', right: '20px' }}
+                    onClick={() => handleMinimize()}>
+                    -
                   </button>
                   <button
                     onClick={() => setDeleteClicked(true)}
@@ -92,9 +93,14 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
           </div>
         </div>
 
+        <div class='stream-text'>
       <DisplayFlash id={props.id}
-      showTimes={() => true}
-      isSpaced={() => true} />;
+      showTimes={() => false}
+      isSpaced={() => true} 
+      renderedBy='flash'
+      />;
+    </div>
+
     </div>
     </Show>
   );
