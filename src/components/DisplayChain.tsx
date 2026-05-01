@@ -110,6 +110,7 @@ export const DisplayChain: Component<DisplayChainProps> = (props) => {
                     id={sparkID}
                     showTimes={() => showTimes()}
                     isSpaced={() => flashSpacing()}
+                    renderedBy='chain' 
                   />);
               } else {
                 const flicker = allFlickers.find(f => f.id === sparkID);
@@ -120,7 +121,8 @@ export const DisplayChain: Component<DisplayChainProps> = (props) => {
                       return <DisplayFlash id={flashID}
                         prevID={prevID}
                         showTimes={() => showTimes()}
-                        isSpaced={() => flashSpacing()} />;
+                        isSpaced={() => flashSpacing()}
+                        renderedBy='chain' />;
                     }}
                   </For>);
               }

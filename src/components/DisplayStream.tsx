@@ -4,7 +4,6 @@ import {
   allStreams, updateStreamTitle,
   groupedFlashIDs,
   deleteStream,
-  setFocusedEntity,
   openFloaters,
   setOpenFloaters,
   setFocusedStreamID,
