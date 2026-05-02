@@ -24,50 +24,53 @@ const App: Component = () => {
         <AnimationOverlay />
       </Show>
       <div class='page-topper'>
-      <div style={{display: 'flex'}}>
-      <VSLister />
+        <div style={{ display: 'flex' }}>
+          <PersistHandBar />
         </div>
-      <div style={{display: 'flex'}}>
-        <PersistHandBar />
+        <div style={{ display: 'flex' }}>
+              <VSLister />
         </div>
-      <div style={{display: 'flex'}}>
+        <div style={{ display: 'flex' }}>
         </div>
       </div>
       <div class="background">
         <WelcomeTitle />
 
         <Show when={userMode() === 'Write'}>
-          <div style={{ 'grid-row': '1 / span 2','grid-column': '1',
-              'max-height': '98dvh',
-            }}>
+          <div style={{
+            'grid-row': '1 / span 2', 'grid-column': '1',
+            'max-height': '98dvh',
+          }}>
             <div class='flex-down'
-            style={{
-              'justify-content': 'flex-start',
-              'height': '100%',
-              'overflow-y': 'auto'
-            }}>
-            <CreateNew of='viewspace' />
+              style={{
+                'justify-content': 'flex-start',
+                'height': '100%',
+                'overflow-y': 'auto'
+              }}>
+              <CreateNew of='viewspace' />
               <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
               <Show when={focusedStreamID()} fallback={
                 <VSListFloaters id
                   ={activeViewSpaceID()}
                   clickAct='focus' />
-                }>
+              }>
                 <InStreamFloaters streamID={focusedStreamID()} clickAct='focus' />
               </Show>
             </div>
           </div>
-          <div style={{ 'grid-column': '2', 'grid-row': '2'
+          <div style={{
+            'grid-column': '2', 'grid-row': '2'
           }}>
             <FocusWriter />
             <WritersHandBar />
           </div>
-          <div  style={{ 'grid-column': '3', 'grid-row': '1 / span 2',
+          <div style={{
+            'grid-column': '3', 'grid-row': '1 / span 2',
             'max-height': '100%',
           }}
-          class='flex-down'
+            class='flex-down'
           >
-              <ViewFocused />
+            <ViewFocused />
           </div>
         </Show>
 

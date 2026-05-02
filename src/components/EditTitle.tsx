@@ -32,20 +32,22 @@ export const EditTitle: Component<EditTitleProps> = (props) => {
       value={value()}
       onInput={(e) => setValue(e.currentTarget.value)}
       onKeyDown={handleKeyDown}
-      onBlur={() => props.onSave(value())} // Save if they click outside the box
+      onBlur={() => props.onSave(value())}
       style={{
+        'font-family': '"Caveat", cursive',
         "font-size": '1.2em', 
         "font-weight": 'bold',
-        margin: '0.83em 0',
+        'z-index': '500',
+        margin: '0 0',
         padding: '0',
         
-        color: 'inherit',
+        color: '#408040',
         "text-shadow": 'inherit',
         "text-align": "center",
         "background-color": 'transparent',
         
         border: 'none',
-        "border-bottom": '2px dashed #90b0f0', // Subtle hint that it's an input
+        "border-bottom": '2px dashed #408040', 
         outline: 'none',
         "box-sizing": 'border-box'
       }}

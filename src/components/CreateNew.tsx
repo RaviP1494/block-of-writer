@@ -18,7 +18,10 @@ export const CreateNew: Component<CreateNewProps> = (props) => {
   };
 
   return (
-      <div class="new-maker flex-down"> 
+      <div classList={{
+        ['create-fromup']: props.of === 'stream',
+        ['create-fromleft']: props.of === 'viewspace'
+      }}> 
         <input 
         type="text" placeholder="Name" value={createName()}
           onInput={(e) => setCreateName(e.currentTarget.value)}

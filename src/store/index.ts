@@ -76,7 +76,7 @@ export const [chainTargetID, setChainTargetID] = createSignal<number | null>(nul
 export const [focusedChainID, setFocusedChainID] = createSignal<number>(0); 
 
 export const [focusedEntity, setFocusedEntity] = createSignal<MultEnt | null>(null);
-export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number | null>(1);
+export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number>(1);
 
 export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 
