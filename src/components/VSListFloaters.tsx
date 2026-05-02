@@ -1,5 +1,5 @@
 import { createSignal, createMemo, For, Show, type Component } from 'solid-js'
-import { flickerCharCount, focusedEntity, getFlash, setFocusedEntity, setWriterTargetID, viewSpaces, type MultEnt } from '../store';
+import { flickerCharCount, flickerWordCount, focusedEntity, getFlash, setFocusedEntity, setWriterTargetID, textWordCount, viewSpaces, type MultEnt } from '../store';
 
 interface VSListFloatersProps {
   id: number | null;
@@ -19,6 +19,13 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
     .filter((ent) => ent.entityType !== 'stream' )
     .reverse() || []);
 
+  const hoverText = (id:number) => {
+    if (id < 0) return flickerWordCount(id);
+    else {
+      const f = getFlash(id);
+      return f ? textWordCount(f.textContents) : 0;
+    }
+  }
   const handleClick = (ent: MultEnt) => focusedEntity() !== ent 
     ? setFocusedEntity(ent) 
     : null;
@@ -73,47 +80,7 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
             const finalCy = () => ordered() ? 10 + spread() : randomY();
 
             return (
-              <Show
-                when={ent.entityType === 'flicker'}
-                fallback={
-                  <g
-                    onMouseOver={() => setHoverEnt(ent)}
-                    onMouseLeave={() => setHoverEnt(null)}
-                    onClick={() => handleClick(ent)}
-                  >
-                    <circle
-                      style={{
-                        transition: 'all 0.3s ease',
-                        r: `${hoverEnt() === ent ? radius() * 2 : radius()}`,
-                        cx: `${finalCx()}%`,
-                        cy: `${finalCy()}%`
-                      }}
-                      r={hoverEnt() === ent ? radius() * 2 : radius()}
-                      cx={`${finalCx()}%`}
-                      cy={`${finalCy()}%`}
-                    fill='#ffff00'
-                    stroke='#ff8000'
-                    stroke-width='2px'
-                    />
-                    {/* Removed <Show> block here */}
-                    <text
-                      style={{
-                        transition: 'all 0.4s ease', // Matches the circle's transition perfectly
-                        opacity: hoverEnt() === ent ? 1 : 0, // Handles the visibility!
-                        'pointer-events': 'none', // Prevents the invisible text from breaking hover state
-                        'font-size': `${hoverEnt() === ent ? radius() * 2 : radius() * 1.14}px`,
-                      }}
-                      x={`${finalCx()}%`}
-                      y={`${finalCy()}%`}
-                      text-anchor="middle"
-                      dominant-baseline="central"
-                      fill='black'
-                    >
-                      F{ent.refID * -1}
-                    </text>
-                  </g>
-                }
-              >
+              <Show when={ent}>
                 <g
                   onMouseOver={() => setHoverEnt(ent)}
                   onMouseLeave={() => setHoverEnt(null)}
@@ -122,32 +89,33 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                   <circle
                     style={{
                       transition: 'all 0.4s ease',
-                      r: `${hoverEnt() === ent ? radius() * 2 : radius()}`,
+                      r: `${hoverEnt() === ent ? radius() + 10 : radius()}`,
                       cx: `${finalCx()}%`,
                       cy: `${finalCy()}%`
                     }}
-                    r={hoverEnt() === ent ? radius() * 2 : radius()}
+                    r={hoverEnt() === ent ? radius() + 10 : radius()}
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
-                      fill='#ffffff'
-                      stroke='#ffff00'
-                    stroke-width='2px'
+                    fill={ent.entityType === 'flicker' ? '#ffff00' : 'rgba(255,255,0,0.5)'}
+                    stroke={ent.entityType === 'flicker' ? '#ff8000' : '#ffff00'}
+                    stroke-dasharray={ent.entityType === 'flicker' ? '1,0' : '3,3'}
+                    stroke-width={ent.entityType === 'flicker' ? '3px' : '1px'}
                   />
                   {/* Removed <Show> block here */}
                   <text
                     style={{
                       transition: 'all 0.2s ease',
-                      opacity: hoverEnt() === ent ? 1 : 0,
+                      opacity: (hoverEnt() && hoverEnt() === ent ? '1' : '0') ,
                       'pointer-events': 'none',
-                      'font-size': `${hoverEnt() === ent ? radius() * 2 : radius() * 1.14}px`,
+                      'font-size': `${hoverEnt() === ent ? radius() + 5 : radius()}px`,
                     }}
                     x={`${finalCx()}%`}
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill='black'
+                    fill={`${ent.entityType === 'flicker' ? 'black' : 'white'}`}
                   >
-                    f{ent.refID}
+                  {hoverText(ent.refID)}
                   </text>
                 </g>
               </Show>);

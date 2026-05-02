@@ -9,9 +9,10 @@ import {
   setFocusedStreamID,
   viewSpaces,
   getStreamTSpan,
+  hoverEnt,
+  setHoverEnt
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
-import { hoverEnt, setHoverEnt } from './InStreamFloaters';
 
 export interface DisplayStreamProps {
   id: number;

@@ -1,12 +1,11 @@
 import { createSignal, createMemo, For, Show, type Component } from 'solid-js'
-import { allStreams, flickerCharCount, focusedEntity, getFlash, setFocusedEntity, type MultEnt } from '../store';
+import { allStreams, flickerCharCount, flickerWordCount, focusedEntity, getFlash, hoverEnt, setFocusedEntity, setHoverEnt, textWordCount, type MultEnt } from '../store';
 
 interface InStreamFloatersProps {
   streamID: number | null;
   clickAct: string;
 };
 
-export const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
 export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
   const [activated, setActivated] = createSignal(true);
   const [ordered, setOrdered] = createSignal(false);
@@ -15,6 +14,14 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
   if (!props.streamID) return (<div>no stream</div>);
 
   const stream = () => allStreams.find(s => s.id === props.streamID);
+  const hoverText = (id:number) => {
+    if (id < 0) return flickerWordCount(id);
+    else {
+      const f = getFlash(id);
+      return f ? textWordCount(f.textContents) : 0;
+    }
+  }
+
   const floatIDs = createMemo(() => allStreams.find(s => s.id === props.streamID)?.contentIDs);
 
   const handleClick = (ent: MultEnt) => 
@@ -75,103 +82,62 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
             const finalCy = () => ordered() ? 10 + spread() : randomY();
 
             return (
-              <Show
-                when={floatID < 0}
-                fallback={
-                  <g
-                    onMouseOver={() => setHoverEnt({entityType: 'flash', refID: floatID})}
-                    onMouseLeave={() => setHoverEnt(null)}
-                    onClick={() => handleClick({entityType: 'flash', refID: floatID})}
-                  >
-                    <circle
-                      style={{
-                        transition: 'all 0.3s ease',
-                        r: `${(hoverEnt()?.entityType === 'flash' 
-                                && hoverEnt()?.refID === floatID) 
-                            ? radius() * 3 
-                            : radius()}`,
-                        cx: `${finalCx()}%`,
-                        cy: `${finalCy()}%`
-                      }}
-                      r= {`${(hoverEnt()?.entityType === 'flash' 
-                                && hoverEnt()?.refID === floatID) 
-                            ? radius() * 3 
-                            : radius()}`}
-                      cx={`${finalCx()}%`}
-                      cy={`${finalCy()}%`}
-                      fill='#ffff00'
-                      stroke='#ff8000'
-                    stroke-width='2px'
-                    />
-                    {/* Removed <Show> block here */}
-                    <text
-                      style={{
-                        transition: 'all 0.4s ease', // Matches the circle's transition perfectly
-                        opacity: (hoverEnt()?.entityType === 'flash' 
-                                && hoverEnt()?.refID === floatID) ? 1 : 0, // Handles the visibility!
-                        'pointer-events': 'none', // Prevents the invisible text from breaking hover state
-                        'font-size': `${(hoverEnt()?.entityType === 'flash' 
-                                && hoverEnt()?.refID === floatID) 
-                                  ? radius() * 2 
-                                  : radius() * 1.14}px`,
-                      }}
-                      x={`${finalCx()}%`}
-                      y={`${finalCy()}%`}
-                      text-anchor="middle"
-                      dominant-baseline="central"
-                      fill='black'
-                    >
-                      f({floatID})
-                    </text>
-                  </g>
-                }
-              >
+              <Show when={floatID}>
                 <g
-                  onMouseOver={() => setHoverEnt({entityType: 'flicker', refID: floatID})}
+                  onMouseOver={() => setHoverEnt({
+                    entityType: floatID < 0 ? 'flicker' : 'flash',
+                    refID: floatID
+                  })}
                   onMouseLeave={() => setHoverEnt(null)}
-                  onClick={() => handleClick({entityType: 'flicker', refID: floatID})}
+                  onClick={() => handleClick({
+                    entityType: floatID < 0 ? 'flicker' : 'flash',
+                    refID: floatID
+                  })}
                 >
                   <circle
                     style={{
                       transition: 'all 0.4s ease',
-                      r: `${(hoverEnt()?.entityType === 'flicker' 
+                      r: `${(hoverEnt() && hoverEnt()?.entityType === 
+                             (floatID < 0 ? 'flicker' : 'flash') 
                              && hoverEnt()?.refID === floatID) 
-                               ? radius() * 3 
+                               ? radius() + 10
                                : radius()}`,
                       cx: `${finalCx()}%`,
                       cy: `${finalCy()}%`
                     }}
-                    r={(hoverEnt()?.entityType === 'flicker' 
+                    r={(hoverEnt() && hoverEnt()?.entityType === 
+                        (floatID < 0 ? 'flicker' : 'flash')
                         && hoverEnt()?.refID === floatID) 
-                          ? radius() * 3 
+                          ? radius() + 10
                           : radius()}
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
-                    fill='transparent'
-                    stroke='#ffff00'
-                    stroke-width='2px'
+                    fill={floatID < 0 ? '#ffff00' : 'rgba(255,255,0,0.5)'}
+                    stroke={floatID < 0 ? '#ff8000' : '#ffff00'}
+                    stroke-dasharray={floatID < 0 ? '1,0' : '3,3'}
+                    stroke-width={floatID < 0 ? '3px' : '1px'}
                   />
-                  {/* Removed <Show> block here */}
                   <text
                     style={{
                       transition: 'all 0.2s ease',
-                      opacity: (hoverEnt()?.entityType === 'flicker' 
+                      opacity: (hoverEnt() && hoverEnt()?.entityType === (floatID < 0 ? 'flicker' : 'flash') 
                                 && hoverEnt()?.refID === floatID) 
                                   ? 1 
                                   : 0,
                       'pointer-events': 'none',
-                      'font-size': `${(hoverEnt()?.entityType === 'flicker' 
+                      'font-size': `${(hoverEnt() && hoverEnt()?.entityType === (floatID < 0 ? 'flicker' : 'flash') 
                                 && hoverEnt()?.refID === floatID) 
-                                  ? radius() * 2.3 
-                                  : radius() * 1.14}px`,
+                                  ? radius() + 5
+                                  : radius()}
+                                  px`,
                     }}
                     x={`${finalCx()}%`}
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill='white'
+                    fill={`${floatID < 0 ? 'black' : 'black'}`}
                   >
-                    F({floatID * -1})
+                  {hoverText(floatID)}
                   </text>
                 </g>
               </Show>);

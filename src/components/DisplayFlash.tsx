@@ -1,6 +1,6 @@
 import { type Component, Show, createMemo } from "solid-js";
-import {allFlashes, allFlickers, setFocusedEntity } from "../store";
-import { setHoverEnt } from './InStreamFloaters';
+import {allFlashes, allFlickers, setFocusedEntity, setHoverEnt  } from "../store";
+import { } from './InStreamFloaters';
 
 interface DisplayFlashProps {
   id: number;

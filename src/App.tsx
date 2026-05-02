@@ -12,6 +12,8 @@ import { PersistHandBar } from './components/PersistHandBar';
 import { VSListFloaters } from './components/VSListFloaters';
 import { VSListStreams } from './components/VSListStreams';
 import { InStreamFloaters } from './components/InStreamFloaters';
+import { VSLister } from './components/VSLister';
+import { CreateNew } from './components/CreateNew';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -22,7 +24,14 @@ const App: Component = () => {
         <AnimationOverlay />
       </Show>
       <div class='page-topper'>
+      <div style={{display: 'flex'}}>
+      <VSLister />
+        </div>
+      <div style={{display: 'flex'}}>
         <PersistHandBar />
+        </div>
+      <div style={{display: 'flex'}}>
+        </div>
       </div>
       <div class="background">
         <WelcomeTitle />
@@ -37,6 +46,7 @@ const App: Component = () => {
               'height': '100%',
               'overflow-y': 'auto'
             }}>
+            <CreateNew of='viewspace' />
               <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
               <Show when={focusedStreamID()} fallback={
                 <VSListFloaters id

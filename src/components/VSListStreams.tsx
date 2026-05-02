@@ -27,6 +27,7 @@ export const VSListStreams: Component<VSListStreamsProps> = (props) => {
       setOpenFloaters(prev => [...prev, ent]);
     }
   };
+  const handleOutClick = () => setWriterTargetID(null);
 
 createEffect(() => {
     const currentFocus = focusedEntity();
@@ -46,13 +47,17 @@ createEffect(() => {
         <h4>Streams</h4>
       </div>
       <Show when={activated()}>
-      <div class="lister-list">
+      <div class="lister-list"
+      onClick={() => handleOutClick()}>
         <For each={streams()}>
           {(s) => (
         <button
           id={'stream' +
             s.refID.toString()}
-          onClick={() => handleClick(s)}
+          onClick={(e) => {
+            handleClick(s);
+            e.stopPropagation();
+          }}
           classList={{
             ['stream-btn']: s.refID !== 0,
             [`focused-stream-btn`]:

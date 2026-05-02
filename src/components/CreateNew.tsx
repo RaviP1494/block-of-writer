@@ -19,7 +19,8 @@ export const CreateNew: Component<CreateNewProps> = (props) => {
 
   return (
       <div class="new-maker flex-down"> 
-        <input type="text" placeholder="Name" value={createName()}
+        <input 
+        type="text" placeholder="Name" value={createName()}
           onInput={(e) => setCreateName(e.currentTarget.value)}
           onKeyDown={(e) => {
             e.key === 'Enter'

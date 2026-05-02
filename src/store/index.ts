@@ -70,6 +70,7 @@ export const [typingStartTime, setTypingStartTime] = createSignal<number | null>
 
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
+export const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
 
 export const [chainTargetID, setChainTargetID] = createSignal<number | null>(null); 
 export const [focusedChainID, setFocusedChainID] = createSignal<number>(0); 
@@ -87,9 +88,12 @@ export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 
 
 export const [allFlashes, setAllFlashes] = createStore<Flash[]>([]);
-export const getFlash = (flashID: number) => allFlashes.find(f => f.id === flashID);
+export const getFlash = (flashID: number) =>
+  allFlashes.find(f => f.id === flashID) 
+  || {id: 0, textContents: '', createDT: 0, delayTSpan: 1, tSpan: 1}; 
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
-export const getFlicker = (flickerID: number) => allFlickers.find(f => f.id === flickerID);
+export const getFlicker = (flickerID: number) => allFlickers.find(f => f.id === flickerID) 
+|| {id: 0, contentIDs: [], createDT: 0, delayTSpan: 1};
 export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
 export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
@@ -109,7 +113,7 @@ let nextFlashID = 1;
 let nextStreamID = 1;
 let nextFlickerID = -1;
 let nextChainID = 1;
-let nextViewSpaceID = 1;
+let nextViewSpaceID = 2;
 
 
 export const addFlash = (flash: Flash) => {
@@ -563,7 +567,7 @@ export const flickerCharCount = (flickerID:number) => {
   }, 0);
 };
 
-export const textWordCount = (text:string) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
+export const textWordCount = (text:string | null) => text?.trim().split(/\s+/).filter(w => w.length > 0).length || 0;
 
 export const getStreamTSpan = (streamID:number) => {
   const ms = streamFlashes(streamID).reduce((total, f) => total + f.tSpan, 0);
