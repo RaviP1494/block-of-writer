@@ -515,22 +515,22 @@ export const groupedFlashIDs = (streamID: number) => {
   if (!streamID && streamID !== 0) return [];
   const ids = allStreams.find((stream) => stream.id === streamID)?.contentIDs
   if (!ids) return [];
-  const groups: Array<{ type: 'flashes' | 'flicker', flashIDs: number[] }> = [];
+  const groups: Array<{ type: 'flashes' | 'flicker', flashIDs: number[], flickerID: number | null }> = [];
   let currentFlashGroup: number[] = [];
   ids.forEach(id => {
     if (id > 0) {
       currentFlashGroup.push(id);
     } else {
       if (currentFlashGroup.length > 0) {
-        groups.push({ type: 'flashes', flashIDs: currentFlashGroup });
+        groups.push({ type: 'flashes', flashIDs: currentFlashGroup, flickerID: null });
         currentFlashGroup = [];
       }
       const flicker = allFlickers.find(f => f.id === id);
-      groups.push({ type: 'flicker', flashIDs: flicker ? flicker.contentIDs : [] });
+      groups.push({ type: 'flicker', flashIDs: flicker ? flicker.contentIDs : [], flickerID: flicker ? flicker.id : 0 });
     }
   });
   if (currentFlashGroup.length > 0) {
-    groups.push({ type: 'flashes', flashIDs: currentFlashGroup });
+    groups.push({ type: 'flashes', flashIDs: currentFlashGroup, flickerID: null });
   }
   return groups;
 }

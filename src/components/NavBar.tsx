@@ -7,7 +7,11 @@ export const NavBar: Component = () => {
 
   return (
     <div class='finger navbar'>
-    {userMode()}
+    <div style={{
+      color: '#ffffff',
+      'font-family': '"Caveat", cursive'
+    }}>Mode:</div>
+    <div>{userMode()}</div>
     </div>
   );
 };

@@ -11,6 +11,7 @@ import {
   getStreamTSpan,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
+import { hoverEnt, setHoverEnt } from './InStreamFloaters';
 
 export interface DisplayStreamProps {
   id: number;
@@ -172,11 +173,18 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
           <For each={groupedContent()}>
             {(group) => (
               <div
-                class={
-                  flashSpacing() ?
-                    'flicker' :
-                    'paragraph flicker'
-                }>
+              classList={{
+                ['paragraph']: flashSpacing(),
+                ['flicker-highlight']: 
+                  (hoverEnt()?.entityType === group.type 
+                  && hoverEnt()?.refID === group.flickerID)
+              }}
+              onMouseOver={() => group.flickerID
+                && setHoverEnt({
+                  entityType: 'flicker',
+                  refID: group.flickerID!})}
+              onMouseLeave={() => setHoverEnt(null)}
+              >
                 <For each={group.flashIDs}>
                   {(flashID, index) => {
                     const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
@@ -185,7 +193,10 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       showTimes={() => showTimes()}
                       isSpaced={() => flashSpacing()}
                       renderedBy='stream'
-                      clickDo={props.innerClickMode} />;
+                      clickDo={props.innerClickMode}
+                      isHovered={
+                        hoverEnt()?.entityType === 'flash' 
+                        && hoverEnt()?.refID === flashID}/>;
                   }}
                 </For>
               </div>

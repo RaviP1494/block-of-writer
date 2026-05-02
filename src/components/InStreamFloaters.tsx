@@ -1,32 +1,35 @@
 import { createSignal, createMemo, For, Show, type Component } from 'solid-js'
-import { flickerCharCount, focusedEntity, getFlash, setFocusedEntity, setWriterTargetID, viewSpaces, type MultEnt } from '../store';
+import { allStreams, flickerCharCount, focusedEntity, getFlash, setFocusedEntity, type MultEnt } from '../store';
 
-interface VSListFloatersProps {
-  id: number | null;
+interface InStreamFloatersProps {
+  streamID: number | null;
   clickAct: string;
 };
-export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
+
+export const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
+export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
   const [activated, setActivated] = createSignal(true);
   const [ordered, setOrdered] = createSignal(false);
   const [shuffleTick, setShuffleTick] = createSignal(0);
-  const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
 
-  if (!props.id) return (<div>no viewspace</div>);
+  if (!props.streamID) return (<div>no stream</div>);
 
-  const vs = () => viewSpaces.find(vs => vs.id === props.id);
-  const floaters = createMemo(
-    () => vs()?.tentsInSpace
-    .filter((ent) => ent.entityType !== 'stream' )
-    .reverse() || []);
+  const stream = () => allStreams.find(s => s.id === props.streamID);
+  const floatIDs = createMemo(() => allStreams.find(s => s.id === props.streamID)?.contentIDs);
 
-  const handleClick = (ent: MultEnt) => focusedEntity() !== ent 
+  const handleClick = (ent: MultEnt) => 
+  !(focusedEntity()?.entityType 
+    === ent.entityType 
+    && 
+      focusedEntity()?.refID 
+    === ent.refID)
     ? setFocusedEntity(ent) 
-    : null;
+    : setFocusedEntity(null);
 
   return (
     <div class='floater-box'>
       <div class='floater-top'>
-        <h4> Free Floaters </h4>
+        <h4> {stream()?.title} </h4>
         <div style={{
           display: activated() ? 'flex' : 'none'
         }}>
@@ -51,15 +54,14 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
         </div>
       </div>
       <svg 
-      onClick={() => setWriterTargetID(null)}
       class={activated() ? 'floater-circles' : 'hiding-circles'}>
       <Show when={activated()}>
-        <For each={floaters()}>
-          {(ent, index) => {
-            const radius = () => ent.entityType === 'flash'
-              ? Math.sqrt(getFlash(ent.refID)?.textContents.length || 1) + 4
-              : Math.sqrt(flickerCharCount(ent.refID) || 1) + 4;
-            const spread = () => (index() / (floaters()?.length || 1) * 80);
+        <For each={floatIDs()}>
+          {(floatID, index) => {
+            const radius = () => floatID > 0
+              ? Math.sqrt(getFlash(floatID)?.textContents.length || 1) + 4
+              : Math.sqrt(flickerCharCount(floatID) || 1) + 4;
+            const spread = () => (index() / (floatIDs()?.length || 1) * 80);
             const randomX = createMemo(() => {
               shuffleTick(); // Subscribe to the shuffle event
               return 10 + Math.random() * 80;
@@ -74,34 +76,44 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
 
             return (
               <Show
-                when={ent.entityType === 'flicker'}
+                when={floatID < 0}
                 fallback={
                   <g
-                    onMouseOver={() => setHoverEnt(ent)}
+                    onMouseOver={() => setHoverEnt({entityType: 'flash', refID: floatID})}
                     onMouseLeave={() => setHoverEnt(null)}
-                    onClick={() => handleClick(ent)}
+                    onClick={() => handleClick({entityType: 'flash', refID: floatID})}
                   >
                     <circle
                       style={{
                         transition: 'all 0.3s ease',
-                        r: `${hoverEnt() === ent ? radius() * 2 : radius()}`,
+                        r: `${(hoverEnt()?.entityType === 'flash' 
+                                && hoverEnt()?.refID === floatID) 
+                            ? radius() * 3 
+                            : radius()}`,
                         cx: `${finalCx()}%`,
                         cy: `${finalCy()}%`
                       }}
-                      r={hoverEnt() === ent ? radius() * 2 : radius()}
+                      r= {`${(hoverEnt()?.entityType === 'flash' 
+                                && hoverEnt()?.refID === floatID) 
+                            ? radius() * 3 
+                            : radius()}`}
                       cx={`${finalCx()}%`}
                       cy={`${finalCy()}%`}
-                    fill='#ffff00'
-                    stroke='#ff8000'
+                      fill='#ffff00'
+                      stroke='#ff8000'
                     stroke-width='2px'
                     />
                     {/* Removed <Show> block here */}
                     <text
                       style={{
                         transition: 'all 0.4s ease', // Matches the circle's transition perfectly
-                        opacity: hoverEnt() === ent ? 1 : 0, // Handles the visibility!
+                        opacity: (hoverEnt()?.entityType === 'flash' 
+                                && hoverEnt()?.refID === floatID) ? 1 : 0, // Handles the visibility!
                         'pointer-events': 'none', // Prevents the invisible text from breaking hover state
-                        'font-size': `${hoverEnt() === ent ? radius() * 2 : radius() * 1.14}px`,
+                        'font-size': `${(hoverEnt()?.entityType === 'flash' 
+                                && hoverEnt()?.refID === floatID) 
+                                  ? radius() * 2 
+                                  : radius() * 1.14}px`,
                       }}
                       x={`${finalCx()}%`}
                       y={`${finalCy()}%`}
@@ -109,45 +121,57 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                       dominant-baseline="central"
                       fill='black'
                     >
-                      F{ent.refID * -1}
+                      f({floatID})
                     </text>
                   </g>
                 }
               >
                 <g
-                  onMouseOver={() => setHoverEnt(ent)}
+                  onMouseOver={() => setHoverEnt({entityType: 'flicker', refID: floatID})}
                   onMouseLeave={() => setHoverEnt(null)}
-                  onClick={() => handleClick(ent)}
+                  onClick={() => handleClick({entityType: 'flicker', refID: floatID})}
                 >
                   <circle
                     style={{
                       transition: 'all 0.4s ease',
-                      r: `${hoverEnt() === ent ? radius() * 2 : radius()}`,
+                      r: `${(hoverEnt()?.entityType === 'flicker' 
+                             && hoverEnt()?.refID === floatID) 
+                               ? radius() * 3 
+                               : radius()}`,
                       cx: `${finalCx()}%`,
                       cy: `${finalCy()}%`
                     }}
-                    r={hoverEnt() === ent ? radius() * 2 : radius()}
+                    r={(hoverEnt()?.entityType === 'flicker' 
+                        && hoverEnt()?.refID === floatID) 
+                          ? radius() * 3 
+                          : radius()}
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
-                      fill='#ffffff'
-                      stroke='#ffff00'
+                    fill='transparent'
+                    stroke='#ffff00'
                     stroke-width='2px'
                   />
                   {/* Removed <Show> block here */}
                   <text
                     style={{
                       transition: 'all 0.2s ease',
-                      opacity: hoverEnt() === ent ? 1 : 0,
+                      opacity: (hoverEnt()?.entityType === 'flicker' 
+                                && hoverEnt()?.refID === floatID) 
+                                  ? 1 
+                                  : 0,
                       'pointer-events': 'none',
-                      'font-size': `${hoverEnt() === ent ? radius() * 2 : radius() * 1.14}px`,
+                      'font-size': `${(hoverEnt()?.entityType === 'flicker' 
+                                && hoverEnt()?.refID === floatID) 
+                                  ? radius() * 2.3 
+                                  : radius() * 1.14}px`,
                     }}
                     x={`${finalCx()}%`}
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill='black'
+                    fill='white'
                   >
-                    f{ent.refID}
+                    F({floatID * -1})
                   </text>
                 </g>
               </Show>);

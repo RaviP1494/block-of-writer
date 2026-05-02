@@ -189,7 +189,7 @@ export const FocusWriter: Component = () => {
         <div id='spinny'
           class={writerTargetID() ? 'stream-targeted' : 'null-targeted'}
           style={{
-            width: '200%',
+            width: '150%',
             'text-align': 'center',
             'color': writerTargetID() ? '#00ff7f' : 'white',
             'font-family': '"Caveat", cursive',

@@ -3,7 +3,7 @@ import './App.css'
 import { createSignal, Show } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { userMode, activeViewSpaceID } from './store';
+import { userMode, activeViewSpaceID, focusedStreamID } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
@@ -11,6 +11,7 @@ import { ViewFocused } from './components/ViewFocused';
 import { PersistHandBar } from './components/PersistHandBar';
 import { VSListFloaters } from './components/VSListFloaters';
 import { VSListStreams } from './components/VSListStreams';
+import { InStreamFloaters } from './components/InStreamFloaters';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -20,8 +21,12 @@ const App: Component = () => {
       <Show when={spawnDots()}>
         <AnimationOverlay />
       </Show>
+      <div class='page-topper'>
+        <PersistHandBar />
+      </div>
       <div class="background">
         <WelcomeTitle />
+
         <Show when={userMode() === 'Write'}>
           <div style={{ 'grid-row': '1 / span 2','grid-column': '1',
               'max-height': '98dvh',
@@ -32,11 +37,14 @@ const App: Component = () => {
               'height': '100%',
               'overflow-y': 'auto'
             }}>
-              <PersistHandBar />
               <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
-              <VSListFloaters id
-                ={activeViewSpaceID()}
-                clickAct='focus' />
+              <Show when={focusedStreamID()} fallback={
+                <VSListFloaters id
+                  ={activeViewSpaceID()}
+                  clickAct='focus' />
+                }>
+                <InStreamFloaters streamID={focusedStreamID()} clickAct='focus' />
+              </Show>
             </div>
           </div>
           <div style={{ 'grid-column': '2', 'grid-row': '2'
@@ -52,6 +60,7 @@ const App: Component = () => {
               <ViewFocused />
           </div>
         </Show>
+
         {/*     <Switch>
           <Match
             when={userMode() === 'ReadWrite'}>

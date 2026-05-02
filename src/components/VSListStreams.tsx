@@ -1,4 +1,4 @@
-import { createEffect, createMemo, For, type Component } from 'solid-js'
+import { createEffect, createMemo, createSignal, For, Show, type Component } from 'solid-js'
 import { focusedEntity, focusedStreamID, getStream, openFloaters, setFocusedEntity, setFocusedStreamID, setOpenFloaters, setWriterTargetID, viewSpaces, writerTargetID, type MultEnt } from '../store';
 
 interface VSListStreamsProps {
@@ -6,6 +6,7 @@ interface VSListStreamsProps {
   clickAct: string;
 };
 export const VSListStreams: Component<VSListStreamsProps> = (props) => {
+  const [activated, setActivated] = createSignal(true);
 
   if (!props.id) return (<div>no viewspace</div>)
   const vs = () => viewSpaces.find(vs => vs.id === props.id);
@@ -44,6 +45,7 @@ createEffect(() => {
       <div class='lister-header'>
         <h4>Streams</h4>
       </div>
+      <Show when={activated()}>
       <div class="lister-list">
         <For each={streams()}>
           {(s) => (
@@ -65,6 +67,15 @@ createEffect(() => {
           )}
         </For>
       </div>
+      </Show>
+        <button class={activated() ? 'minibar' : 'minibar maxer'}
+        style={{
+          'border-radius': '0'
+        }}
+        onClick={()=>setActivated(!activated())}>
+          <span>⮝</span>
+          <span>⮝</span>
+        </button>
     </div>
       );
 }

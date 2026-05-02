@@ -1,5 +1,6 @@
-import { type Component, Show } from "solid-js";
+import { type Component, Show, createMemo } from "solid-js";
 import {allFlashes, allFlickers, setFocusedEntity } from "../store";
+import { setHoverEnt } from './InStreamFloaters';
 
 interface DisplayFlashProps {
   id: number;
@@ -8,6 +9,7 @@ interface DisplayFlashProps {
   renderedBy: string;
   prevID?: number | null;
   clickDo?: string;
+  isHovered?: boolean;
 }
 
 export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
@@ -15,6 +17,7 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
   const showTimes = () => props.showTimes();
   const isSpaced = () => props.isSpaced();
   const holdingFlicker = allFlickers.find(f => f.contentIDs.includes(props.id));
+  const isHighlighted = createMemo(()=>props.isHovered)
 
   const handleClick = () => {
     if (props.clickDo === 'focus') {
@@ -33,8 +36,16 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
           fallback={
             <span 
             onClick={()=>handleClick()}
-            class={isSpaced() ? 'paragraph' : ''}
-              title={(flash()!.tSpan / 1000).toString() + ' seconds'}>
+            classList={{
+              ['paragraph']: isSpaced(),
+              ['flash-highlight']: isHighlighted()
+            }}
+            onMouseOver={() => flash()?.id
+              && setHoverEnt({
+                entityType: 'flash',
+                refID: flash()!.id})}
+            onMouseLeave={() => setHoverEnt(null)}
+            title={(flash()!.tSpan / 1000).toString() + ' seconds'}>
               {flash()!.textContents}&nbsp;
             </span>
           }>
