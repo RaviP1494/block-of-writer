@@ -66,7 +66,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                     position: 'absolute', 
                     inset: 0, 
                     margin: 'auto'}}>
-                    Flash {flash()?.id}
+                    Flash
                     </h3>
             <button class={deleteClicked()
               ? 'delete-reveal' : 'delete-hide'}

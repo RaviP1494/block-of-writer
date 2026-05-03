@@ -63,9 +63,21 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
       <Show when={activated()}>
         <For each={floaters()}>
           {(ent, index) => {
-            const radius = () => ent.entityType === 'flash'
-              ? Math.sqrt(getFlash(ent.refID)?.textContents.length || 1) + 4
-              : Math.sqrt(flickerCharCount(ent.refID) || 1) + 4;
+            const radius = () => {
+              if (ent.entityType === 'flash') { 
+                const calced 
+                = (2 * Math.log(getFlash(ent.refID)?.textContents.length || 1)) + 1;
+                return calced > 3 ? calced : 3;
+              }
+              else if (ent.entityType === 'flicker') { 
+                const calced 
+                = (2 * Math.log(flickerCharCount(ent.refID) || 1)) + 1;
+                return calced > 3 ? calced : 3;
+              }
+              else {
+                return 1;
+              }
+            };
             const spread = () => (index() / (floaters()?.length || 1) * 80);
             const randomX = createMemo(() => {
               shuffleTick(); // Subscribe to the shuffle event

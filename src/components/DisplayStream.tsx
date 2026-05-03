@@ -175,7 +175,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             {(group) => (
               <div
               classList={{
-                ['paragraph']: flashSpacing(),
+                ['paragraph']: true,
                 ['flicker-highlight']: 
                   (hoverEnt()?.entityType === group.type 
                   && hoverEnt()?.refID === group.flickerID)

@@ -65,9 +65,19 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
       <Show when={activated()}>
         <For each={floatIDs()}>
           {(floatID, index) => {
-            const radius = () => floatID > 0
-              ? Math.sqrt(getFlash(floatID)?.textContents.length || 1) + 4
-              : Math.sqrt(flickerCharCount(floatID) || 1) + 4;
+            const radius = () => {
+              if (floatID > 0) {
+              const calced = (2 * Math.log(getFlash(floatID)
+                ?.textContents.length || 1)) + 1;
+                return calced > 3 ? calced : 3;
+              }
+              else {
+                const calced 
+                = (2 * Math.log(flickerCharCount(floatID) 
+                  || 1)) + 1;
+              return calced > 3 ? calced : 3;
+              }
+            }
             const spread = () => (index() / (floatIDs()?.length || 1) * 80);
             const randomX = createMemo(() => {
               shuffleTick(); // Subscribe to the shuffle event
