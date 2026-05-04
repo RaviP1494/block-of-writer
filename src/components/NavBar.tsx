@@ -1,9 +1,12 @@
-import { type Component } from 'solid-js';
+import { For, type Component } from 'solid-js';
 import {
+    setUserMode,
   userMode,
 } from '../store';
 
 export const NavBar: Component = () => {
+
+  const modes = ['WriteRead', 'Write'];
 
   return (
     <div class='finger navbar'>
@@ -11,7 +14,17 @@ export const NavBar: Component = () => {
       color: '#ffffff',
       'font-family': '"Caveat", cursive'
     }}>Mode:</div>
-    <div>{userMode()}</div>
+    <div>
+    <For each={modes}>
+    {(mode:string) =>
+    <button 
+    onClick={()=>setUserMode(mode)}
+    style={{
+      'background-color': mode === userMode() ? 'green' : 'transparent'
+    }}>{mode}</button>
+    }
+    </For>
+    </div>
     </div>
   );
 };

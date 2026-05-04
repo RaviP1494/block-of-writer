@@ -13,7 +13,6 @@ import { VSListFloaters } from './components/VSListFloaters';
 import { VSListStreams } from './components/VSListStreams';
 import { InStreamFloaters } from './components/InStreamFloaters';
 import { VSLister } from './components/VSLister';
-import { CreateNew } from './components/CreateNew';
 
 export const [spawnDots, setSpawnDots] = createSignal(false);
 
@@ -37,6 +36,35 @@ const App: Component = () => {
         <WelcomeTitle />
 
         <Show when={userMode() === 'Write'}>
+        <div style={{
+            'grid-row': '1 / span 2', 'grid-column': '1',
+            'max-height': '98dvh',
+        }}>
+            <div class='flex-down'
+              style={{
+                'justify-content': 'flex-start',
+                'height': '100%',
+                'overflow-y': 'auto'
+              }}>
+              <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
+              <Show when={focusedStreamID()} fallback={
+                <VSListFloaters id
+                  ={activeViewSpaceID()}
+                  clickAct='focus' />
+              }>
+                <InStreamFloaters streamID={focusedStreamID()} clickAct='focus' />
+              </Show>
+            </div>
+          </div>
+          <div style={{
+            'grid-column': '2', 'grid-row': '2'
+          }}>
+            <FocusWriter />
+            <WritersHandBar />
+          </div>
+        </Show>
+
+        <Show when={userMode() === 'WriteRead'}>
           <div style={{
             'grid-row': '1 / span 2', 'grid-column': '1',
             'max-height': '98dvh',
@@ -47,7 +75,6 @@ const App: Component = () => {
                 'height': '100%',
                 'overflow-y': 'auto'
               }}>
-              <CreateNew of='viewspace' />
               <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
               <Show when={focusedStreamID()} fallback={
                 <VSListFloaters id

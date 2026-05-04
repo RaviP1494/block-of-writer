@@ -40,6 +40,11 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
               ['paragraph']: isSpaced(),
               ['flash-highlight']: isHighlighted()
             }}
+            style={{
+              'word-wrap': 'break-word',
+              'overflow-wrap': 'break-word',
+              'word-break': 'break-all'
+            }}
             onMouseOver={() => flash()?.id
               && setHoverEnt({
                 entityType: 'flash',

@@ -27,7 +27,10 @@ export const VSListStreams: Component<VSListStreamsProps> = (props) => {
       setOpenFloaters(prev => [...prev, ent]);
     }
   };
-  const handleOutClick = () => setWriterTargetID(null);
+  const handleOutClick = () => {
+    setWriterTargetID(null);
+    setFocusedStreamID(0);
+  };
 
 createEffect(() => {
     const currentFocus = focusedEntity();

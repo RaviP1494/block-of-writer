@@ -117,6 +117,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     </button>
                   </div>
               <h1
+              class='grav-pt'
               onClick={() => setIsEditingTitle(true)}>
                 {stream()?.title}
               </h1>

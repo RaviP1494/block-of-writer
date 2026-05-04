@@ -13,8 +13,7 @@ interface ActiveParticle {
   y: number;
   vx: number;
   vy: number;
-  gravX: number;
-  gravY: number;
+  gravPts: PointTuple[];
   isDespawning: boolean;
   despawnTarget?: PointTuple;
 }
@@ -25,39 +24,16 @@ let particles: ActiveParticle[] = [];
 // ==========================================
 // EXPORTED TRIGGER FUNCTIONS
 // ==========================================
-const charGroups = ['qaz', 'wsx', 'edc', 'rfv','uh','bij','okn','plm'];
 
-const charMap = new Int8Array(26).fill(-1); 
-
-charGroups.forEach((group, index) => {
-  for (let i = 0; i < group.length; i++) {
-    charMap[group.charCodeAt(i) - 97] = index;
-  }
-});
-
-export function getGroupIndexFast(char: string): number {
-  if (!char) return -1;
-  const code = char.toLowerCase().charCodeAt(char.length-1) - 97;
-  
-  // Ensure it's a standard letter between a and z
-  if (code >= 0 && code <= 25) {
-     return charMap[code] + 1;
-  }
-  return -1; // Character not in any group (like numbers, punctuation, or 't')
-}
 export const spawnParticle = (
-  gravPt: PointTuple,
+  gravPts: PointTuple[],
   text: string, 
   timeSpan: number
 ) => {
-
-  const mass = text.length * 500;
+  const mass = Math.log(text.length + 1) * 1500;
   const radius = Math.sqrt(text.length) + 3;
-
   const wordsPerSecond = textWordCount(text) / timeSpan;
-  // let initialVx = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond / 2;
-  // let initialVy = (Math.floor(Math.random() * 3) - 1) * wordsPerSecond / 2;
-  const initialVx = ((Math.random() * 3) - 1) * wordsPerSecond * -5;
+  const initialVx = wordsPerSecond * 5;
   const initialVy = wordsPerSecond * (-5);
 
   console.log('id:' + nextParticleID + 
@@ -65,8 +41,8 @@ export const spawnParticle = (
               radius + ',mass:' + mass +
               ',x:' + ',y:' +
                ',vx:' + + initialVx +
-              ',vy:' + initialVy + ',gravX:' +
-              gravPt[1] + ',gravY:' + gravPt[0]);
+              ',vy:' + initialVy);
+              
 
   particles.push({
     id: nextParticleID++,
@@ -76,8 +52,7 @@ export const spawnParticle = (
     y: window.innerHeight,
     vx: initialVx,
     vy: initialVy,
-    gravX: gravPt[1],
-    gravY: gravPt[0],
+    gravPts: gravPts,
     isDespawning: false
   });
   return nextParticleID;
@@ -125,8 +100,7 @@ export const AnimationOverlay: Component = () => {
      // Iterate backwards so we can safely splice out despawned particles
      for (let i = particles.length - 1; i >= 0; i--) {
        const p = particles[i];
-       let gravX: number;
-       let gravY: number;
+       let gravPts: PointTuple[] = [];
    
        if (p.x < 0) p.vx = Math.abs(p.vx);
        else if (p.x > canvasRef.width) p.vx = Math.abs(p.vx) * (-1);
@@ -135,28 +109,27 @@ export const AnimationOverlay: Component = () => {
 
        // 1. Determine Target
        if (p.isDespawning && p.despawnTarget) {
-         gravY = p.despawnTarget[0];
-         gravX = p.despawnTarget[1];
+         gravPts = [p.despawnTarget];
     
          // If it gets close enough to the despawn point, kill it
-         if (Math.hypot(gravX - p.x, gravY - p.y) < 50) {
+         if (Math.hypot(gravPts[0][1] - p.x, gravPts[0][0] - p.y) < 50) {
            particles.splice(i, 1);
            continue;
          }
        } else {
-         gravX = p.gravX;
-         gravY = p.gravY;
+         gravPts = p.gravPts;
        }
 
-       const d = Math.max(Math.hypot(gravX - p.x, gravY - p.y), 40);
-       const a = p.mass / (d * d);
-       const propX = (gravX - p.x) / d;
-       const propY = (gravY - p.y) / d;
-
-
-       //console.log('vx:' + p.vx + ' ' + 'vy' + p.vy);
-       p.vx += (a * propX); 
-       p.vy += (a * propY);
+       let ax = 0;
+       let ay = 0;
+       gravPts.forEach((pt) => {
+         const d = Math.max(Math.hypot(pt[1] - p.x, pt[0] - p.y), 40);
+         ax += (p.mass / (d * d)) * ((pt[1] - p.x) / d);
+         ay += (p.mass / (d * d)) * ((pt[0] - p.y) / d);
+         
+       });
+       p.vx += ax; 
+       p.vy += ay;
 
        p.vx = p.vx < 0 ? Math.max(p.vx, -20) : Math.min(p.vx, 20);
        p.vy = p.vy < 0 ? Math.max(p.vy, -20) : Math.min(p.vy, 20);

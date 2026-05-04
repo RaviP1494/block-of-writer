@@ -94,6 +94,7 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
             return (
               <Show when={ent}>
                 <g
+                  class='grav-pt'
                   onMouseOver={() => setHoverEnt(ent)}
                   onMouseLeave={() => setHoverEnt(null)}
                   onClick={() => handleClick(ent)}

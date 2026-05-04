@@ -28,14 +28,14 @@ export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
 
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
-  const newStreamBtn = document.getElementById('spinny');
-  const newStrBtnRect = newStreamBtn?.getBoundingClientRect();
-  console.log(newStrBtnRect);
-  const gravPt: PointTuple = 
-    [(newStrBtnRect!.top + newStrBtnRect!.bottom) / 2, 
-      (newStrBtnRect!.left + newStrBtnRect!.right) / 2];
-
-  spawnParticle(gravPt, text, timeSpan);
+  const gravEls = document.querySelectorAll<HTMLElement>('.grav-pt');
+  const gravPts: PointTuple[] = [];
+  gravEls.forEach((el) => {
+    const rect = el?.getBoundingClientRect();
+    gravPts.push([(rect!.top + rect!.bottom) / 2, 
+      (rect!.left + rect!.right) / 2]);
+  });
+  spawnParticle(gravPts, text, timeSpan);
 };
 
 // Example: Arcing it to the StreamList to destroy it
@@ -186,8 +186,8 @@ export const FocusWriter: Component = () => {
           }}>
           Sending To
         </div>
-        <div id='spinny'
-          class={writerTargetID() ? 'stream-targeted' : 'null-targeted'}
+        <div
+          class={writerTargetID() ? 'stream-targeted grav-pt' : 'null-targeted grav-pt'}
           style={{
             width: '150%',
             'text-align': 'center',

@@ -94,6 +94,7 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
             return (
               <Show when={floatID}>
                 <g
+                class = 'grav-pt'
                   onMouseOver={() => setHoverEnt({
                     entityType: floatID < 0 ? 'flicker' : 'flash',
                     refID: floatID
