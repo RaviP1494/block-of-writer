@@ -76,7 +76,6 @@
   display: flex;
   box-shadow: inset 0 0 1ch #000000;
   background-color: #007fff;
-  border-bottom: 1px solid blue;
   transition: all 0.4s ease;
 }
 .floater-top > h4 {
@@ -105,7 +104,7 @@
   width: 100%;
   box-sizing: border-box;
   background-color: #000000;
-  box-shadow: inset 0 0 20ch -9ch #007fff, 0 0 6ch -3ch #007fff;
+  box-shadow: inset 0 0 25ch -10ch #ffffff, 0 0 6ch -3ch #ffffff;
 }
 .hiding-circles {
   display: none;
@@ -437,8 +436,8 @@
   flex-wrap: wrap-reverse;
   align-content: center;
   overflow-y: auto;
-  background-color: #ffffff;
-  box-shadow: inset 0 0 14ch #0000ff, 0 0 5ch -3ch #ffffff;
+  background-color: #0000ff;
+  box-shadow: inset 0 0 10ch #000000, 0 0 5ch -3ch #ffffff, inset 0 0 5ch 2ch #0000ff;
 }
 .lister-list button.null-btn {
   order: 1;

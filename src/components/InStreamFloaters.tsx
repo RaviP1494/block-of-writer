@@ -124,8 +124,8 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
                     fill={floatID < 0 ? '#ffff00' : 'rgba(255,255,0,0.5)'}
-                    stroke={floatID < 0 ? '#ff8000' : '#ffff00'}
-                    stroke-dasharray={floatID < 0 ? '1,0' : '3,3'}
+                    stroke={floatID < 0 ? 'rgba(255,255,0,0.5)' : '#ffff00'}
+                    stroke-dasharray='3,3'
                     stroke-width={floatID < 0 ? '3px' : '1px'}
                   />
                   <text

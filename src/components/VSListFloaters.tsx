@@ -32,12 +32,22 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
 
   return (
     <div class='floater-box'>
-      <div class='floater-top'>
-        <h4> Free Floaters </h4>
+      <div class='floater-top'
+      style={{
+        'background-color': '#ffffff',
+      }}>
+        <h4
+        style={{
+        color: '#000000'
+        }}
+        > Free Floaters </h4>
         <div style={{
-          display: activated() ? 'flex' : 'none'
+          display: activated() ? 'flex' : 'none',
         }}>
           <button 
+        style={{
+        color: '#000000'
+        }}
             class='floater-button'
             onClick={(e) => {
               e.stopPropagation();
@@ -47,6 +57,9 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
           </button>
           <Show when={!ordered()}>
             <button 
+        style={{
+        color: '#000000'
+        }}
             class='floater-button'
             onClick={(e) => {
               e.stopPropagation();
@@ -110,8 +123,8 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
                     fill={ent.entityType === 'flicker' ? '#ffff00' : 'rgba(255,255,0,0.5)'}
-                    stroke={ent.entityType === 'flicker' ? '#ff8000' : '#ffff00'}
-                    stroke-dasharray={ent.entityType === 'flicker' ? '1,0' : '3,3'}
+                    stroke={ent.entityType === 'flicker' ? 'rgba(255,255,0,0.5)' : '#ffff00'}
+                    stroke-dasharray='3,3'
                     stroke-width={ent.entityType === 'flicker' ? '3px' : '1px'}
                   />
                   {/* Removed <Show> block here */}
