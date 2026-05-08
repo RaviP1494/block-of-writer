@@ -18,14 +18,14 @@
   box-sizing: border-box;
   padding: 1ch;
   background-color: #303330;
-  box-shadow: inset 0 20ch 100dvh #ffffff, inset 0 -100dvh 100dvh -50dvh rgba(60,80,140, 0.3);
+  box-shadow: inset 0 20ch calc(100dvh - 3ch) #ffffff, inset 0 calc(3ch - 100dvh) calc(100dvh - 3ch) -50dvh rgba(60,80,140, 0.3);
   width: 100%;
   max-height: calc(100dvh - 3ch);
   min-height: calc(100dvh - 3ch);
   display: grid;
   grid-template-rows: 20ch 1fr;
   grid-template-columns: minmax(0, 1fr) 40dvw minmax(0, 1fr);
-  overflow: hidden;
+  overflow: clip;
 }
 
 .minibar {
@@ -538,7 +538,7 @@
   font-family: 'Syne Mono', monospace;
   font-size: 1.94dvw;
   resize: none;
-  overflow: hidden;
+  overflow: auto;
   line-height: 1.5;
 }
 .inflection {

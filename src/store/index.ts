@@ -53,7 +53,7 @@ export interface SparkChain {
 // 2. GLOBAL SIGNALS (Transient State)
 // ==========================================
 
-export const [userMode, setUserMode] = createSignal<string> ('Write');
+export const [userMode, setUserMode] = createSignal<string> ('WriteRead');
 export const [flashDelayT, setFlashDelayT] = createSignal<number>(2);
 
 export const [flickerModeOn, setFlickerModeOn] = createSignal<boolean>(true);
@@ -64,8 +64,6 @@ export const [inflecTents, setInflecTents] = createSignal<Flash[] | null>(null);
 export const [inflectionOn, setInflectionOn] = createSignal<boolean>(false);
 export const [backspaceDisabled, setBackspaceDisabled] = createSignal<boolean>(false);
 
-//webworker
-export const [isWritersBlockEmpty, setIsWritersBlockEmpty] = createSignal<boolean>(true);
 export const [typingStartTime, setTypingStartTime] = createSignal<number | null>(null);
 
 export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 

@@ -41,7 +41,7 @@ export const VSLister: Component = () => {
               {(vs) =>
                 <button onClick={(e) => {
                   setActiveViewSpaceID(vs.id);
-                  setIsSelecting(false);
+                  if(viewSpaces.length > 1) setIsSelecting(false);
                   e.stopPropagation();
                 }}>{vs.title}</button>
               }

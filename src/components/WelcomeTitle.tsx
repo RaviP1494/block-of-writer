@@ -1,5 +1,4 @@
 import { type Component } from 'solid-js';
-import { NavBar } from './NavBar';
 import { setSpawnDots, spawnDots } from '../App';
 
 export const WelcomeTitle: Component = () => {
@@ -14,7 +13,6 @@ export const WelcomeTitle: Component = () => {
       }}>
         Writer's Block
       </h1>
-      <NavBar />
     </div>
   );
 }

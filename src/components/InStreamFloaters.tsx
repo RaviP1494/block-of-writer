@@ -67,15 +67,13 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
           {(floatID, index) => {
             const radius = () => {
               if (floatID > 0) {
-              const calced = (2 * Math.log(getFlash(floatID)
-                ?.textContents.length || 1)) + 1;
-                return calced > 3 ? calced : 3;
+                return 3;
               }
               else {
                 const calced 
                 = (2 * Math.log(flickerCharCount(floatID) 
                   || 1)) + 1;
-              return calced > 3 ? calced : 3;
+                return calced > 3 ? calced : 3;
               }
             }
             const spread = () => (index() / (floatIDs()?.length || 1) * 80);
@@ -111,7 +109,7 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
                       r: `${(hoverEnt() && hoverEnt()?.entityType === 
                              (floatID < 0 ? 'flicker' : 'flash') 
                              && hoverEnt()?.refID === floatID) 
-                               ? radius() + 10
+                               ? 20
                                : radius()}`,
                       cx: `${finalCx()}%`,
                       cy: `${finalCy()}%`
@@ -119,7 +117,7 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
                     r={(hoverEnt() && hoverEnt()?.entityType === 
                         (floatID < 0 ? 'flicker' : 'flash')
                         && hoverEnt()?.refID === floatID) 
-                          ? radius() + 10
+                          ? 20
                           : radius()}
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
@@ -146,9 +144,16 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill={`${floatID < 0 ? 'black' : 'black'}`}
+                    fill={`${floatID < 0 ? 'black' : '#d0d0d0'}`}
                   >
-                  {hoverText(floatID)}
+                    <tspan x={`${finalCx()}%`} dy="-0.3em">
+                      {hoverText(floatID)}
+                    </tspan>
+
+                    <tspan x={`${finalCx()}%`} dy="1.2em" font-size="0.6em">
+                      words
+                    </tspan>
+
                   </text>
                 </g>
               </Show>);

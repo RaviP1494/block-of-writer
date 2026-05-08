@@ -1,12 +1,11 @@
 import TimerWorker from '../workers/timerWorker?worker';
-import { type Component, createSignal, createEffect, onCleanup, Show } from 'solid-js';
+import { type Component, createSignal, onCleanup, Show } from 'solid-js';
 import { spawnParticle, triggerDespawn, type PointTuple } from './AnimationOverlay';
 import {
   type Flash, flashDelayT,
   flickerModeOn, flickerDelayT,
   backspaceDisabled, inflecTents,
   typingStartTime, setTypingStartTime,
-  setIsWritersBlockEmpty,
   setIsFlickerOpen,
   inflectionOn,
   writerTargetID,
@@ -53,7 +52,6 @@ const killMyParticle = () => {
 }
 
 export const FocusWriter: Component = () => {
-  let textareaRef: HTMLTextAreaElement | undefined;
   const [currentText, setCurrentText] = createSignal("    ");
 
   const targetName = () => writerTargetID()
@@ -73,7 +71,7 @@ export const FocusWriter: Component = () => {
       initFlash();
     } else if (e.data.type === 'flicker_timeout') {
       if(spawnDots()) killMyParticle();
-      setIsFlickerOpen(false);
+      inflectionOn() ? setIsFlickerOpen(false) : outFlect();
       setIsActiveTimer(false);
     }
   };
@@ -148,23 +146,22 @@ export const FocusWriter: Component = () => {
     });
   };
 
-  createEffect(() => {
-    if (textareaRef) {
-      textareaRef.style.height = 'auto';
-      textareaRef.style.height = textareaRef.scrollHeight + 'px';
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'auto'
-      });
-    }
-    setIsWritersBlockEmpty(currentText().trim().length === 0);
-  });
+  // createEffect(() => {
+  //   if (textareaRef) {
+  //     textareaRef.style.height = 'auto';
+  //     textareaRef.style.height = textareaRef.scrollHeight + 'px';
+  //     window.scrollTo({
+  //       top: document.documentElement.scrollHeight,
+  //       behavior: 'auto'
+  //     });
+  //   }
+  // });
 
   return (
     <div class='focus-writer'>
       <CreateNew of='stream' />
       <textarea
-        ref={textareaRef}
+        class='writers-block'
         value={currentText()}
         onInput={(e) => setCurrentText(e.currentTarget.value)}
         onPaste={(e) => e.preventDefault()}

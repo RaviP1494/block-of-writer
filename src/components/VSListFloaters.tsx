@@ -78,9 +78,7 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
           {(ent, index) => {
             const radius = () => {
               if (ent.entityType === 'flash') { 
-                const calced 
-                = (2 * Math.log(getFlash(ent.refID)?.textContents.length || 1)) + 1;
-                return calced > 3 ? calced : 3;
+                return 3;
               }
               else if (ent.entityType === 'flicker') { 
                 const calced 
@@ -115,11 +113,11 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                   <circle
                     style={{
                       transition: 'all 0.4s ease',
-                      r: `${hoverEnt() === ent ? radius() + 10 : radius()}`,
+                      r: `${hoverEnt() === ent ? 20 : radius()}`,
                       cx: `${finalCx()}%`,
                       cy: `${finalCy()}%`
                     }}
-                    r={hoverEnt() === ent ? radius() + 10 : radius()}
+                    r={hoverEnt() === ent ? 20 : radius()}
                     cx={`${finalCx()}%`}
                     cy={`${finalCy()}%`}
                     fill={ent.entityType === 'flicker' ? '#ffff00' : 'rgba(255,255,0,0.5)'}
@@ -139,9 +137,15 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill={`${ent.entityType === 'flicker' ? 'black' : 'white'}`}
+                    fill={`${ent.entityType === 'flicker' ? 'black' : '#d0d0d0'}`}
                   >
-                  {hoverText(ent.refID)}
+                    <tspan x={`${finalCx()}%`} dy="-0.3em">
+                      {hoverText(ent.refID)}
+                    </tspan>
+
+                    <tspan x={`${finalCx()}%`} dy="1.2em" font-size="0.6em">
+                      words
+                    </tspan>
                   </text>
                 </g>
               </Show>);
