@@ -131,13 +131,16 @@ export const VSListFloaters: Component<VSListFloatersProps> = (props) => {
                       transition: 'all 0.2s ease',
                       opacity: (hoverEnt() && hoverEnt() === ent ? '1' : '0') ,
                       'pointer-events': 'none',
-                      'font-size': `${hoverEnt() === ent ? radius() + 5 : radius()}px`,
+                      'font-size': `${ent.entityType === 'flicker' 
+                                      ? radius() + 5 
+                                      : 12}
+                                      px`,
                     }}
                     x={`${finalCx()}%`}
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill={`${ent.entityType === 'flicker' ? 'black' : '#d0d0d0'}`}
+                    fill='black'
                   >
                     <tspan x={`${finalCx()}%`} dy="-0.3em">
                       {hoverText(ent.refID)}

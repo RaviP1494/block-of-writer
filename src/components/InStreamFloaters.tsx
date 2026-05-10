@@ -134,17 +134,16 @@ export const InStreamFloaters: Component<InStreamFloatersProps> = (props) => {
                                   ? 1 
                                   : 0,
                       'pointer-events': 'none',
-                      'font-size': `${(hoverEnt() && hoverEnt()?.entityType === (floatID < 0 ? 'flicker' : 'flash') 
-                                && hoverEnt()?.refID === floatID) 
-                                  ? radius() + 5
-                                  : radius()}
-                                  px`,
+                      'font-size': `${(floatID < 0) 
+                                        ? radius() + 5
+                                        : 12}
+                                        px`,
                     }}
                     x={`${finalCx()}%`}
                     y={`${finalCy()}%`}
                     text-anchor="middle"
                     dominant-baseline="central"
-                    fill={`${floatID < 0 ? 'black' : '#d0d0d0'}`}
+                    fill='black'
                   >
                     <tspan x={`${finalCx()}%`} dy="-0.3em">
                       {hoverText(floatID)}

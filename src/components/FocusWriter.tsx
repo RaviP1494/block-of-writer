@@ -71,7 +71,8 @@ export const FocusWriter: Component = () => {
       initFlash();
     } else if (e.data.type === 'flicker_timeout') {
       if(spawnDots()) killMyParticle();
-      inflectionOn() ? setIsFlickerOpen(false) : outFlect();
+      setIsFlickerOpen(false)
+      !inflectionOn() && outFlect();
       setIsActiveTimer(false);
     }
   };
