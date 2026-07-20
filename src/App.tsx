@@ -3,7 +3,7 @@ import './App.css'
 import { createSignal, Show } from 'solid-js';
 import { type Component } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { userMode, activeViewSpaceID, focusedStreamID } from './store';
+import { userMode, activeViewSpaceID, focusedStreamID, writerTargetID } from './store';
 import { AnimationOverlay } from './components/AnimationOverlay';
 import { WelcomeTitle } from './components/WelcomeTitle';
 import { WritersHandBar } from './components/WritersHandBar';
@@ -76,12 +76,12 @@ const App: Component = () => {
                 'overflow-y': 'auto'
               }}>
               <VSListStreams id={activeViewSpaceID()} clickAct='focus' />
-              <Show when={focusedStreamID()} fallback={
+              <Show when={writerTargetID()} fallback={
                 <VSListFloaters id
                   ={activeViewSpaceID()}
                   clickAct='focus' />
               }>
-                <InStreamFloaters streamID={focusedStreamID()} clickAct='focus' />
+                <InStreamFloaters streamID={writerTargetID()} clickAct='focus' />
               </Show>
             </div>
           </div>

@@ -16,17 +16,24 @@ export const VSListStreams: Component<VSListStreamsProps> = (props) => {
       .reverse() || []);
 
   const handleClick = (ent: MultEnt) => {
-    if(props.clickAct === 'focus'){
-      writerTargetID() === ent.refID
-        ? setFocusedStreamID(ent.refID)
-        : setWriterTargetID(ent.refID);
+    if (props.clickAct === 'focus') {
+      // writerTargetID() === ent.refID
+      //   ? setFocusedStreamID(ent.refID)
+      //   : setWriterTargetID(ent.refID);
+      // setFocusedEntity(null);
+      if (writerTargetID() === ent.refID) {
+        setFocusedStreamID(ent.refID);
+      } else {
+        setWriterTargetID(ent.refID);
+      }
       setFocusedEntity(null);
     }
-    else if(props.clickAct === 'multi'){
-      !openFloaters.includes(ent) 
+    else if (props.clickAct === 'multi') {
+      !openFloaters.includes(ent)
       setOpenFloaters(prev => [...prev, ent]);
     }
   };
+
   const handleOutClick = () => {
     setWriterTargetID(null);
     setFocusedStreamID(0);
