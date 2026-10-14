@@ -164,12 +164,13 @@ export const AnimationOverlay: Component = () => {
     <canvas
       ref={canvasRef}
       style={{
+        'box-sizing': 'border-box',
         'background-color': 'transparent',
         position: 'fixed',
         top: 0,
         left: 0,
-        width: '100vw',
-        height: '100vh',
+        width: '100dvw',
+        height: '100dvh',
         'pointer-events': 'none',
         'z-index': 9999
       }}

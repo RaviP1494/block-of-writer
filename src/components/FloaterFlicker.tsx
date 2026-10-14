@@ -1,5 +1,5 @@
 import { type Component, Show, For, createSignal } from 'solid-js';
-import { allFlickers, allStreams, deleteFlicker, getFlickerTSpan, makeStreamFrom, openFloaters, setFocusedEntity, setOpenFloaters, viewSpaces } from '../store';
+import { allFlickers, allStreams, addToChain, deleteFlicker, getFlickerTSpan, makeStreamFrom, openFloaters, setFocusedEntity, setOpenFloaters, viewSpaces } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
 interface FloaterFlashProps {
@@ -56,7 +56,12 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                 }>
                 ⚵
                 </button>
-                <button title='Start Chain (coming soon..)'>☍</button>
+                <button 
+                  title='Add to Target SparkChain'
+                  onClick={() => {
+                    if (flicker()?.id) addToChain(flicker()!.id);
+                  }}
+                >☍</button>
                 </div>
                   <h3 style={{
                     position: 'absolute', 

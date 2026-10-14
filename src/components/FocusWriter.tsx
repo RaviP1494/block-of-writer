@@ -19,7 +19,6 @@ import {
 } from '../store';
 import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
-import { CreateNew } from './CreateNew';
 
 export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
@@ -160,7 +159,6 @@ export const FocusWriter: Component = () => {
 
   return (
     <div class='focus-writer'>
-      <CreateNew of='stream' />
       <textarea
         class='writers-block'
         value={currentText()}
@@ -170,34 +168,6 @@ export const FocusWriter: Component = () => {
         placeholder="oops"
         autofocus
       />
-      <Show when={inflectionOn()}>
-        <InflectionPoint />
-      </Show>
-      <div
-        class='flex-down'
-        style={{
-          'max-width': '100%'
-        }}>
-        <div
-          style={{
-            'font-size': '1rch'
-          }}>
-          Sending To
-        </div>
-        <div
-          class={writerTargetID() ? 'stream-targeted grav-pt' : 'null-targeted grav-pt'}
-          style={{
-            width: '150%',
-            'text-align': 'center',
-            'color': writerTargetID() ? '#00ff7f' : 'white',
-            'font-family': '"Caveat", cursive',
-            'font-size': '3rch',
-          }}
-          onClick={() => writerTargetID() && setFocusedStreamID(writerTargetID()!)}
-          >
-          {targetName()}
-        </div>
-      </div>
     </div>
   );
 };

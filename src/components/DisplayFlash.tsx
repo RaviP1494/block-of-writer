@@ -1,5 +1,5 @@
 import { type Component, Show, createMemo } from "solid-js";
-import {allFlashes, allFlickers, setFocusedEntity, setHoverEnt  } from "../store";
+import { allFlashes, allFlickers, addToChain, setFocusedEntity, setHoverEnt } from "../store";
 import { } from './InStreamFloaters';
 
 interface DisplayFlashProps {
@@ -20,7 +20,9 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
   const isHighlighted = createMemo(()=>props.isHovered)
 
   const handleClick = () => {
-    if (props.clickDo === 'focus') {
+    if (props.clickDo === 'chain') {
+      addToChain(props.id);
+    } else if (props.clickDo === 'focus') {
       props.renderedBy === 'stream' && holdingFlicker
         ? setFocusedEntity({ refID: holdingFlicker.id, entityType: 'flicker' })
         : props.renderedBy !== 'flash' 

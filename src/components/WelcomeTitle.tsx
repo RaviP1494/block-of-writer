@@ -3,16 +3,17 @@ import { setSpawnDots, spawnDots } from '../App';
 
 export const WelcomeTitle: Component = () => {
   return (
-    <div class='welcomer'>
-      <h1 
+    <div class='grav-pt'>
+      <span 
       onClick={()=>setSpawnDots(!spawnDots())} 
       title='click for weird dots on flickering flashes'
       style={{
-        'margin-top': '10px',
         'text-shadow': spawnDots() ? '-2px 0 10px #ff0000' : 'inherit',
+        'font-family': "'Syne Mono', monospace",
+        'color': '#ffffff'
       }}>
         Writer's Block
-      </h1>
+      </span>
     </div>
   );
 }

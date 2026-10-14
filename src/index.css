@@ -8,8 +8,21 @@ html, body {
 }
 *, *::before, *::after {
   box-sizing: inherit;
+  margin: 0;
+  padding: 0;
 }
 
-
-
+#root {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  --bg-primary: #ffffff;
+  --text-primary: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f0f0f;
+    --text-primary: #e0e0e0;
+  }
+}
 

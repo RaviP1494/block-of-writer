@@ -10,7 +10,9 @@ import {
   viewSpaces,
   getStreamTSpan,
   hoverEnt,
-  setHoverEnt
+  setHoverEnt,
+  addToChain,
+  saveStreamToFile
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -86,6 +88,12 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                       border: deleteClicked() ? '1px dashed #003004' : 'none',
                       transition: 'border 0.5s ease'
                     }}>
+                    <button 
+                      class='transparent'
+                      style={{width: 'fit-content'}}
+                      onClick={() => saveStreamToFile(stream()!.id)}>
+                      Save
+                    </button>
                     <button 
                       class='transparent'
                       style={{width: 'fit-content'}}
@@ -187,6 +195,28 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   refID: group.flickerID!})}
               onMouseLeave={() => setHoverEnt(null)}
               >
+                <Show when={group.flickerID && props.innerClickMode === 'chain'}>
+                  <button
+                    class="chain-add-flicker-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToChain(group.flickerID!);
+                    }}
+                    title="Add flicker to target chain"
+                    style={{
+                      background: 'transparent',
+                      border: '1px dashed #ff8000',
+                      color: '#ff8000',
+                      'border-radius': '3px',
+                      'font-size': '0.75rem',
+                      cursor: 'pointer',
+                      margin: '0 4px',
+                      padding: '0 4px'
+                    }}
+                  >
+                    + Flicker
+                  </button>
+                </Show>
                 <For each={group.flashIDs}>
                   {(flashID, index) => {
                     const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;

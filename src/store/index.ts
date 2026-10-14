@@ -53,7 +53,7 @@ export interface SparkChain {
 // 2. GLOBAL SIGNALS (Transient State)
 // ==========================================
 
-export const [userMode, setUserMode] = createSignal<string> ('WriteRead');
+export const [userMode, setUserMode] = createSignal<string> ('Write');
 export const [flashDelayT, setFlashDelayT] = createSignal<number>(2);
 
 export const [flickerModeOn, setFlickerModeOn] = createSignal<boolean>(true);
@@ -321,6 +321,11 @@ export const deleteFlash = (flashID: number) => {
                 prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
 
   setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
+  setSparkChains(
+    chain => chain.sparkIDs.includes(flashID),
+    'sparkIDs',
+    prevIds => prevIds.filter(id => id !== flashID)
+  );
   return 1;
 };
 
@@ -341,6 +346,11 @@ export const deleteFlicker = (flickerID: number) => {
                  'tentsInSpace', 
                   prev => prev.filter(e => !(e.entityType === 'flicker' && e.refID === flickerID)));
   setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flicker' && e.refID === flickerID)));
+  setSparkChains(
+    chain => chain.sparkIDs.includes(flickerID),
+    'sparkIDs',
+    prevIds => prevIds.filter(id => id !== flickerID)
+  );
 
   setAllFlickers(prev => prev.filter(b => b.id !== flickerID));
   return 1;
@@ -380,28 +390,57 @@ export const deleteChain = (chainID: number) => {
   const chain = sparkChains.find(c => c.id === chainID);
   if (!chain) return null;
   setSparkChains(prev => prev.filter(c => c.id !== chainID));
-}
+  setOpenChains(prev => prev.filter(id => id !== chainID));
+  if (chainTargetID() === chainID) {
+    setChainTargetID(null);
+  }
+  if (focusedChainID() === chainID) {
+    setFocusedChainID(0);
+  }
+  return 1;
+};
 
-export const addToChain = (id: number) => {
-  if(id > 0){
-    const focusedChain = sparkChains.find(c=>c.id === focusedChainID());
-    if (!focusedChain) return;
-    if (!focusedChain.sparkIDs.includes(id)){
+export const addToChain = (id: number, targetChainID?: number) => {
+  const targetID = targetChainID ?? chainTargetID() ?? focusedChainID();
+  if (!targetID) return;
+  const targetChain = sparkChains.find(c => c.id === targetID);
+  if (!targetChain) return;
+
+  if (!targetChain.sparkIDs.includes(id)) {
     setSparkChains(
-      (chain) => chain.id === focusedChainID(),
-        'sparkIDs',
+      (chain) => chain.id === targetID,
+      'sparkIDs',
       (prev) => [...prev, id]
     );
-    } 
-    // else{
-    //   setSparkChains(
-    //   (chain) => chain.id === focusedChainID(),
-    //     'sparkIDs',
-    //   (prev) => [...prev.filter(sparkID => sparkID !== id)]
-    //   );
-    // }
   }
-}
+};
+
+export const removeFromChain = (chainID: number, sparkID: number) => {
+  setSparkChains(
+    (chain) => chain.id === chainID,
+    'sparkIDs',
+    (prev) => prev.filter(id => id !== sparkID)
+  );
+};
+
+export const getChainStats = (chainID: number) => {
+  const chain = sparkChains.find(c => c.id === chainID);
+  if (!chain) return { count: 0, lastEntry: 0 };
+  let count = chain.sparkIDs.length;
+  let lastEntry = 0;
+
+  chain.sparkIDs.forEach(id => {
+    if (id > 0) {
+      const f = getFlash(id);
+      if (f && f.createDT > lastEntry) lastEntry = f.createDT;
+    } else {
+      const b = getFlicker(id);
+      if (b && b.createDT > lastEntry) lastEntry = b.createDT;
+    }
+  });
+
+  return { count, lastEntry };
+};
 
 export const createNewChain = (name?:string) => {
   const chainName = name && name?.length > 0 ? name : `Chain ${nextChainID}`
@@ -716,6 +755,384 @@ export const loadSavedApp = async () => {
     console.log('App state successfully loaded from IndexedDB!');
   } catch (err) {
     console.error('Failed to load app state:', err);
+  }
+};
+
+// ==========================================
+// 6. FILE SYSTEM EXPORT / IMPORT
+// ==========================================
+
+export const [fileErrorMessage, setFileErrorMessage] = createSignal<string | null>(null);
+
+let fileErrorTimer: number | undefined;
+export const triggerFileError = (msg: string) => {
+  if (fileErrorTimer) clearTimeout(fileErrorTimer);
+  setFileErrorMessage(msg);
+  fileErrorTimer = window.setTimeout(() => {
+    setFileErrorMessage(null);
+  }, 3000);
+};
+
+export const saveJsonWithPicker = async (data: any, suggestedName: string) => {
+  const jsonString = JSON.stringify(data, null, 2);
+
+  // 1. Desktop Chromium: File System Access API
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName,
+        types: [
+          {
+            description: 'JSON Files',
+            accept: { 'application/json': ['.json'] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(jsonString);
+      await writable.close();
+      return true;
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return false;
+      }
+      console.warn('showSaveFilePicker failed, trying fallback...', err);
+    }
+  }
+
+  const blob = new Blob([jsonString], { type: 'application/json' });
+
+  // 2. Mobile fallback: Web Share API (native share sheet: Save to Files / Drive / iCloud / AirDrop)
+  if (typeof navigator !== 'undefined' && 'canShare' in navigator) {
+    try {
+      const file = new File([blob], suggestedName, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: suggestedName,
+        });
+        return true;
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return false;
+      }
+      console.warn('Web Share API failed, falling back to Blob download...', err);
+    }
+  }
+
+  // 3. Firefox / Safari / Universal fallback: Blob URL Download
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = suggestedName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (err: any) {
+    triggerFileError(err?.message || 'Failed to save file.');
+    return false;
+  }
+};
+
+export const saveSessionToFile = async () => {
+  const snapshot = {
+    nextFlashID,
+    nextStreamID,
+    nextFlickerID,
+    nextViewSpaceID,
+    nextChainID,
+
+    activeViewSpaceID: activeViewSpaceID(),
+    flickerDelayT: flickerDelayT(),
+    flickerModeOn: flickerModeOn(),
+    flashDelayT: flashDelayT(),
+
+    allFlashes: unwrap(allFlashes),
+    allStreams: unwrap(allStreams),
+    allFlickers: unwrap(allFlickers),
+    suspenBarTents: unwrap(suspenBarTents),
+    viewSpaces: unwrap(viewSpaces),
+    sparkChains: unwrap(sparkChains),
+  };
+
+  const payload = {
+    type: 'wb-session',
+    version: 1,
+    exportDate: Date.now(),
+    data: snapshot,
+  };
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  await saveJsonWithPicker(payload, `writers-block-session-${dateStr}.json`);
+};
+
+export const saveStreamToFile = async (streamID: number) => {
+  const stream = getStream(streamID);
+  if (!stream) {
+    triggerFileError('Stream not found.');
+    return;
+  }
+
+  const flashes = streamFlashes(streamID);
+  const flickerIDs = stream.contentIDs.filter(id => id < 0);
+  const flickers = flickerIDs
+    .map(id => getFlicker(id))
+    .filter(f => f && f.id !== 0);
+
+  const payload = {
+    type: 'wb-stream',
+    version: 1,
+    exportDate: Date.now(),
+    stream: unwrap(stream),
+    flashes: flashes.map(f => unwrap(f)),
+    flickers: flickers.map(f => unwrap(f)),
+  };
+
+  const safeTitle = (stream.title || `stream-${streamID}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+  await saveJsonWithPicker(payload, `${safeTitle}.stream.json`);
+};
+
+export const saveSparkChainToFile = async (chainID: number) => {
+  const chain = sparkChains.find(c => c.id === chainID);
+  if (!chain) {
+    triggerFileError('SparkChain not found.');
+    return;
+  }
+
+  const flashIDs = new Set<number>();
+  const flickers: Flicker[] = [];
+
+  chain.sparkIDs.forEach(id => {
+    if (id > 0) {
+      flashIDs.add(id);
+    } else {
+      const b = getFlicker(id);
+      if (b && b.id !== 0) {
+        flickers.push(unwrap(b));
+        b.contentIDs.forEach(fid => flashIDs.add(fid));
+      }
+    }
+  });
+
+  const flashes = Array.from(flashIDs)
+    .map(fid => getFlash(fid))
+    .filter(f => f && f.id !== 0)
+    .map(f => unwrap(f));
+
+  const payload = {
+    type: 'wb-sparkchain',
+    version: 1,
+    exportDate: Date.now(),
+    chain: unwrap(chain),
+    flashes,
+    flickers,
+  };
+
+  const safeTitle = (chain.title || `chain-${chainID}`).replace(/[^a-zA-Z0-9_-]/g, '_');
+  await saveJsonWithPicker(payload, `${safeTitle}.chain.json`);
+};
+
+export const importLoadedJson = (json: any) => {
+  if (!json || typeof json !== 'object') {
+    triggerFileError('Invalid file format.');
+    return;
+  }
+
+  // Case 1: Session
+  if (json.type === 'wb-session' || (json.data && json.data.allStreams) || json.allStreams) {
+    const data = json.data || json;
+    batch(() => {
+      nextFlashID = data.nextFlashID || nextFlashID;
+      nextStreamID = data.nextStreamID || nextStreamID;
+      nextFlickerID = data.nextFlickerID || nextFlickerID;
+      nextViewSpaceID = data.nextViewSpaceID || nextViewSpaceID;
+      nextChainID = data.nextChainID || nextChainID;
+
+      setAllFlashes(data.allFlashes || []);
+      setAllStreams(data.allStreams || []);
+      setAllFlickers(data.allFlickers || []);
+      setSuspenBarTents(data.suspenBarTents || []);
+      setSparkChains(data.sparkChains || []);
+      setViewSpaces(data.viewSpaces?.length ? data.viewSpaces : [
+        { id: 1, title: 'Initial Space', tentsInSpace: [], layoutMode: 'spreadmixed' }
+      ]);
+
+      setActiveViewSpaceID(data.activeViewSpaceID ?? 1);
+      setFlickerDelayT(data.flickerDelayT ?? 6);
+      setFlickerModeOn(data.flickerModeOn ?? true);
+      setFlashDelayT(data.flashDelayT ?? 2);
+    });
+    return;
+  }
+
+  // Case 2: Stream
+  if (json.type === 'wb-stream' || (json.stream && json.flashes)) {
+    const rawStream: Stream = json.stream;
+    const rawFlashes: Flash[] = json.flashes || [];
+    const rawFlickers: Flicker[] = json.flickers || [];
+
+    const flashIdMap = new Map<number, number>();
+    const clonedFlashes: Flash[] = rawFlashes.map(f => {
+      const newId = nextFlashID++;
+      flashIdMap.set(f.id, newId);
+      return { ...f, id: newId };
+    });
+
+    const flickerIdMap = new Map<number, number>();
+    const clonedFlickers: Flicker[] = rawFlickers.map(b => {
+      const newFlickerId = nextFlickerID--;
+      flickerIdMap.set(b.id, newFlickerId);
+      const remappedContentIDs = b.contentIDs.map(fid => flashIdMap.get(fid) ?? fid);
+      return { ...b, id: newFlickerId, contentIDs: remappedContentIDs };
+    });
+
+    const newStreamID = nextStreamID++;
+    const remappedStreamContentIDs = rawStream.contentIDs.map(id => {
+      if (id > 0) return flashIdMap.get(id) ?? id;
+      return flickerIdMap.get(id) ?? id;
+    });
+
+    const newStream: Stream = {
+      ...rawStream,
+      id: newStreamID,
+      contentIDs: remappedStreamContentIDs,
+    };
+
+    batch(() => {
+      setAllFlashes(prev => [...prev, ...clonedFlashes]);
+      setAllFlickers(prev => [...prev, ...clonedFlickers]);
+      setAllStreams(prev => [...prev, newStream]);
+
+      const activeID = activeViewSpaceID();
+      if (activeID !== null) {
+        setViewSpaces(vs => vs.id === activeID, 'tentsInSpace', prev => [
+          ...prev,
+          { entityType: 'stream', refID: newStreamID },
+        ]);
+      }
+      setWriterTargetID(newStreamID);
+    });
+    return;
+  }
+
+  // Case 3: SparkChain
+  if (json.type === 'wb-sparkchain' || (json.chain && json.sparkIDs !== undefined) || (json.chain && json.flashes)) {
+    const rawChain: SparkChain = json.chain || json;
+    const rawFlashes: Flash[] = json.flashes || [];
+    const rawFlickers: Flicker[] = json.flickers || [];
+
+    const flashIdMap = new Map<number, number>();
+    const clonedFlashes: Flash[] = rawFlashes.map(f => {
+      const newId = nextFlashID++;
+      flashIdMap.set(f.id, newId);
+      return { ...f, id: newId };
+    });
+
+    const flickerIdMap = new Map<number, number>();
+    const clonedFlickers: Flicker[] = rawFlickers.map(b => {
+      const newFlickerId = nextFlickerID--;
+      flickerIdMap.set(b.id, newFlickerId);
+      const remappedContentIDs = b.contentIDs.map(fid => flashIdMap.get(fid) ?? fid);
+      return { ...b, id: newFlickerId, contentIDs: remappedContentIDs };
+    });
+
+    const newChainID = nextChainID++;
+    const remappedSparkIDs = (rawChain.sparkIDs || []).map(id => {
+      if (id > 0) return flashIdMap.get(id) ?? id;
+      return flickerIdMap.get(id) ?? id;
+    });
+
+    const newChain: SparkChain = {
+      ...rawChain,
+      id: newChainID,
+      sparkIDs: remappedSparkIDs,
+    };
+
+    batch(() => {
+      if (clonedFlashes.length > 0) setAllFlashes(prev => [...prev, ...clonedFlashes]);
+      if (clonedFlickers.length > 0) setAllFlickers(prev => [...prev, ...clonedFlickers]);
+      setSparkChains(prev => [...prev, newChain]);
+      setOpenChains(prev => [...prev, newChainID]);
+      setChainTargetID(newChainID);
+    });
+    return;
+  }
+
+  triggerFileError('Unrecognized file structure.');
+};
+
+export const loadFromFile = async () => {
+  let fileText: string | null = null;
+
+  if ('showOpenFilePicker' in window) {
+    try {
+      const [handle] = await (window as any).showOpenFilePicker({
+        types: [
+          {
+            description: 'JSON Files',
+            accept: { 'application/json': ['.json'] },
+          },
+        ],
+        multiple: false,
+      });
+      const file = await handle.getFile();
+      fileText = await file.text();
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      console.warn('showOpenFilePicker failed, falling back to file input...', err);
+    }
+  }
+
+  // Mobile & Cross-browser fallback: HTML5 file input
+  if (!fileText) {
+    fileText = await new Promise<string | null>((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,application/json';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+
+      const cleanup = () => {
+        if (document.body.contains(input)) {
+          document.body.removeChild(input);
+        }
+      };
+
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        cleanup();
+        if (file) {
+          try {
+            resolve(await file.text());
+          } catch {
+            resolve(null);
+          }
+        } else {
+          resolve(null);
+        }
+      };
+
+      input.oncancel = () => {
+        cleanup();
+        resolve(null);
+      };
+
+      input.click();
+    });
+  }
+
+  if (!fileText) return;
+
+  try {
+    const json = JSON.parse(fileText);
+    importLoadedJson(json);
+  } catch (err: any) {
+    triggerFileError('Invalid JSON file.');
   }
 };
 
