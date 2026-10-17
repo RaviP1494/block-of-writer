@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, onMount, For, Show, type Component } from 'solid-js';
+import { createMemo, createSignal, onCleanup, onMount, For, Show, type Component } from 'solid-js';
 import { 
   activeViewSpaceID, 
   getEmacsDateString, 
