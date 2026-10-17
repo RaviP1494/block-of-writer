@@ -283,12 +283,12 @@ export const makeStreamFrom = (ent: MultEnt) => {
 };
 
 export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
-  setSuspenBarTents(prev => [...prev, {
-    entityType,
-    refID,
-  }]);
+  setSuspenBarTents(prev =>
+    prev.some(e => e.entityType === entityType && e.refID === refID)
+      ? prev
+      : [...prev, { entityType, refID }]
+  );
 };
-
 export const sendToViewSpace = (entityType: EntityType, refID: number) => {
     const activeID = activeViewSpaceID();
     if (activeID !== null){
@@ -839,6 +839,13 @@ export const saveJsonWithPicker = async (data: any, suggestedName: string) => {
   }
 };
 
+export const saveToFile = async (streamID?: number) => {
+  if (typeof streamID === 'number') {
+    return await saveStreamToFile(streamID);
+  }
+  return await saveSessionToFile();
+};
+
 export const saveSessionToFile = async () => {
   const snapshot = {
     nextFlashID,
@@ -868,7 +875,7 @@ export const saveSessionToFile = async () => {
   };
 
   const dateStr = new Date().toISOString().slice(0, 10);
-  await saveJsonWithPicker(payload, `writers-block-session-${dateStr}.json`);
+  return await saveJsonWithPicker(payload, `writers-block-session-${dateStr}.json`);
 };
 
 export const saveStreamToFile = async (streamID: number) => {
@@ -1012,7 +1019,7 @@ export const importLoadedJson = (json: any) => {
       if (activeID !== null) {
         setViewSpaces(vs => vs.id === activeID, 'tentsInSpace', prev => [
           ...prev,
-          { entityType: 'stream', refID: newStreamID },
+          { entityType: 'stream' as const, refID: newStreamID },
         ]);
       }
       setWriterTargetID(newStreamID);

@@ -155,8 +155,23 @@ export interface StreamSelectorProps {
 }
 
 export const StreamSelector: Component<StreamSelectorProps> = (props) => {
+  const [showNewModal, setShowNewModal] = createSignal(false);
+  const [newStreamName, setNewStreamName] = createSignal('');
   const [displayMode, setDisplayMode] = createSignal<DisplayMode>('bar');
   let containerRef: HTMLDivElement | undefined;
+  let nameInputRef: HTMLInputElement | undefined;
+
+  const openNewStreamModal = () => {
+    setNewStreamName('');
+    setShowNewModal(true);
+    setTimeout(() => nameInputRef?.focus(), 20);
+  };
+
+  const submitNewStream = () => {
+    createNewStream(newStreamName().trim());
+    setNewStreamName('');
+    setShowNewModal(false);
+  };
 
   const currentVSID = () => (props.id !== undefined && props.id !== null) ? props.id : activeViewSpaceID();
   const currentVS = () => viewSpaces.find(vs => vs.id === currentVSID());
@@ -201,7 +216,7 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
           targetedID={writerTargetID}
           onOpenGrid={() => setDisplayMode('grid')} 
           onSelect={handleStreamClick}
-          onCreateNew={() => createNewStream()}
+          onCreateNew={openNewStreamModal}
         />
       </Show>
       <Show when={displayMode() === 'grid'}>
@@ -214,6 +229,50 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
           }} 
         />
       </Show>
-    </div>
-  );
+
+      <Show when={showNewModal()}>
+        <div
+          class="wb-modal-backdrop"
+          onClick={() => setShowNewModal(false)}
+        >
+          <div
+            class="wb-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Create New Stream"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 class="wb-modal-card__title">New Stream</h3>
+            <input
+              ref={nameInputRef}
+              type="text"
+              class="wb-modal-card__input"
+              placeholder="Stream name (leave blank for default)..."
+              value={newStreamName()}
+              onInput={(e) => setNewStreamName(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') submitNewStream();
+                if (e.key === 'Escape') setShowNewModal(false);
+              }}
+            />
+            <div class="wb-modal-card__actions">
+              <button
+                type="button"
+                class="wb-navbar__btn"
+                onClick={() => setShowNewModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="wb-navbar__btn wb-navbar__btn--active"
+                onClick={submitNewStream}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      </Show>
+    </div>  );
 };

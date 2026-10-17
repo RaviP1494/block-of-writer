@@ -12,7 +12,12 @@ import {
   hoverEnt,
   setHoverEnt,
   addToChain,
-  saveStreamToFile
+  saveStreamToFile,
+  writerTargetID,
+  setWriterTargetID,
+  setUserMode,
+  setFocusedEntity,
+  sendToSuspenBar
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
@@ -41,16 +46,19 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
     ?.title;
 
   const handleMinimize = () => {
-    props.innerClickMode === 'multi' 
-      ? setOpenFloaters(() => [
+    if (props.innerClickMode === 'multi') {
+      setOpenFloaters(() => [
         ...openFloaters.filter(
-          ent => ent.refID !== stream()?.id 
-            || ent.entityType !== 'stream')])
-      : props.innerClickMode === 'focus' 
-        ? setFocusedStreamID(0)
-        : null;
-  }
-
+          ent => ent.refID !== stream()?.id || ent.entityType !== 'stream'
+        ),
+      ]);
+    } else if (props.innerClickMode === 'focus') {
+      setFocusedStreamID(0);
+      setFocusedEntity(null);
+    } else if (writerTargetID() === stream()?.id) {
+      setWriterTargetID(null);
+    }
+  };
   const handleDelete = () => deleteStream(stream()!.id) && handleMinimize();
 
   const groupedContent = createMemo(() => {
@@ -70,115 +78,161 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
   return (
     <Show when={stream()}>
       <div class={streamBG() ? 'stream-box white-bg' : 'stream-box parchment-bg'}>
-        <div class='stream-title'>
-          <Show when={!isEditingTitle()}
-            fallback={
-              <EditTitle
-                initialValue={stream()!.title}
-                onSave={(title: string) => {
-                  updateStreamTitle(stream()!.id, title);
-                  setIsEditingTitle(false);
-                }}
-                onCancel={() => setIsEditingTitle(false)} />
-            }>
+        <header class="stream-title">
+          <div
+            onMouseLeave={() => setDeleteClicked(false)}
+            class="display-top-box"
+            classList={{ 'display-top-box--confirming': deleteClicked() }}
+          >
+            <div class="stream-header__actions-left">
+              <button
+                type="button"
+                class="stream-action-pill"
+                onClick={() => saveStreamToFile(stream()!.id)}
+                title="Save Stream to File"
+              >
+                Save
+              </button>
+              <Show when={props.innerClickMode !== 'focus'}>
+                <button
+                  type="button"
+                  class="stream-action-pill"
+                  onClick={() => {
+                    setFocusedStreamID(stream()!.id);
+                    setFocusedEntity({ entityType: 'stream', refID: stream()!.id });
+                    setUserMode('Read');
+                  }}
+                  title="Focus Stream in Reader Mode"
+                >
+                  Focus
+                </button>
+              </Show>
+            </div>
 
-                  <div onMouseLeave={() => setDeleteClicked(false)}
-                    class='display-top-box'
-                    style={{
-                      border: deleteClicked() ? '1px dashed #003004' : 'none',
-                      transition: 'border 0.5s ease'
-                    }}>
-                    <button 
-                      class='transparent'
-                      style={{width: 'fit-content'}}
-                      onClick={() => saveStreamToFile(stream()!.id)}>
-                      Save
-                    </button>
-                    <button 
-                      class='transparent'
-                      style={{width: 'fit-content'}}
-                      onClick={()=> console.log('reader-mode')//here be reader mode
-                      }>
-                      Focus
-                    </button>
-                    <button class={deleteClicked()
-                      ? 'delete-reveal' : 'delete-hide'}
-                      onClick={() =>
-                        deleteClicked()
-                          ? handleDelete()
-                          : ''}
-                    >
-                      Confirm?
-                    </button>
-                  <button
-                    class={deleteClicked() ?
-                      'delete-hide' : 'delete-reveal'}
-                    style={{ 'background-color': '#ff8000', right: '20px' }}
-                    onClick={() => handleMinimize()}>
-                    -
-                  </button>
-                    <button
-                      onClick={() => setDeleteClicked(true)}
-                      class={deleteClicked() ?
-                        'delete-hide' : 'delete-reveal'}>
-                      X
-                    </button>
-                  </div>
+            <div class="stream-header__actions-right">
+            <button
+                type="button"
+                class="stream-action-pill"
+                onClick={() => sendToSuspenBar('stream', stream()!.id)}
+                title="Suspend"
+              >
+                ↯
+              </button>
+              <button
+                type="button"
+                class={deleteClicked() ? 'delete-reveal confirm-delete-btn' : 'delete-hide'}
+                onClick={() => (deleteClicked() ? handleDelete() : '')}
+              >
+                Confirm?
+              </button>
+              <button
+                type="button"
+                class={deleteClicked() ? 'delete-hide stream-icon-btn' : 'delete-reveal stream-icon-btn'}
+                onClick={() => handleMinimize()}
+                title="Minimize Stream"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                class={
+                  deleteClicked()
+                    ? 'delete-hide stream-icon-btn stream-icon-btn--danger'
+                    : 'delete-reveal stream-icon-btn stream-icon-btn--danger'
+                }
+                onClick={() => setDeleteClicked(true)}
+                title="Delete Stream"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div class="stream-header__identity">
+            <Show
+              when={!isEditingTitle()}
+              fallback={
+                <EditTitle
+                  initialValue={stream()!.title}
+                  onSave={(title: string) => {
+                    updateStreamTitle(stream()!.id, title);
+                    setIsEditingTitle(false);
+                  }}
+                  onCancel={() => setIsEditingTitle(false)}
+                />
+              }
+            >
               <h1
-              class='grav-pt'
-              onClick={() => setIsEditingTitle(true)}>
+                class="grav-pt stream-header__title"
+                onClick={() => setIsEditingTitle(true)}
+                title="Click to rename stream"
+              >
                 {stream()?.title}
               </h1>
-                <div class='reader-stats'>
-                <span>{createDateTime().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</span>
-                <span>{heldBy()}</span>
-                <span>{getStreamTSpan(props.id)}</span>
-                </div>
-            <div
-              class='flex-top-down'
-              style={{
-                position: 'relative'
-              }}>
+            </Show>
 
-              <div class='tiny-fun flex-wide'>
-                <button
-                title='Change Background'
-                  onClick={() => setStreamBG(p => !p)}
-                >
-                  ⬚
-                </button>
-                <button
-                title='Flip Order'
-                  class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
-                  onClick={() => {
-                    setFlowUp(!flowUp())
-                    setShowTimes(false)
-                  }}>
-                  🡇
-                </button>
-                <button
-                title='Toggle Spacing'
-                  class={
-                    showTimes() ? 'anim-spacing inactivated'
-                      : flashSpacing() ? 'anim-spacing' : 'anim-spacing-off'}
-                  onClick={() =>
-                    setFlashSpacing(!flashSpacing())}>
-                  ⟣⟢
-                </button>
-                <button
-                title='Toggle Timestamps'
-                  class={flowUp() ? 'anim-flip-off inactivated'
-                    : showTimes() ? 'anim-flip-on' : 'anim-flip-off'}
-                  onClick={() => {
-                    setFlashSpacing(true)
-                    setShowTimes(!showTimes())
-                  }}>
-                  ⏲
-                </button>
-              </div>
+            <div class="reader-stats">
+              <span>{createDateTime().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>{heldBy()}</span>
+              <span>{getStreamTSpan(props.id)}</span>
             </div>
-          </Show>
-        </div>
+          </div>
+
+          <div class="flex-top-down">
+            <div class="tiny-fun flex-wide" role="group" aria-label="Stream display options">
+              <button
+                type="button"
+                classList={{ 'optic-active': !streamBG() }}
+                title="Change Background"
+                onClick={() => setStreamBG((p) => !p)}
+              >
+                ⬚
+              </button>
+              <button
+                type="button"
+                title="Flip Order"
+                class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
+                onClick={() => {
+                  setFlowUp(!flowUp());
+                  setShowTimes(false);
+                }}
+              >
+                🡇
+              </button>
+              <button
+                type="button"
+                title="Toggle Spacing"
+                class={
+                  showTimes()
+                    ? 'anim-spacing inactivated'
+                    : flashSpacing()
+                    ? 'anim-spacing'
+                    : 'anim-spacing-off'
+                }
+                onClick={() => setFlashSpacing(!flashSpacing())}
+              >
+                ⟣⟢
+              </button>
+              <button
+                type="button"
+                title="Toggle Timestamps"
+                class={
+                  flowUp()
+                    ? 'anim-flip-off inactivated'
+                    : showTimes()
+                    ? 'anim-flip-on'
+                    : 'anim-flip-off'
+                }
+                onClick={() => {
+                  setFlashSpacing(true);
+                  setShowTimes(!showTimes());
+                }}
+              >
+                ⏲
+              </button>
+            </div>
+          </div>
+        </header>
         <div class='stream-text'>
           <For each={groupedContent()}>
             {(group) => (

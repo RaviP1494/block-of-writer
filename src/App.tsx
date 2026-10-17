@@ -1,236 +1,160 @@
 import './App.css'
-
-import { createSignal, For, Show, Switch, Match } from 'solid-js';
-import { type Component } from 'solid-js';
+import { type Component, createSignal, Show } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { 
-  userMode, setUserMode, focusedStreamID, writerTargetID, setWriterTargetID, 
-  focusedEntity, setFocusedEntity, inflectionOn, openChains,
-  fileErrorMessage, setFileErrorMessage 
-} from './store';
-import { AnimationOverlay } from './components/AnimationOverlay';
-import { WelcomeTitle } from './components/WelcomeTitle';
-import { WritersHandBar } from './components/WritersHandBar';
-import { ViewFocused } from './components/ViewFocused';
-import { PersistHandBar } from './components/PersistHandBar';
-import { InStreamFloaters } from './components/InStreamFloaters';
-import { VSLister } from './components/VSLister';
 import { StreamSelector } from './components/StreamSelector';
+import { VSLister } from './components/VSLister';
+import { DisplayStream } from './components/DisplayStream';
+import { ViewFocused } from './components/ViewFocused';
 import { VSReadPicker } from './components/VSReadPicker';
-import { SparkChainSelector } from './components/SparkChainSelector';
-import { DisplayChain } from './components/DisplayChain';
 import { InflectionPoint } from './components/InflectionPoint';
-import { CreateNew } from './components/CreateNew';
-
+import { SuspenBar } from './components/SuspenBar';
+import {
+  saveToFile,
+  loadFromFile,
+  fileErrorMessage,
+  writerTargetID,
+  userMode,
+  setUserMode,
+  inflectionOn,
+  inflecTents,
+} from './store';
 export const [spawnDots, setSpawnDots] = createSignal(false);
-export const [showSettings, setShowSettings] = createSignal(false);
+export const [appTheme, setAppTheme] = createSignal<'space' | 'reef'>('space');
+
 
 const App: Component = () => {
-  const toggleUserMode = () => {
-    if (userMode() === 'Write') {
-      const target = writerTargetID();
-      if (target) {
-        setFocusedEntity({ entityType: 'stream', refID: target });
-      } else {
-        setFocusedEntity(null);
-      }
-      setUserMode('Read');
+  const [saveStatus, setSaveStatus] = createSignal<string | null>(null);
+
+  const toggleTheme = () =>
+    setAppTheme((prev) => (prev === 'space' ? 'reef' : 'space'));
+
+  const handleSave = async () => {
+    setSaveStatus('Saving...');
+    const ok = await saveToFile();
+    if (ok) {
+      setSaveStatus('Saved!');
+      setTimeout(() => setSaveStatus(null), 2000);
     } else {
-      const focused = focusedEntity();
-      if (focused && focused.entityType === 'stream') {
-        setWriterTargetID(focused.refID);
-      } else {
-        setWriterTargetID(null);
-      }
-      setUserMode('Write');
+      setSaveStatus(null);
     }
+  };
+
+  const handleLoad = async () => {
+    await loadFromFile();
   };
 
   return (
     <>
-      <Show when={spawnDots()}>
-        <AnimationOverlay />
-      </Show>
-      <div class='page-topper'>
-        <div style={{ display: 'flex' }}>
-          <Show when={userMode() === 'Write'}>
-            <button onClick={() => setShowSettings(!showSettings())}>
-              Settings
-            </button>
-          </Show>
-        </div>
-        <div style={{ display: 'flex' }}>
-          <WelcomeTitle />
-        </div>
-        <div style={{ display: 'flex' }}>
-          <PersistHandBar />
-        </div>
-      </div>
-      <div class="background">
-        <div style={{
-          'grid-column': '1',
-          'max-height': '100%',
-        }}
-          class='flex-down'
-        />
-
-        <div style={{
-          'grid-column': '2',
-          'max-height': '100%',
-        }}
-          class='flex-down'
-        >
-          <button 
-            class="mode-toggle-btn"
-            onClick={toggleUserMode}
-            style={{
-              background: 'transparent',
-              border: '1px solid #00ff7f',
-              color: '#00ff7f',
-              padding: '0.2rem 1.2rem',
-              'border-radius': '4px',
-              cursor: 'pointer',
-              'font-weight': 'bold',
-              'margin-bottom': '0.5rem'
-            }}
-          >
-            {userMode() === 'Write' ? 'Read' : 'Write'}
-          </button>
-          <VSLister />
-          <Show when={userMode() === 'Write'}>
-            <StreamSelector />
-            <CreateNew of='stream' />
-            <FocusWriter />
-            <Show when={inflectionOn()}>
-              <InflectionPoint />
-            </Show>
-          </Show>
-          <Show when={userMode() === 'Read'}>
-            <VSReadPicker />
-            <ViewFocused />
-          </Show>
-        </div>
-
-        <div style={{
-          'grid-column': '3',
-          'max-height': '100%',
-        }}>
-          <Show when={userMode() === 'Write'}>
-            <div class='flex-down'
-              style={{
-                'justify-content': 'flex-start',
-                'height': '100%',
-                'overflow-y': 'auto'
-              }}>
-
-              <Switch>
-                <Match when={focusedStreamID()}>
-                  <ViewFocused />
-                </Match>
-                <Match when={writerTargetID()}>
-                  <InStreamFloaters streamID={writerTargetID()} clickAct='focus' />
-                </Match>
-              </Switch>
-            </div>
-          </Show>
-          <Show when={userMode() === 'Read'}>
-            <div class='flex-down'
-              style={{
-                'justify-content': 'flex-start',
-                'height': '100%',
-                'overflow-y': 'auto',
-                width: '100%'
-              }}>
-              <SparkChainSelector />
-              <For each={openChains}>
-                {(chainID) => (
-                  <DisplayChain id={chainID} />
-                )}
-              </For>
-            </div>
-          </Show>
-        </div>
-
-        {/*     <Switch>
-          <Match
-            when={userMode() === 'ReadWrite'}>
-            <div class='handbar' 
-            style={{ display: 'flex' }}>
-              <WritersHandBar />
-            </div>
-            <div class='focus-left flex-down'>
-              <SelectItem
-                of='viewspace'
-                clickAct='focus' />
-            </div>
-            <div class='focus'>
-              <CreateNew of='stream' />
-              <FocusWriter />
-            </div>
-            <div class='focus-right'>
-            <ViewAnyItem ent={focusedEntity()} innerClickMode='focus' />
-            </div>
-          </Match>
-
-          <Match
-            when={userMode() === 'SparkScrape'}>
-            <div class='focus-left'>
-            <SelectItem of='viewspace' clickAct='multi' />
-            </div>
-            <div class='focus multi-stream'>
-              <For each={openFloaters}>
-                {(floater) => (
-                  <ViewAnyItem
-                    ent= {floater}
-                    innerClickMode='multi' />)}
-              </For>
-            </div>
-            <div class='focus-right'>
-            <SelectChain clickAct='focus' />
-              <DisplayChain
-                id={focusedChainID()} />
-            </div>
-          </Match>
-        </Switch>
-        */}
-
-      </div>
-
-      <Show when={showSettings()}>
-        <div class="settings-overlay" onClick={() => setShowSettings(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <WritersHandBar />
-          </div>
-        </div>
-      </Show>
-
       <Show when={fileErrorMessage()}>
-        <div class="settings-overlay" onClick={() => setFileErrorMessage(null)}>
-          <div
-            class="writers-handbar"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              padding: '1.2rem',
-              'text-align': 'center',
-              width: '32ch',
-              height: 'auto',
-              border: '1px solid #ff4444',
-              color: '#ffffff',
-              'box-shadow': '0 4px 20px rgba(255, 68, 68, 0.4)',
-              'z-index': '101'
-            }}
-          >
-            <div style={{ color: '#ff6666', 'font-size': '1.3rem', 'font-weight': 'bold', 'margin-bottom': '0.5rem' }}>
-              Notice
-            </div>
-            <div style={{ 'font-size': '1rem' }}>
-              {fileErrorMessage()}
-            </div>
-          </div>
+        <div class="wb-toast-error" role="alert">
+          {fileErrorMessage()}
         </div>
       </Show>
+
+      <div
+        class="wb-app"
+        data-theme={appTheme()}
+        data-mode={userMode().toLowerCase()}
+        data-companion={userMode() === 'Write' && writerTargetID() !== null ? 'open' : 'closed'}
+      >
+
+        <header class="wb-navbar" role="banner">
+          <div class="wb-navbar__left">
+            <button 
+              type="button" 
+              class="wb-navbar__btn" 
+              onClick={handleSave}
+              title="Save session to file"
+            >
+              {saveStatus() || 'Save'}
+            </button>
+            <button 
+              type="button" 
+              class="wb-navbar__btn" 
+              onClick={handleLoad}
+              title="Load session or stream from file"
+            >
+              Load
+            </button>
+          </div>
+
+          <h1 class="wb-navbar__brand">Writers Block</h1>
+          <div class="wb-navbar__right">
+            <nav aria-label="Workspace Mode" class="wb-mode-ReadRecollect">
+              <button
+                type="button"
+                class="wb-navbar__btn"
+                classList={{ 'wb-navbar__btn--active': userMode() === 'Write' }}
+                onClick={() => setUserMode('Write')}
+              >
+                Write
+              </button>
+              <button
+                type="button"
+                class="wb-navbar__btn"
+                classList={{ 'wb-navbar__btn--active': userMode() === 'Read' }}
+                onClick={() => setUserMode('Read')}
+              >
+                Review
+              </button>
+              <button type="button" class="wb-ghost-slot" onClick={toggleTheme}>
+                {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
+              </button>
+            </nav>
+            <button type="button" class="wb-ghost-slot">Settings</button>
+            <button type="button" class="wb-ghost-slot">Account</button>
+          </div>
+        </header>
+
+        <section class="wb-context-deck" aria-label="View Space and Stream Selectors">
+          <VSLister />
+          <Show when={userMode() === 'Write'} fallback={<VSReadPicker />}>
+            <StreamSelector />
+          </Show>
+        </section>
+
+        <div class="wb-workspace">
+
+          <main class="wb-stage" id="focal-stage" tabindex="-1">
+            <Show
+              when={userMode() === 'Write'}
+              fallback={
+                <article class="wb-focal-chamber wb-focal-chamber--reader" data-measure="narrow">
+                  <ViewFocused innerClickMode="focus" />
+                </article>
+              }
+            >
+              <article class="wb-focal-chamber" data-measure="wide">
+                <FocusWriter />
+              </article>
+
+              <Show when={inflectionOn() || (inflecTents() && inflecTents()!.length > 0)}>
+                <section class="wb-inflection-slot" aria-label="Inflection Point">
+                  <InflectionPoint />
+                </section>
+              </Show>
+            </Show>
+          </main>
+
+          <aside class="wb-companion-bay" aria-label="Companion Streams and Stractors">
+            <div class="wb-companion-track">
+              <Show when={writerTargetID() !== null}>
+                <article class="wb-companion-card">
+                  <DisplayStream id={writerTargetID()!} />
+                </article>
+              </Show>
+            </div>
+          </aside>
+
+        </div>
+
+        <aside class="wb-suspension-bar" aria-label="Suspension Bar for items in transit">
+          <SuspenBar />
+        </aside>
+
+      </div>
     </>
   );
-};
+}
 
 export default App;

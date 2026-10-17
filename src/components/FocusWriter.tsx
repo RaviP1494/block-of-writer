@@ -8,22 +8,32 @@ import {
   typingStartTime, setTypingStartTime,
   setIsFlickerOpen,
   inflectionOn,
+  setInflectionOn,
   writerTargetID,
-  allStreams,
-  viewSpaces,
-  activeViewSpaceID,
   addFlash,
   outFlect,
   focusedEntity,
-  setFocusedStreamID,
+  getStream,
+  activeViewSpaceID,
+  viewSpaces,
+  textWordCount,
 } from '../store';
-import { InflectionPoint } from './InflectionPoint';
 import { spawnDots } from '../App';
 
 export const [flashTimeLeft, setFlashTimeLeft] = createSignal(0);
 export const [flickerTimeLeft, setFlickerTimeLeft] = createSignal(0);
 export const [isActiveTimer, setIsActiveTimer] = createSignal(false);
+export const [cursorIndex, setCursorIndex] = createSignal<number>(4);
+export const [showTimeBars, setShowTimeBars] = createSignal<boolean>(true);
+export const [hideTypedText, setHideTypedText] = createSignal<boolean>(false);
 
+export const VALID_WRITER_KEYS: readonly string[] = [
+  ...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  ...'0123456789',
+  ' ', '.', ',', '!', '?', ';', ':', "'", '"', '-', '_',
+  '(', ')', '[', ']', '{', '}', '/', '\\', '&', '@', '#',
+  '$', '%', '^', '*', '+', '=', '<', '>', '~', '`', '|'
+];
 
 const spawnMyParticle = (timeSpan: number, text: string) => {
   const gravEls = document.querySelectorAll<HTMLElement>('.grav-pt');
@@ -50,16 +60,24 @@ const killMyParticle = () => {
     triggerDespawn(target);
 }
 
+const [currentText, setCurrentText] = createSignal("    ");
+
+export const reclaimToWriter = (flashesText: string) => {
+  setCurrentText((prev) => {
+    const trimmed = prev.trim();
+    return trimmed ? `    ${trimmed} ${flashesText} ` : `    ${flashesText} `;
+  });
+};
+
 export const FocusWriter: Component = () => {
-  const [currentText, setCurrentText] = createSignal("    ");
 
-  const targetName = () => writerTargetID()
-    ? allStreams.find(s => s.id === writerTargetID())?.title
-    : activeViewSpaceID()
-      ? 'float in ' + viewSpaces.find(vs => vs.id === activeViewSpaceID())?.title
-      : 'none';
-
+  let textareaRef: HTMLTextAreaElement | undefined;
   const worker = new TimerWorker();
+
+  const syncCursorIndex = (el: HTMLTextAreaElement) => {
+    setCursorIndex(el.selectionStart ?? 0);
+  };
+
 
   worker.onmessage = (e) => {
     if (e.data.type === 'tick') {
@@ -96,15 +114,21 @@ export const FocusWriter: Component = () => {
       tSpan: now - start,
       delayTSpan: delayT
     };
+    setFlashTimeLeft(0);
     addFlash(newFlash);
     if (text && spawnDots()) spawnMyParticle((now-start)/1000, text);
     setCurrentText("    ");
+    setCursorIndex(4);
     setTypingStartTime(null);
     worker.postMessage({ type: 'stop_flash' });
     if (!flickerModeOn()) setIsActiveTimer(false);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      if (e.key.toLowerCase() === 'v') e.preventDefault();
+      return;
+    }
     const text = currentText();
     if (backspaceDisabled() && e.key === 'Backspace') {
       e.preventDefault();
@@ -134,7 +158,7 @@ export const FocusWriter: Component = () => {
       }
       return;
     }
-    if([27,91,16,17,18,20].includes(e.keyCode)) return;
+    if (!VALID_WRITER_KEYS.includes(e.key)) return;
     if (!typingStartTime()) {
       setTypingStartTime(Date.now());
       setIsActiveTimer(true);
@@ -156,18 +180,120 @@ export const FocusWriter: Component = () => {
   //     });
   //   }
   // });
+  const flashProgress = () => {
+    const total = flashDelayT() * 1000;
+    return total > 0 && isActiveTimer()
+      ? Math.max(0, Math.min(1, flashTimeLeft() / total))
+      : 0;
+  };
+
+  const flickerProgress = () => {
+    const total = flickerDelayT() * 1000;
+    return total > 0 && isActiveTimer() && flickerModeOn()
+      ? Math.max(0, Math.min(1, flickerTimeLeft() / total))
+      : 0;
+  };
+
+  const targetLabel = () => {
+    const streamId = writerTargetID();
+    if (streamId !== null) {
+      const s = getStream(streamId);
+      return s ? `Stream: ${s.title}` : 'Stream';
+    }
+    const vs = viewSpaces.find((v) => v.id === activeViewSpaceID());
+    return vs ? `Space: ${vs.title} (Loose)` : 'Loose in Space';
+  };
 
   return (
-    <div class='focus-writer'>
-      <textarea
-        class='writers-block'
-        value={currentText()}
-        onInput={(e) => setCurrentText(e.currentTarget.value)}
-        onPaste={(e) => e.preventDefault()}
-        onKeyDown={(e) => { handleKeyDown(e) }}
-        placeholder="oops"
-        autofocus
-      />
+    <div
+      data-timer-active={isActiveTimer() ? 'true' : 'false'}
+      class='focus-writer'
+      style={{
+        '--flash-pct': `${(flashProgress() * 100).toFixed(1)}%`,
+        '--flicker-pct': `${(flickerProgress() * 100).toFixed(1)}%`,
+      }}
+    >
+      <div class="focus-writer__meta">
+        <div class="focus-writer__toggles" role="group" aria-label="Writer view toggles">
+          <button
+            type="button"
+            class="focus-writer__toggle-btn"
+            aria-pressed={hideTypedText()}
+            onClick={() => {
+              setHideTypedText((prev) => !prev);
+              textareaRef?.focus();
+            }}
+          >
+          Invisible Ink
+          </button>
+          <button
+            type="button"
+            class="focus-writer__toggle-btn"
+            aria-pressed={showTimeBars()}
+            onClick={() => {
+              setShowTimeBars((prev) => !prev);
+              textareaRef?.focus();
+            }}
+          >
+          {showTimeBars() ? 'Time Bars' : 'Time Bars'}
+          </button>
+          <button
+            type="button"
+            class="focus-writer__toggle-btn"
+            aria-pressed={inflectionOn()}
+            onClick={() => {
+              setInflectionOn((prev) => !prev);
+              textareaRef?.focus();
+            }}
+          >
+            Inflection
+          </button>
+        </div>
+
+        <span class="focus-writer__target-badge">{targetLabel()}</span>
+
+        <span class="focus-writer__stats">
+          {textWordCount(currentText())}w
+          <Show when={backspaceDisabled()}>
+            <span class="focus-writer__lock-badge" title="Backspace triggers Flash">
+              No-BS
+            </span>
+          </Show>
+        </span>
+      </div>
+        <div class="focus-writer__surface">
+          <textarea
+            ref={textareaRef}
+            class="writers-block"
+            classList={{ 'writers-block--hidden-text': hideTypedText() }}
+            aria-label="Writers Block Flash Input"
+            spellcheck={false}
+            autocorrect="off"
+            autocapitalize="off"
+            value={currentText()}
+            onInput={(e) => {
+              setCurrentText(e.currentTarget.value);
+              syncCursorIndex(e.currentTarget);
+            }}
+            onKeyUp={(e) => syncCursorIndex(e.currentTarget)}
+            onClick={(e) => syncCursorIndex(e.currentTarget)}
+            onSelect={(e) => syncCursorIndex(e.currentTarget)}
+            onPaste={(e) => e.preventDefault()}
+            onDrop={(e) => e.preventDefault()}
+            onKeyDown={(e) => { handleKeyDown(e) }}
+            placeholder="Begin a flash..."
+            autofocus
+          />
+
+          <Show when={showTimeBars()}>
+            <div class="focus-writer__timers" aria-hidden="true">
+              <div class="focus-writer__timer-bar focus-writer__timer-bar--flash" />
+              <Show when={flickerModeOn()}>
+                <div class="focus-writer__timer-bar focus-writer__timer-bar--flicker" />
+              </Show>
+            </div>
+          </Show>
+        </div>
     </div>
   );
 };

@@ -33,24 +33,7 @@ export const EditTitle: Component<EditTitleProps> = (props) => {
       onInput={(e) => setValue(e.currentTarget.value)}
       onKeyDown={handleKeyDown}
       onBlur={() => props.onSave(value())}
-      style={{
-        'font-family': '"Caveat", cursive',
-        "font-size": '1.2em', 
-        "font-weight": 'bold',
-        'z-index': '500',
-        margin: '0 0',
-        padding: '0',
-        
-        color: '#408040',
-        "text-shadow": 'inherit',
-        "text-align": "center",
-        "background-color": 'transparent',
-        
-        border: 'none',
-        "border-bottom": '2px dashed #408040', 
-        outline: 'none',
-        "box-sizing": 'border-box'
-      }}
+      class="wb-edit-title-input"
     />
   );
 };

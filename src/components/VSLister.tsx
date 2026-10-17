@@ -65,7 +65,11 @@ const VSSummaryCell: Component<{ vs: ViewSpace, onSelect: () => void }> = (props
   const timeStr = () => stats().lastEntry ? getEmacsDateString(stats().lastEntry) : 'No Entries';
 
   return (
-    <button class="vs-summary-cell" onClick={props.onSelect}>
+    <button 
+      class="vs-summary-cell"
+      classList={{ 'active-vs': props.vs.id === activeViewSpaceID() }}
+      onClick={props.onSelect}
+    >
       <div class="vs-cell-title">{props.vs.title}</div>
       <div class="vs-cell-stats">
         {stats().flashes} Flashes / {stats().streams} Streams / {stats().seconds}s
@@ -148,6 +152,7 @@ const VSBarSelect: Component<{ onOpenGrid: () => void, onSelect: () => void }> =
             <button 
               id={'vs-btn-' + vs.id}
               class="vs-bar-title"
+              classList={{ 'active-vs': vs.id === activeViewSpaceID() }}
               onClick={() => {
                 setActiveViewSpaceID(vs.id);
                 props.onSelect();

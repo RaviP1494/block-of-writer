@@ -45,7 +45,6 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
             style={{
               'word-wrap': 'break-word',
               'overflow-wrap': 'break-word',
-              'word-break': 'break-all'
             }}
             onMouseOver={() => flash()?.id
               && setHoverEnt({
@@ -56,13 +55,13 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
               {flash()!.textContents}&nbsp;
             </span>
           }>
-          <div style={{ 
-            color: '#800000',
-            'text-align': 'left',
-            'text-decoration': props.prevID 
-              ? 'overline' 
-              : 'underline' 
-          }}>
+          <div
+            class="flash-timestamp"
+            style={{
+              'text-align': 'left',
+              'text-decoration': props.prevID ? 'overline' : 'underline',
+            }}
+          >
             {(() => {
               if (!props.prevID) {
                 // First flash: Show absolute time
@@ -86,11 +85,11 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
             })()}
           </div>
           <div
-            class='paragraph flash'
+            class="paragraph flash"
             title={(flash()!.tSpan / 1000).toString() + ' seconds'}
-            onClick={()=>handleClick()}
-            style={{ 'color': '#000000' }}>
-            {flash()!.textContents}&nbsp
+            onClick={() => handleClick()}
+          >
+            {flash()!.textContents}&nbsp;
           </div>
         </Show>
     </Show>
