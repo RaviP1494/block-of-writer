@@ -15,7 +15,6 @@ export const InflectionPoint: Component = () => {
     const current = inflecTents();
     if (!current || current.length === 0) return;
     const last = current[current.length - 1];
-    reclaimToWriter(last.textContents);
     const remaining = current.slice(0, -1);
     if (remaining.length === 0) {
       setInflecTents(null);
@@ -23,6 +22,7 @@ export const InflectionPoint: Component = () => {
     } else {
       setInflecTents(remaining);
     }
+    reclaimToWriter(last);
   };
 
   return (

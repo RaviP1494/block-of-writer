@@ -20,6 +20,11 @@ import {
   sendToSuspenBar
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
+import {
+  createReplayController,
+  ReplayHeaderControl,
+  ReplayTextView,
+} from './ReplayEngine';
 
 export interface DisplayStreamProps {
   id: number;
@@ -27,7 +32,7 @@ export interface DisplayStreamProps {
 }
 
 export const DisplayStream: Component<DisplayStreamProps> = (props) => {
-  const [streamBG, setStreamBG] = createSignal(true);
+  const [hideContent, setHideContent] = createSignal(false);
   const [deleteClicked, setDeleteClicked] = createSignal(false);
   const [flashSpacing, setFlashSpacing] = createSignal(false);
   const [showTimes, setShowTimes] = createSignal(false);
@@ -75,9 +80,14 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
     return groups;
   });
 
+  const replay = createReplayController(
+    () => groupedFlashIDs(props.id),
+    () => props.id
+  );
+
   return (
     <Show when={stream()}>
-      <div class={streamBG() ? 'stream-box white-bg' : 'stream-box parchment-bg'}>
+      <div class='stream-box'>
         <header class="stream-title">
           <div
             onMouseLeave={() => setDeleteClicked(false)}
@@ -108,6 +118,8 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 </button>
               </Show>
             </div>
+
+            <ReplayHeaderControl controller={replay} />
 
             <div class="stream-header__actions-right">
             <button
@@ -182,9 +194,8 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             <div class="tiny-fun flex-wide" role="group" aria-label="Stream display options">
               <button
                 type="button"
-                classList={{ 'optic-active': !streamBG() }}
-                title="Change Background"
-                onClick={() => setStreamBG((p) => !p)}
+                title="Hide Text Content"
+                onClick={() => setHideContent((p)=>!p)}
               >
                 ⬚
               </button>
@@ -233,62 +244,83 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             </div>
           </div>
         </header>
-        <div class='stream-text'>
-          <For each={groupedContent()}>
-            {(group) => (
-              <div
-              classList={{
-                ['paragraph']: true,
-                ['flicker-highlight']: 
-                  (hoverEnt()?.entityType === group.type 
-                  && hoverEnt()?.refID === group.flickerID)
-              }}
-              onMouseOver={() => group.flickerID
-                && setHoverEnt({
-                  entityType: 'flicker',
-                  refID: group.flickerID!})}
-              onMouseLeave={() => setHoverEnt(null)}
-              >
-                <Show when={group.flickerID && props.innerClickMode === 'chain'}>
-                  <button
-                    class="chain-add-flicker-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToChain(group.flickerID!);
-                    }}
-                    title="Add flicker to target chain"
-                    style={{
-                      background: 'transparent',
-                      border: '1px dashed #ff8000',
-                      color: '#ff8000',
-                      'border-radius': '3px',
-                      'font-size': '0.75rem',
-                      cursor: 'pointer',
-                      margin: '0 4px',
-                      padding: '0 4px'
-                    }}
-                  >
-                    + Flicker
-                  </button>
-                </Show>
-                <For each={group.flashIDs}>
-                  {(flashID, index) => {
-                    const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
-                    return <DisplayFlash id={flashID}
-                      prevID={prevID}
-                      showTimes={() => showTimes()}
-                      isSpaced={() => flashSpacing()}
-                      renderedBy='stream'
-                      clickDo={props.innerClickMode}
-                      isHovered={
-                        hoverEnt()?.entityType === 'flash' 
-                        && hoverEnt()?.refID === flashID}/>;
+        <Show when={!hideContent()}>
+        <div class="stream-text">
+          <Show
+            when={!replay.isReplaying()}
+            fallback={
+              <ReplayTextView
+                controller={replay}
+                showTimes={() => showTimes()}
+                isSpaced={() => flashSpacing()}
+              />
+            }
+          >
+            <For each={groupedContent()}>
+              {(group) => (
+                <div
+                  classList={{
+                    ['paragraph']: true,
+                    ['flicker-highlight']:
+                      hoverEnt()?.entityType === group.type &&
+                      hoverEnt()?.refID === group.flickerID,
                   }}
-                </For>
-              </div>
-            )}
-          </For>
+                  onMouseOver={() =>
+                    group.flickerID &&
+                    setHoverEnt({
+                      entityType: 'flicker',
+                      refID: group.flickerID!,
+                    })
+                  }
+                  onMouseLeave={() => setHoverEnt(null)}
+                >
+                  <Show when={group.flickerID && props.innerClickMode === 'chain'}>
+                    <button
+                      class="chain-add-flicker-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToChain(group.flickerID!);
+                      }}
+                      title="Add flicker to target chain"
+                      style={{
+                        background: 'transparent',
+                        border: '1px dashed #ff8000',
+                        color: '#ff8000',
+                        'border-radius': '3px',
+                        'font-size': '0.75rem',
+                        cursor: 'pointer',
+                        margin: '0 4px',
+                        padding: '0 4px',
+                      }}
+                    >
+                      + Flicker
+                    </button>
+                  </Show>
+                  <For each={group.flashIDs}>
+                    {(flashID, index) => {
+                      const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
+                      return (
+                        <DisplayFlash
+                          id={flashID}
+                          prevID={prevID}
+                          showTimes={() => showTimes()}
+                          isSpaced={() => flashSpacing()}
+                          renderedBy="stream"
+                          clickDo={props.innerClickMode}
+                          isHovered={
+                            hoverEnt()?.entityType === 'flash' &&
+                            hoverEnt()?.refID === flashID
+                          }
+                        />
+                      );
+                    }}
+                  </For>
+                </div>
+              )}
+            </For>
+          </Show>
         </div>
+      </Show>
       </div>
     </Show>
   );

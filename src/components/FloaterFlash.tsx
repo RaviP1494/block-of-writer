@@ -14,6 +14,12 @@ import {
   type MultEnt } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
+import {
+  createReplayController,
+  ReplayHeaderControl,
+  ReplayTextView,
+} from './ReplayEngine';
+
 interface FloaterFlashProps {
   id: number;
   clickSource?: MultEnt;
@@ -63,6 +69,11 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
 
   const handleDelete = () => deleteFlash(flash()!.id) && handleMinimize();
 
+  const replay = createReplayController(
+    () => [{ type: 'flashes', flashIDs: [props.id], flickerID: null }],
+    () => props.id
+  );
+
   return (
     <Show when={flash()}>
       <div class={bg() ? 'floater-flash white-bg' : 'floater-flash parchment-bg'}>
@@ -93,6 +104,11 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               >
                 ☍
               </button>
+            </div>
+
+            <ReplayHeaderControl controller={replay} />
+
+            <div class="stream-header__actions-right">
               <button
                 type="button"
                 class="stream-action-pill"
@@ -101,9 +117,6 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               >
                 ↯
               </button>
-            </div>
-
-            <div class="stream-header__actions-right">
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-reveal confirm-delete-btn' : 'delete-hide'}
@@ -167,12 +180,23 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
         </header>
 
         <div class="stream-text">
-          <DisplayFlash
-            id={props.id}
-            showTimes={() => false}
-            isSpaced={() => true}
-            renderedBy="flash"
-          />
+          <Show
+            when={!replay.isReplaying()}
+            fallback={
+              <ReplayTextView
+                controller={replay}
+                showTimes={() => false}
+                isSpaced={() => true}
+              />
+            }
+          >
+            <DisplayFlash
+              id={props.id}
+              showTimes={() => false}
+              isSpaced={() => true}
+              renderedBy="flash"
+            />
+          </Show>
         </div>
       </div>
     </Show>

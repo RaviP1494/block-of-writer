@@ -16,7 +16,6 @@ import {
   userMode,
   setUserMode,
   inflectionOn,
-  inflecTents,
 } from './store';
 export const [spawnDots, setSpawnDots] = createSignal(false);
 export const [appTheme, setAppTheme] = createSignal<'space' | 'reef'>('space');
@@ -101,8 +100,8 @@ const App: Component = () => {
                 {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
               </button>
             </nav>
-            <button type="button" class="wb-ghost-slot">Settings</button>
-            <button type="button" class="wb-ghost-slot">Account</button>
+            <button type="button" class="wb-ghost-slot"><s>Settings</s></button>
+            <button type="button" class="wb-ghost-slot"><s>Account</s></button>
           </div>
         </header>
 
@@ -128,7 +127,7 @@ const App: Component = () => {
                 <FocusWriter />
               </article>
 
-              <Show when={inflectionOn() || (inflecTents() && inflecTents()!.length > 0)}>
+              <Show when={inflectionOn()}>
                 <section class="wb-inflection-slot" aria-label="Inflection Point">
                   <InflectionPoint />
                 </section>

@@ -10,12 +10,19 @@ export type FlickFlash = 'flash' | 'flicker';
 export type RenderContext = 'ViewSpace' | 'FlickerView' | 'StreamView' | 'ReflectionHold';
 export type FocusMode = 'Write' | 'Read' | 'Float';
 
+export type Keymote = [
+  charTyped: string,
+  tTypedRel: number,
+  cursorPosition: number
+];
+
 export interface Flash {
   id: number; 
   createDT: number; 
   textContents: string;
   tSpan: number; 
   delayTSpan: number; 
+  log: Keymote[] | null;
 }
 
 export interface Flicker {
@@ -88,7 +95,7 @@ export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 export const [allFlashes, setAllFlashes] = createStore<Flash[]>([]);
 export const getFlash = (flashID: number) =>
   allFlashes.find(f => f.id === flashID) 
-  || {id: 0, textContents: '', createDT: 0, delayTSpan: 1, tSpan: 1}; 
+  || {id: 0, textContents: '', createDT: 0, delayTSpan: 1, tSpan: 1, log: null}; 
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
 export const getFlicker = (flickerID: number) => allFlickers.find(f => f.id === flickerID) 
 || {id: 0, contentIDs: [], createDT: 0, delayTSpan: 1};

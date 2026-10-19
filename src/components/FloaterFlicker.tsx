@@ -11,6 +11,11 @@ import { allFlickers,
   setOpenFloaters,
   viewSpaces } from '../store';
 import { DisplayFlash } from './DisplayFlash';
+import {
+  createReplayController,
+  ReplayHeaderControl,
+  ReplayTextView,
+} from './ReplayEngine';
 
 interface FloaterFlashProps {
   id: number;
@@ -62,6 +67,17 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
     return flowUp() ? ids.reverse() : ids;
   });
 
+  const replay = createReplayController(
+    () => [
+      {
+        type: 'flicker',
+        flashIDs: [...(flicker()?.contentIDs || [])],
+        flickerID: props.id,
+      },
+    ],
+    () => props.id
+  );
+
   return (
     <Show when={flicker()}>
       <div class={bg() ? 'floater-flicker white-bg' : 'floater-flicker parchment-bg'}>
@@ -92,6 +108,11 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               >
                 ☍
               </button>
+            </div>
+
+            <ReplayHeaderControl controller={replay} />
+
+            <div class="stream-header__actions-right">
               <button
                 type="button"
                 class="stream-action-pill"
@@ -100,9 +121,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               >
                 ↯
               </button>
-            </div>
 
-            <div class="stream-header__actions-right">
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-reveal confirm-delete-btn' : 'delete-hide'}
@@ -208,23 +227,34 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
         </header>
 
         <div class="stream-text">
-          <div class="paragraph">
-            <For each={orderedFlashIDs()}>
-              {(flashID, index) => {
-                const prevID = index() > 0 ? orderedFlashIDs()[index() - 1] : null;
-                return (
-                  <DisplayFlash
-                    id={flashID}
-                    prevID={prevID}
-                    showTimes={() => showTimes()}
-                    isSpaced={() => flashSpacing()}
-                    renderedBy="flicker"
-                    clickDo={props.innerClickMode}
-                  />
-                );
-              }}
-            </For>
-          </div>
+          <Show
+            when={!replay.isReplaying()}
+            fallback={
+              <ReplayTextView
+                controller={replay}
+                showTimes={() => showTimes()}
+                isSpaced={() => flashSpacing()}
+              />
+            }
+          >
+            <div class="paragraph">
+              <For each={orderedFlashIDs()}>
+                {(flashID, index) => {
+                  const prevID = index() > 0 ? orderedFlashIDs()[index() - 1] : null;
+                  return (
+                    <DisplayFlash
+                      id={flashID}
+                      prevID={prevID}
+                      showTimes={() => showTimes()}
+                      isSpaced={() => flashSpacing()}
+                      renderedBy="flicker"
+                      clickDo={props.innerClickMode}
+                    />
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
         </div>
       </div>
     </Show>
