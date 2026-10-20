@@ -10,6 +10,7 @@ import {
   sendToSuspenBar,
   setFocusedEntity,
   setOpenFloaters,
+  setUserMode,
   viewSpaces,
   type MultEnt } from '../store';
 import { DisplayFlash } from './DisplayFlash';
@@ -104,6 +105,19 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               >
                 ☍
               </button>
+              <Show when={props.innerClickMode !== 'focus'}>
+                <button
+                  type="button"
+                  class="stream-action-pill"
+                  onClick={() => {
+                    setFocusedEntity({ entityType: 'flash', refID: flash()!.id });
+                    setUserMode('Read');
+                  }}
+                  title="Focus Flash in Reader Mode"
+                >
+                  Focus
+                </button>
+              </Show>
             </div>
 
             <ReplayHeaderControl controller={replay} />

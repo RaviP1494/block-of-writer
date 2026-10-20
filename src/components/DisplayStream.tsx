@@ -54,9 +54,12 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
     if (props.innerClickMode === 'multi') {
       setOpenFloaters(() => [
         ...openFloaters.filter(
-          ent => ent.refID !== stream()?.id || ent.entityType !== 'stream'
+          (ent) => ent.refID !== stream()?.id || ent.entityType !== 'stream'
         ),
       ]);
+      if (writerTargetID() === stream()?.id) {
+        setWriterTargetID(null);
+      }
     } else if (props.innerClickMode === 'focus') {
       setFocusedStreamID(0);
       setFocusedEntity(null);

@@ -1421,3 +1421,41 @@ body, html {
   from { opacity: 1; }
   to { opacity: 0.35; }
 }
+
+/* ==========================================================================
+   15. UNIFIED SELECTOR DECK, STREAMLESS PILL & MULTI-READER BAY
+   ========================================================================== */
+.wb-unified-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.vs-bar-title--streamless {
+  border-style: dashed;
+}
+
+.vs-bar-title.opened-stream-pill:not(.targeted-stream) {
+  color: var(--text-primary);
+  border-color: rgba(132, 145, 186, 0.45);
+}
+
+.vs-summary-cell--streamless {
+  border-style: dashed;
+}
+
+/* Ensures ViewMultItems (.multi-reader) stacks and scrolls cleanly inside .wb-companion-track */
+.wb-companion-track .multi-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .wb-companion-track .multi-reader {
+    flex-direction: row;
+  }
+}

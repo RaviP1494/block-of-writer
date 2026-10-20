@@ -12,43 +12,37 @@ export const ViewMultItems: Component<ViewMultItemsProps> = (props) => {
   const items = createMemo(() => openFloaters.filter(f => f && f.refID !== 0));
 
   return (
-    <div class='multi-reader'>
+    <div class="multi-reader">
       <For each={items()}>
-        {(entity) =>
-          <Switch fallback={<div class='mistake'>Nothing Here</div>}>
-            <Match
-              when=
-              {entity.entityType
-                === 'stream'}>
-              <DisplayStream
-                id=
-                {entity.refID}
-                innerClickMode=
-                {props.innerClickMode} />
-            </Match>
+        {(entity) => (
+          <article
+            id={`companion-${entity.entityType}-${entity.refID}`}
+            class="wb-companion-card"
+          >
+            <Switch fallback={<div class="mistake">Nothing Here</div>}>
+              <Match when={entity.entityType === 'stream'}>
+                <DisplayStream
+                  id={entity.refID}
+                  innerClickMode={props.innerClickMode}
+                />
+              </Match>
 
-            <Match when=
-              {entity.entityType
-                === 'flicker'}>
-              <FloaterFlicker
-                id=
-                {entity.refID}
-                innerClickMode=
-                {props.innerClickMode} />
-            </Match>
+              <Match when={entity.entityType === 'flicker'}>
+                <FloaterFlicker
+                  id={entity.refID}
+                  innerClickMode={props.innerClickMode}
+                />
+              </Match>
 
-            <Match
-              when=
-              {entity.entityType
-                === 'flash'}>
-              <FloaterFlash
-                id=
-                {entity.refID}
-                innerClickMode=
-                {props.innerClickMode} />
-            </Match>
-          </Switch>
-        }
+              <Match when={entity.entityType === 'flash'}>
+                <FloaterFlash
+                  id={entity.refID}
+                  innerClickMode={props.innerClickMode}
+                />
+              </Match>
+            </Switch>
+          </article>
+        )}
       </For>
     </div>
   )

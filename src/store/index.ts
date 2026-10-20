@@ -290,12 +290,63 @@ export const makeStreamFrom = (ent: MultEnt) => {
 };
 
 export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
-  setSuspenBarTents(prev =>
-    prev.some(e => e.entityType === entityType && e.refID === refID)
-      ? prev
-      : [...prev, { entityType, refID }]
-  );
+  batch(() => {
+    if (entityType === 'stream') {
+      setViewSpaces(
+        (vs) => vs.tentsInSpace && vs.tentsInSpace.length > 0,
+        'tentsInSpace',
+        (prev) => prev.filter((e) => !(e.entityType === 'stream' && e.refID === refID))
+      );
+      if (writerTargetID() === refID) setWriterTargetID(null);
+      if (focusedStreamID() === refID) setFocusedStreamID(0);
+    } else if (entityType === 'flicker') {
+      setAllStreams(
+        (stream) => stream.contentIDs.includes(refID),
+        'contentIDs',
+        (prevIds) => prevIds.filter((id) => id !== refID)
+      );
+      setViewSpaces(
+        (vs) => vs.tentsInSpace && vs.tentsInSpace.length > 0,
+        'tentsInSpace',
+        (prev) => prev.filter((e) => !(e.entityType === 'flicker' && e.refID === refID))
+      );
+    } else if (entityType === 'flash') {
+      setAllFlickers(
+        (flicker) => flicker.contentIDs.includes(refID),
+        'contentIDs',
+        (prevIds) => prevIds.filter((id) => id !== refID)
+      );
+      setAllStreams(
+        (stream) => stream.contentIDs.includes(refID),
+        'contentIDs',
+        (prevIds) => prevIds.filter((id) => id !== refID)
+      );
+      setViewSpaces(
+        (vs) => vs.tentsInSpace && vs.tentsInSpace.length > 0,
+        'tentsInSpace',
+        (prev) => prev.filter((e) => !(e.entityType === 'flash' && e.refID === refID))
+      );
+    }
+
+    setOpenFloaters((prev) =>
+      prev.filter((e) => !(e.entityType === entityType && e.refID === refID))
+    );
+
+    if (
+      focusedEntity()?.entityType === entityType &&
+      focusedEntity()?.refID === refID
+    ) {
+      setFocusedEntity(null);
+    }
+
+    setSuspenBarTents((prev) =>
+      prev.some((e) => e.entityType === entityType && e.refID === refID)
+        ? prev
+        : [...prev, { entityType, refID }]
+    );
+  });
 };
+
 export const sendToViewSpace = (entityType: EntityType, refID: number) => {
     const activeID = activeViewSpaceID();
     if (activeID !== null){
@@ -479,8 +530,11 @@ export const createNewStream = (name?:string) => {
                    ]
                 );
   setWriterTargetID(newStream.id); // Automatically switch to the new stream
-  console.log('Streams:');
-  console.log(allStreams);
+  setOpenFloaters((prev) =>
+    prev.some((e) => e.entityType === 'stream' && e.refID === newStream.id)
+      ? prev
+      : [...prev, { entityType: 'stream', refID: newStream.id }]
+  );
 };
 
 export const createNewViewSpace = (name?: string) => {

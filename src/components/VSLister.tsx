@@ -9,9 +9,12 @@ import {
   getFlash,
   getFlicker,
   getEmacsDateString,
+  userMode,
   type ViewSpace
 } from '../store';
 import { EditTitle } from './EditTitle';
+import { StreamSelector } from './StreamSelector';
+import { VSReadPicker } from './VSReadPicker';
 
 type DisplayMode = 'active' | 'bar' | 'grid';
 
@@ -168,6 +171,7 @@ const VSBarSelect: Component<{ onOpenGrid: () => void, onSelect: () => void }> =
         class="vs-btn-icon"
         onClick={() => {
           createNewViewSpace();
+          props.onSelect();
         }}
         title="Create New ViewSpace"
       >+</button>
@@ -181,12 +185,25 @@ const ActiveVSDisplay: Component<{ onOpenBar: () => void }> = (props) => {
 
   return (
     <div class="active-vs-display">
-      <button class="vs-btn-icon" onClick={props.onOpenBar}>🗖</button>
+      <button class="vs-btn-icon" onClick={props.onOpenBar} title="Switch ViewSpace">🗖</button>
       <Show when={isEditingTitle()}
         fallback={
-          <div class="active-vs-title-wrapper" onClick={() => setIsEditingTitle(true)}>
+          <div
+            class="active-vs-title-wrapper"
+            onClick={props.onOpenBar}
+            title="Click to switch ViewSpace"
+          >
             <span class="active-vs-title">{activeVS()?.title}</span>
-            <span class="active-vs-edit-icon">✎</span>
+            <span
+              class="active-vs-edit-icon"
+              title="Rename ViewSpace"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingTitle(true);
+              }}
+            >
+              ✎
+            </span>
           </div>
         }
       >
@@ -226,23 +243,31 @@ export const VSLister: Component = () => {
   });
 
   return (
-    <div 
-      ref={containerRef}
-      class="vs-lister-container"
-    >
+    <div class="wb-unified-selector">
+      <div
+        ref={containerRef}
+        class="vs-lister-container"
+      >
+        <Show when={displayMode() === 'active'}>
+          <ActiveVSDisplay onOpenBar={() => setDisplayMode('bar')} />
+        </Show>
+        <Show when={displayMode() === 'bar'}>
+          <VSBarSelect 
+            onOpenGrid={() => setDisplayMode('grid')} 
+            onSelect={() => setDisplayMode('active')} 
+          />
+        </Show>
+        <Show when={displayMode() === 'grid'}>
+          <VSGridSelect 
+            onSelect={() => setDisplayMode('active')} 
+          />
+        </Show>
+      </div>
+
       <Show when={displayMode() === 'active'}>
-        <ActiveVSDisplay onOpenBar={() => setDisplayMode('bar')} />
-      </Show>
-      <Show when={displayMode() === 'bar'}>
-        <VSBarSelect 
-          onOpenGrid={() => setDisplayMode('grid')} 
-          onSelect={() => setDisplayMode('active')} 
-        />
-      </Show>
-      <Show when={displayMode() === 'grid'}>
-        <VSGridSelect 
-          onSelect={() => setDisplayMode('active')} 
-        />
+        <Show when={userMode() === 'Write'} fallback={<VSReadPicker />}>
+          <StreamSelector />
+        </Show>
       </Show>
     </div>
   );

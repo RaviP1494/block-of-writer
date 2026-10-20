@@ -9,6 +9,7 @@ import { allFlickers,
   sendToSuspenBar,
   setFocusedEntity,
   setOpenFloaters,
+  setUserMode,
   viewSpaces } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 import {
@@ -108,6 +109,19 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               >
                 ☍
               </button>
+              <Show when={props.innerClickMode !== 'focus'}>
+                <button
+                  type="button"
+                  class="stream-action-pill"
+                  onClick={() => {
+                    setFocusedEntity({ entityType: 'flicker', refID: flicker()!.id });
+                    setUserMode('Read');
+                  }}
+                  title="Focus Flicker in Reader Mode"
+                >
+                  Focus
+                </button>
+              </Show>
             </div>
 
             <ReplayHeaderControl controller={replay} />

@@ -16,6 +16,7 @@ import {
   setWriterTargetID,
   setFocusedEntity,
   setFocusedStreamID,
+  setOpenFloaters,
   type MultEnt,
 } from '../store';
 
@@ -33,8 +34,15 @@ export const SuspenBar: Component = () => {
   };
 
   const handleInspect = (ent: MultEnt) => {
-    if (ent.entityType === 'stream' && userMode() === 'Write') {
-      setWriterTargetID(ent.refID);
+    if (userMode() === 'Write') {
+      if (ent.entityType === 'stream') {
+        setWriterTargetID(ent.refID);
+      }
+      setOpenFloaters((prev) =>
+        prev.some((e) => e.entityType === ent.entityType && e.refID === ent.refID)
+          ? prev
+          : [...prev, { entityType: ent.entityType, refID: ent.refID }]
+      );
     } else {
       if (ent.entityType === 'stream') setFocusedStreamID(ent.refID);
       setFocusedEntity({ entityType: ent.entityType, refID: ent.refID });

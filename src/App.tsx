@@ -1,18 +1,16 @@
 import './App.css'
 import { type Component, createSignal, Show } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { StreamSelector } from './components/StreamSelector';
 import { VSLister } from './components/VSLister';
-import { DisplayStream } from './components/DisplayStream';
 import { ViewFocused } from './components/ViewFocused';
-import { VSReadPicker } from './components/VSReadPicker';
+import { ViewMultItems } from './components/ViewMultItems';
 import { InflectionPoint } from './components/InflectionPoint';
 import { SuspenBar } from './components/SuspenBar';
 import {
   saveToFile,
   loadFromFile,
   fileErrorMessage,
-  writerTargetID,
+  openFloaters,
   userMode,
   setUserMode,
   inflectionOn,
@@ -54,7 +52,7 @@ const App: Component = () => {
         class="wb-app"
         data-theme={appTheme()}
         data-mode={userMode().toLowerCase()}
-        data-companion={userMode() === 'Write' && writerTargetID() !== null ? 'open' : 'closed'}
+        data-companion={userMode() === 'Write' && openFloaters.length > 0 ? 'open' : 'closed'}
       >
 
         <header class="wb-navbar" role="banner">
@@ -107,9 +105,6 @@ const App: Component = () => {
 
         <section class="wb-context-deck" aria-label="View Space and Stream Selectors">
           <VSLister />
-          <Show when={userMode() === 'Write'} fallback={<VSReadPicker />}>
-            <StreamSelector />
-          </Show>
         </section>
 
         <div class="wb-workspace">
@@ -137,11 +132,7 @@ const App: Component = () => {
 
           <aside class="wb-companion-bay" aria-label="Companion Streams and Stractors">
             <div class="wb-companion-track">
-              <Show when={writerTargetID() !== null}>
-                <article class="wb-companion-card">
-                  <DisplayStream id={writerTargetID()!} />
-                </article>
-              </Show>
+              <ViewMultItems innerClickMode="multi" />
             </div>
           </aside>
 

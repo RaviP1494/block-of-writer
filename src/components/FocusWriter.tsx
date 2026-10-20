@@ -329,7 +329,7 @@ export const FocusWriter: Component = () => {
 
     // Allow Backspace, Delete, and Arrow keys; block unlisted keys
     if (
-      !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key) &&
+      !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'].includes(e.key) &&
       !VALID_WRITER_KEYS.includes(e.key)
     ) {
       e.preventDefault();
@@ -432,7 +432,7 @@ export const FocusWriter: Component = () => {
             ref={textareaRef}
             class="writers-block"
             classList={{ 'writers-block--hidden-text': hideTypedText() }}
-            aria-label="Writers Block Input"
+            aria-label="Writing Input"
             spellcheck={false}
             autocorrect="off"
             autocapitalize="off"
@@ -483,7 +483,7 @@ export const FocusWriter: Component = () => {
             onPaste={(e) => e.preventDefault()}
             onDrop={(e) => e.preventDefault()}
             onKeyDown={(e) => { handleKeyDown(e) }}
-            placeholder="Begin a flash..."
+            placeholder="Write on!"
             autofocus
           />
 
