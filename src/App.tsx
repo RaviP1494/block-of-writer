@@ -1,7 +1,7 @@
 import './App.css'
 import { type Component, createSignal, Show } from 'solid-js';
 import { FocusWriter } from './components/FocusWriter';
-import { VSLister } from './components/VSLister';
+import { VSLister, vsDisplayMode } from './components/VSLister';
 import { ViewFocused } from './components/ViewFocused';
 import { ViewMultItems } from './components/ViewMultItems';
 import { InflectionPoint } from './components/InflectionPoint';
@@ -52,7 +52,12 @@ const App: Component = () => {
         class="wb-app"
         data-theme={appTheme()}
         data-mode={userMode().toLowerCase()}
-        data-companion={userMode() === 'Write' && openFloaters.length > 0 ? 'open' : 'closed'}
+        data-vs-grid={vsDisplayMode() === 'grid' ? 'open' : 'closed'}
+        data-companion={
+          vsDisplayMode() === 'active' && userMode() === 'Write' && openFloaters.length > 0
+            ? 'open'
+            : 'closed'
+        }
       >
 
         <header class="wb-navbar" role="banner">
@@ -107,36 +112,38 @@ const App: Component = () => {
           <VSLister />
         </section>
 
-        <div class="wb-workspace">
+        <Show when={vsDisplayMode() === 'active'}>
+          <div class="wb-workspace">
 
-          <main class="wb-stage" id="focal-stage" tabindex="-1">
-            <Show
-              when={userMode() === 'Write'}
-              fallback={
-                <article class="wb-focal-chamber wb-focal-chamber--reader" data-measure="narrow">
-                  <ViewFocused innerClickMode="focus" />
+            <main class="wb-stage" id="focal-stage" tabindex="-1">
+              <Show
+                when={userMode() === 'Write'}
+                fallback={
+                  <article class="wb-focal-chamber wb-focal-chamber--reader" data-measure="narrow">
+                    <ViewFocused innerClickMode="focus" />
+                  </article>
+                }
+              >
+                <article class="wb-focal-chamber" data-measure="wide">
+                  <FocusWriter />
                 </article>
-              }
-            >
-              <article class="wb-focal-chamber" data-measure="wide">
-                <FocusWriter />
-              </article>
 
-              <Show when={inflectionOn()}>
-                <section class="wb-inflection-slot" aria-label="Inflection Point">
-                  <InflectionPoint />
-                </section>
+                <Show when={inflectionOn()}>
+                  <section class="wb-inflection-slot" aria-label="Inflection Point">
+                    <InflectionPoint />
+                  </section>
+                </Show>
               </Show>
-            </Show>
-          </main>
+            </main>
 
-          <aside class="wb-companion-bay" aria-label="Companion Streams and Stractors">
-            <div class="wb-companion-track">
-              <ViewMultItems innerClickMode="multi" />
-            </div>
-          </aside>
+            <aside class="wb-companion-bay" aria-label="Companion Streams and Stractors">
+              <div class="wb-companion-track">
+                <ViewMultItems innerClickMode="multi" />
+              </div>
+            </aside>
 
-        </div>
+          </div>
+        </Show>
 
         <aside class="wb-suspension-bar" aria-label="Suspension Bar for items in transit">
           <SuspenBar />

@@ -143,13 +143,13 @@ const StreamBarSelect: Component<{
   });
 
   return (
-    <div class="vs-bar-select">
-      <button class="vs-btn-icon" onClick={props.onOpenGrid} title="Open Grid">🗖</button>
-      <button class="vs-btn-icon" onClick={scrollLeft} title="Scroll Left">&lt;</button>
-      <div class="vs-bar-scroll" ref={scrollRef} style={{ 'scroll-behavior': 'smooth' }}>
+    <div class="stream-bar-select">
+      <button class="stream-btn-icon" onClick={props.onOpenGrid} title="Open Grid">🗖</button>
+      <button class="stream-btn-icon" onClick={scrollLeft} title="Scroll Left">&lt;</button>
+      <div class="stream-bar-scroll" ref={scrollRef} style={{ 'scroll-behavior': 'smooth' }}>
         <button
           type="button"
-          class="vs-bar-title vs-bar-title--streamless"
+          class="stream-bar-title stream-bar-title--streamless"
           classList={{ 'targeted-stream': props.hasOpenStreamless() }}
           onClick={props.onToggleStreamless}
           title={
@@ -164,7 +164,7 @@ const StreamBarSelect: Component<{
           {(stream) => (
             <button 
               id={'stream' + stream.id.toString()}
-              class="vs-bar-title"
+              class="stream-bar-title"
               classList={{
                 'targeted-stream': props.targetedID() === stream.id,
                 'opened-stream-pill': openFloaters.some(
@@ -178,9 +178,9 @@ const StreamBarSelect: Component<{
           )}
         </For>
       </div>
-      <button class="vs-btn-icon" onClick={scrollRight} title="Scroll Right">&gt;</button>
+      <button class="stream-btn-icon" onClick={scrollRight} title="Scroll Right">&gt;</button>
       <button 
-        class="vs-btn-icon"
+        class="stream-btn-icon"
         onClick={props.onCreateNew}
         title="Create New Stream"
       >+</button>
@@ -289,7 +289,7 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
   return (
     <div 
       ref={containerRef}
-      class="vs-lister-container stream-selector-container"
+      class="stream-lister-container stream-selector-container"
     >
       <Show when={displayMode() === 'bar'}>
         <StreamBarSelect 

@@ -47,6 +47,7 @@ export interface MultEnt {
 export interface ViewSpace {
   id: number;
   title: string;
+  createDT: number;
   tentsInSpace: MultEnt[];
 }
 
@@ -73,7 +74,7 @@ export const [backspaceDisabled, setBackspaceDisabled] = createSignal<boolean>(f
 
 export const [typingStartTime, setTypingStartTime] = createSignal<number | null>(null);
 
-export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(null); 
+export const [writerTargetID, setWriterTargetID] = createSignal<number | null>(1); 
 export const [focusedStreamID, setFocusedStreamID] = createSignal<number>(0); 
 export const [hoverEnt, setHoverEnt] = createSignal<MultEnt | null>(null);
 
@@ -99,11 +100,15 @@ export const getFlash = (flashID: number) =>
 export const [allFlickers, setAllFlickers] = createStore<Flicker[]>([]);
 export const getFlicker = (flickerID: number) => allFlickers.find(f => f.id === flickerID) 
 || {id: 0, contentIDs: [], createDT: 0, delayTSpan: 1};
-export const [allStreams, setAllStreams] = createStore<Stream[]>([]);
+export const [allStreams, setAllStreams] = createStore<Stream[]>([
+  { id: 1, title: 'Initial Stream', createDT: Date.now(), contentIDs: [] }
+]);
 export const getStream = (streamID: number) => allStreams.find(s => s.id === streamID);
 export const [suspenBarTents, setSuspenBarTents] = createStore<MultEnt[]>([]);
 export const [viewSpaces, setViewSpaces] = createStore<ViewSpace[]>([
-  { id: 1, title: 'Initial Space', tentsInSpace: [] }
+  { id: 1, title: 'Initial Space', createDT: Date.now(), tentsInSpace: [
+    { entityType: 'stream', refID: 1 }
+  ] }
 ]);
 export const [sparkChains, setSparkChains] = createStore<SparkChain[]>([]);
 export const [openStreams, setOpenStreams] = createStore<number[]>([]);
@@ -115,7 +120,7 @@ export const [openFloaters, setOpenFloaters] = createStore<MultEnt[]>([]);
 // ==========================================
 
 let nextFlashID = 1;
-let nextStreamID = 1;
+let nextStreamID = 2;
 let nextFlickerID = -1;
 let nextChainID = 1;
 let nextViewSpaceID = 2;
@@ -542,6 +547,7 @@ export const createNewViewSpace = (name?: string) => {
   const newVS: ViewSpace = {
     id: nextViewSpaceID++,
     title: vsName,
+    createDT: Date.now(),
     tentsInSpace: [],
   };
   setViewSpaces(prev => [...prev, newVS]);
