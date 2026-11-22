@@ -8,7 +8,6 @@ import {
   typingStartTime, setTypingStartTime,
   setIsFlickerOpen,
   inflectionOn,
-  setInflectionOn,
   writerTargetID,
   addFlash,
   outFlect,
@@ -366,7 +365,7 @@ export const FocusWriter: Component = () => {
       return s ? `Stream: ${s.title}` : 'Stream';
     }
     const vs = viewSpaces.find((v) => v.id === activeViewSpaceID());
-    return vs ? `Space: ${vs.title} (Loose)` : 'Loose in Space';
+    return vs ? `Space: ${vs.title} (Floating)` : 'Floating in Space';
   };
 
   return (
@@ -402,18 +401,7 @@ export const FocusWriter: Component = () => {
               textareaRef?.focus();
             }}
           >
-          {showTimeBars() ? 'Time Bars' : 'Time Bars'}
-          </button>
-          <button
-            type="button"
-            class="focus-writer__toggle-btn"
-            aria-pressed={inflectionOn()}
-            onClick={() => {
-              setInflectionOn((prev) => !prev);
-              textareaRef?.focus();
-            }}
-          >
-            Inflection
+            Time Bars
           </button>
         </div>
 

@@ -85,6 +85,7 @@ export const [focusedEntity, setFocusedEntity] = createSignal<MultEnt | null>(nu
 export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number>(1);
 
 export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
+export const [seedSource, setSeedSource] = createSignal<MultEnt | null>(null);
 
 
 
@@ -187,116 +188,191 @@ const sendFlickOrFlash = (entityType: 'flash' | 'flicker', entityId: number) => 
   }
 };
 
-export const makeStreamFrom = (ent: MultEnt) => {
-  if( ent.entityType === 'flash' ){
+const cloneKeymotes = (log: Keymote[] | null): Keymote[] | null =>
+  log ? log.map((k) => [...k] as Keymote) : null;
+
+export const makeStreamFrom = (ent: MultEnt, customTitle?: string): number | null => {
+  const resolveTitle = (streamID: number) => {
+    const trimmed = customTitle?.trim();
+    return trimmed && trimmed.length > 0 ? trimmed : `Stream ${streamID}`;
+  };
+
+  if (ent.entityType === 'flash') {
     const flash = allFlashes.find(f => f.id === ent.refID);
-    if (!flash) return;
+    if (!flash) return null;
 
-    const finalFlash = { ...flash, id: nextFlashID++ };
-    setAllFlashes(prev => [...prev, finalFlash ]);
+    const finalFlash: Flash = {
+      ...flash,
+      id: nextFlashID++,
+      log: cloneKeymotes(flash.log),
+    };
     const newStreamID = nextStreamID++;
-
     const newStream: Stream = {
       id: newStreamID,
-      title: `Stream ${newStreamID}`, 
+      title: resolveTitle(newStreamID),
       createDT: Date.now(),
-      contentIDs: [finalFlash.id] // <-- The crucial link!
+      contentIDs: [finalFlash.id],
     };
-    setAllStreams(prev => [...prev, newStream]);
-    sendToViewSpace('stream', newStreamID);
-  } else if( ent.entityType === 'flicker' ){
 
+    batch(() => {
+      setAllFlashes(prev => [...prev, finalFlash]);
+      setAllStreams(prev => [...prev, newStream]);
+      sendToViewSpace('stream', newStreamID);
+    });
+    return newStreamID;
+  } else if (ent.entityType === 'flicker') {
     const flicker = allFlickers.find(b => b.id === ent.refID);
-    if (!flicker) return;
+    if (!flicker) return null;
+
     const clonedFlashIDs: number[] = [];
     const clonedFlashes: Flash[] = [];
 
     flicker.contentIDs.forEach(flashID => {
       const originalFlash = allFlashes.find(f => f.id === flashID);
       if (originalFlash) {
-        const newFlash = { ...originalFlash, id: nextFlashID++ };
+        const newFlash: Flash = {
+          ...originalFlash,
+          id: nextFlashID++,
+          log: cloneKeymotes(originalFlash.log),
+        };
         clonedFlashes.push(newFlash);
         clonedFlashIDs.push(newFlash.id);
       }
     });
 
-    if (clonedFlashes.length > 0) {
-      setAllFlashes(prev => [...prev, ...clonedFlashes]);
-    }
-
     const newFlickerID = nextFlickerID--;
     const newFlicker: Flicker = {
       ...flicker,
       id: newFlickerID,
-      contentIDs: clonedFlashIDs // <-- The crucial link for the Flicker!
+      contentIDs: clonedFlashIDs,
     };
-    
-    setAllFlickers(prev => [...prev, newFlicker]);
 
     const newStreamID = nextStreamID++;
     const newStream: Stream = {
       id: newStreamID,
-      title: `Stream ${newStreamID}`, 
-      createDT: flicker.createDT,
-      contentIDs: [newFlicker.id] // <-- The crucial link for the Stream!
+      title: resolveTitle(newStreamID),
+      createDT: Date.now(),
+      contentIDs: [newFlicker.id],
     };
 
-    setAllStreams(prev => [...prev, newStream]);
-    sendToViewSpace('stream', newStreamID);
-    }
-    else if (ent.entityType === 'stream'){
-      const stream = allStreams.find(s => s.id === ent.refID);
-      if (!stream) return;
-      const newStreamID = nextStreamID++;
-      const newStream: Stream = {
-        id: newStreamID,
-        title: `Stream ${newStreamID}`, 
-        createDT: Date.now(),
-        contentIDs: []
-      };
-      const clonedFlashes: Flash[] = [];
-
-      stream.contentIDs.forEach((i) => {
-        if(i >= 0){
-          const originalFlash = allFlashes.find(f => f.id === i);
-          if (originalFlash) {
-            const newFlash = { ...originalFlash, id: nextFlashID++ };
-            clonedFlashes.push(newFlash);
-            newStream.contentIDs.push(newFlash.id);
-            setAllFlashes(prev => [...prev, newFlash]);
-          }
-        } else if(i < 0){
-          const originalFlicker = allFlickers.find(b => b.id === i);
-          if (originalFlicker) {
-            const flickerFlashIDs: number[] = [];
-            originalFlicker.contentIDs.forEach(flashID => {
-              const originalFlash = allFlashes.find(f => f.id === flashID);
-              if (originalFlash) {
-                const newFlash = { ...originalFlash, id: nextFlashID++ };
-                clonedFlashes.push(newFlash);
-                flickerFlashIDs.push(newFlash.id);
-              }
-            })
-            const newFlickerID = nextFlickerID--;
-            const newFlicker = { 
-              ...originalFlicker,
-              id: newFlickerID,
-              contentIDs: flickerFlashIDs 
-            }
-            newStream.contentIDs.push(newFlickerID);
-            setAllFlickers(prev => [...prev, newFlicker]);
-          }
-        }
-      })
-      setAllFlashes(prev => [...prev, ...clonedFlashes]);
+    batch(() => {
+      if (clonedFlashes.length > 0) {
+        setAllFlashes(prev => [...prev, ...clonedFlashes]);
+      }
+      setAllFlickers(prev => [...prev, newFlicker]);
       setAllStreams(prev => [...prev, newStream]);
       sendToViewSpace('stream', newStreamID);
+    });
+    return newStreamID;
+  } else if (ent.entityType === 'stream') {
+    const stream = allStreams.find(s => s.id === ent.refID);
+    if (!stream) return null;
+
+    const newStreamID = nextStreamID++;
+    const newStream: Stream = {
+      id: newStreamID,
+      title: resolveTitle(newStreamID),
+      createDT: Date.now(),
+      contentIDs: [],
     };
+    const clonedFlashes: Flash[] = [];
+    const clonedFlickers: Flicker[] = [];
+
+    stream.contentIDs.forEach((i) => {
+      if (i >= 0) {
+        const originalFlash = allFlashes.find(f => f.id === i);
+        if (originalFlash) {
+          const newFlash: Flash = {
+            ...originalFlash,
+            id: nextFlashID++,
+            log: cloneKeymotes(originalFlash.log),
+          };
+          clonedFlashes.push(newFlash);
+          newStream.contentIDs.push(newFlash.id);
+        }
+      } else if (i < 0) {
+        const originalFlicker = allFlickers.find(b => b.id === i);
+        if (originalFlicker) {
+          const flickerFlashIDs: number[] = [];
+          originalFlicker.contentIDs.forEach(flashID => {
+            const originalFlash = allFlashes.find(f => f.id === flashID);
+            if (originalFlash) {
+              const newFlash: Flash = {
+                ...originalFlash,
+                id: nextFlashID++,
+                log: cloneKeymotes(originalFlash.log),
+              };
+              clonedFlashes.push(newFlash);
+              flickerFlashIDs.push(newFlash.id);
+            }
+          });
+          const newFlickerID = nextFlickerID--;
+          const newFlicker: Flicker = {
+            ...originalFlicker,
+            id: newFlickerID,
+            contentIDs: flickerFlashIDs,
+          };
+          newStream.contentIDs.push(newFlickerID);
+          clonedFlickers.push(newFlicker);
+        }
+      }
+    });
+
+    batch(() => {
+      if (clonedFlashes.length > 0) {
+        setAllFlashes(prev => [...prev, ...clonedFlashes]);
+      }
+      if (clonedFlickers.length > 0) {
+        setAllFlickers(prev => [...prev, ...clonedFlickers]);
+      }
+      setAllStreams(prev => [...prev, newStream]);
+      sendToViewSpace('stream', newStreamID);
+    });
+    return newStreamID;
+  }
+
+  return null;
+};
+
+export const replaceInOpenFloaters = (from: MultEnt, to: MultEnt | null) => {
+  setOpenFloaters((prev) => {
+    const idx = prev.findIndex(
+      (e) => e.entityType === from.entityType && e.refID === from.refID
+    );
+    const withoutFrom = prev.filter(
+      (e) => !(e.entityType === from.entityType && e.refID === from.refID)
+    );
+    if (!to) return withoutFrom;
+    const alreadyHasTo = withoutFrom.some(
+      (e) => e.entityType === to.entityType && e.refID === to.refID
+    );
+    if (alreadyHasTo) return withoutFrom;
+    if (idx === -1) return [...withoutFrom, to];
+    const next = [...withoutFrom];
+    next.splice(idx, 0, to);
+    return next;
+  });
 };
 
 export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
   batch(() => {
+    const hiddenFlickerIDs = new Set<number>();
+    const hiddenFlashIDs = new Set<number>();
+
     if (entityType === 'stream') {
+      const stream = allStreams.find((s) => s.id === refID);
+      if (stream) {
+        stream.contentIDs.forEach((cid) => {
+          if (cid > 0) {
+            hiddenFlashIDs.add(cid);
+          } else {
+            hiddenFlickerIDs.add(cid);
+            const flk = allFlickers.find((b) => b.id === cid);
+            flk?.contentIDs.forEach((fid) => hiddenFlashIDs.add(fid));
+          }
+        });
+      }
+
       setViewSpaces(
         (vs) => vs.tentsInSpace && vs.tentsInSpace.length > 0,
         'tentsInSpace',
@@ -305,6 +381,9 @@ export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
       if (writerTargetID() === refID) setWriterTargetID(null);
       if (focusedStreamID() === refID) setFocusedStreamID(0);
     } else if (entityType === 'flicker') {
+      const flk = allFlickers.find((b) => b.id === refID);
+      flk?.contentIDs.forEach((fid) => hiddenFlashIDs.add(fid));
+
       setAllStreams(
         (stream) => stream.contentIDs.includes(refID),
         'contentIDs',
@@ -316,6 +395,10 @@ export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
         (prev) => prev.filter((e) => !(e.entityType === 'flicker' && e.refID === refID))
       );
     } else if (entityType === 'flash') {
+      const affectedFlickerIDs = allFlickers
+        .filter((flicker) => flicker.contentIDs.includes(refID))
+        .map((flicker) => flicker.id);
+
       setAllFlickers(
         (flicker) => flicker.contentIDs.includes(refID),
         'contentIDs',
@@ -331,16 +414,24 @@ export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
         'tentsInSpace',
         (prev) => prev.filter((e) => !(e.entityType === 'flash' && e.refID === refID))
       );
+
+      affectedFlickerIDs.forEach((fid) => {
+        const flk = allFlickers.find((b) => b.id === fid);
+        if (flk && flk.contentIDs.length === 0) {
+          deleteFlicker(fid);
+        }
+      });
     }
 
-    setOpenFloaters((prev) =>
-      prev.filter((e) => !(e.entityType === entityType && e.refID === refID))
-    );
+    const isHiddenEnt = (e: MultEnt) =>
+      (e.entityType === entityType && e.refID === refID) ||
+      (e.entityType === 'flicker' && hiddenFlickerIDs.has(e.refID)) ||
+      (e.entityType === 'flash' && hiddenFlashIDs.has(e.refID));
 
-    if (
-      focusedEntity()?.entityType === entityType &&
-      focusedEntity()?.refID === refID
-    ) {
+    setOpenFloaters((prev) => prev.filter((e) => !isHiddenEnt(e)));
+
+    const currentFocus = focusedEntity();
+    if (currentFocus && isHiddenEnt(currentFocus)) {
       setFocusedEntity(null);
     }
 
@@ -366,29 +457,47 @@ export const sendToViewSpace = (entityType: EntityType, refID: number) => {
 
 
 export const deleteFlash = (flashID: number) => {
-  if (!allFlashes.some(f=> f.id === flashID)) return 0;
-  setAllFlashes(prev => prev.filter(flash => flash.id !== flashID));
+  if (!allFlashes.some(f => f.id === flashID)) return 0;
 
-  setAllFlickers(
-    flicker => flicker.contentIDs.includes(flashID),
-    'contentIDs',
-    prevIds => prevIds.filter(id => id !== flashID)
-  );
-  setAllStreams(
-    stream => stream.contentIDs.includes(flashID),
-    'contentIDs',
-    prevIds => prevIds.filter(id => id !== flashID)
-  );
-  setViewSpaces( vs => vs.tentsInSpace && vs.tentsInSpace.length > 0,
-                'tentsInSpace',
-                prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
+  batch(() => {
+    const affectedFlickerIDs = allFlickers
+      .filter((flicker) => flicker.contentIDs.includes(flashID))
+      .map((flicker) => flicker.id);
 
-  setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
-  setSparkChains(
-    chain => chain.sparkIDs.includes(flashID),
-    'sparkIDs',
-    prevIds => prevIds.filter(id => id !== flashID)
-  );
+    setAllFlashes(prev => prev.filter(flash => flash.id !== flashID));
+
+    setAllFlickers(
+      flicker => flicker.contentIDs.includes(flashID),
+      'contentIDs',
+      prevIds => prevIds.filter(id => id !== flashID)
+    );
+    setAllStreams(
+      stream => stream.contentIDs.includes(flashID),
+      'contentIDs',
+      prevIds => prevIds.filter(id => id !== flashID)
+    );
+    setViewSpaces(
+      vs => vs.tentsInSpace && vs.tentsInSpace.length > 0,
+      'tentsInSpace',
+      prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID))
+    );
+
+    setSuspenBarTents(prev => prev.filter(e => !(e.entityType === 'flash' && e.refID === flashID)));
+    setSparkChains(
+      chain => chain.sparkIDs.includes(flashID),
+      'sparkIDs',
+      prevIds => prevIds.filter(id => id !== flashID)
+    );
+
+    // Delete any flicker that became empty after removing this flash
+    affectedFlickerIDs.forEach((fid) => {
+      const flk = allFlickers.find((b) => b.id === fid);
+      if (flk && flk.contentIDs.length === 0) {
+        deleteFlicker(fid);
+      }
+    });
+  });
+
   return 1;
 };
 
@@ -445,6 +554,15 @@ export const deleteStream = (streamID: number) => {
   if (writerTargetID() === streamID) {
     setWriterTargetID(null);
   }
+  if (focusedStreamID() === streamID) {
+    setFocusedStreamID(0);
+  }
+  if (focusedEntity()?.entityType === 'stream' && focusedEntity()?.refID === streamID) {
+    setFocusedEntity(null);
+  }
+  setOpenFloaters(prev =>
+    prev.filter(e => !(e.entityType === 'stream' && e.refID === streamID))
+  );
   setAllStreams(prev => prev.filter(s => s.id !== streamID));
   return 1;
 };
@@ -516,30 +634,32 @@ export const createNewChain = (name?:string) => {
   setFocusedChainID(newChain.id);
 }
 
-export const createNewStream = (name?:string) => {
-  const streamName = name && name?.length > 0 ? name : `Stream ${nextStreamID}`
+export const createNewStream = (name?: string) => {
+  const trimmed = name?.trim();
+  const streamName = trimmed && trimmed.length > 0 ? trimmed : `Stream ${nextStreamID}`;
   const newStream: Stream = {
     id: nextStreamID++,
-    title: streamName, // e.g., "Stream 2", "Stream 3"
+    title: streamName,
     createDT: Date.now(),
     contentIDs: []
   };
-  setAllStreams((prev) => [...prev, newStream]);
-  const activeID = activeViewSpaceID();
-  setViewSpaces(vs => vs.id === activeID, 
-                 'tentsInSpace',
-                   (prev) => [...prev, {
-                             entityType: 'stream',
-                             refID: newStream.id 
-                             } as MultEnt
-                   ]
-                );
-  setWriterTargetID(newStream.id); // Automatically switch to the new stream
-  setOpenFloaters((prev) =>
-    prev.some((e) => e.entityType === 'stream' && e.refID === newStream.id)
-      ? prev
-      : [...prev, { entityType: 'stream', refID: newStream.id }]
-  );
+  batch(() => {
+    setAllStreams((prev) => [...prev, newStream]);
+    const activeID = activeViewSpaceID();
+    setViewSpaces(
+      vs => vs.id === activeID,
+      'tentsInSpace',
+      (prev) => [
+        ...prev,
+        {
+          entityType: 'stream',
+          refID: newStream.id
+        } as MultEnt
+      ]
+    );
+    // Match first-click behavior: target new stream without auto-opening it
+    setWriterTargetID(newStream.id);
+  });
 };
 
 export const createNewViewSpace = (name?: string) => {
@@ -550,8 +670,14 @@ export const createNewViewSpace = (name?: string) => {
     createDT: Date.now(),
     tentsInSpace: [],
   };
-  setViewSpaces(prev => [...prev, newVS]);
-  setActiveViewSpaceID(newVS.id);
+  batch(() => {
+    setViewSpaces(prev => [...prev, newVS]);
+    setActiveViewSpaceID(newVS.id);
+    if (userMode() === 'Read') {
+      setFocusedStreamID(0);
+      setFocusedEntity(null);
+    }
+  });
 };
 
 export const updateChainTitle = (chainID: number, newTitle: string) => {
@@ -673,31 +799,40 @@ export const flickerCharCount = (flickerID:number) => {
 
 export const textWordCount = (text:string | null) => text?.trim().split(/\s+/).filter(w => w.length > 0).length || 0;
 
-export const getStreamTSpan = (streamID:number) => {
+export const formatClock12h = (dt: number): string => {
+  const d = new Date(dt);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const rawHours = d.getHours();
+  const hours12 = rawHours % 12 || 12;
+  const suffix = rawHours >= 12 ? 'PM' : 'AM';
+  return `${pad(hours12)}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${suffix}`;
+};
+
+export const getStreamTSpan = (streamID: number) => {
   const ms = streamFlashes(streamID).reduce((total, f) => total + f.tSpan, 0);
   const sec = ms / 1000;
   const hours = Math.floor(sec / 3600);
-  const minutes = Math.floor(sec / 60) - hours;
+  const minutes = Math.floor((sec % 3600) / 60);
   const seconds = Math.floor(sec % 60);
   let retStr = '';
-  hours ? retStr+=hours.toString() + 'h:' : '';
-  minutes ? retStr+=minutes.toString() + 'm:' :'';
-  retStr.length ? retStr+=seconds.toString() + 's' : retStr+=Number((ms / 1000).toFixed(2)) + 's';
+  if (hours > 0) retStr += `${hours}h:`;
+  if (minutes > 0 || hours > 0) retStr += `${minutes}m:`;
+  retStr += retStr.length ? `${seconds}s` : `${Number((ms / 1000).toFixed(2))}s`;
   return retStr;
 };
 
 export const getFlickerTSpan = (flickerID: number) => {
   const flicker = allFlickers.find((b) => b.id === flickerID);
-  if (!flicker) return 0;
-  if (!flicker.contentIDs) {
-    deleteFlicker(flickerID);
-    return 0;
-  }
-  const endT = allFlashes.find((f)=> 
-                               f.id === flicker.contentIDs[flicker.contentIDs.length - 1])?.createDT || 0;
-  if (!endT || !flicker.createDT) return 0;
-  return (endT - flicker.createDT);
-}
+  if (!flicker || !flicker.contentIDs || flicker.contentIDs.length === 0) return 0;
+  const firstFlash = allFlashes.find((f) => f.id === flicker.contentIDs[0]);
+  const lastFlash = allFlashes.find(
+    (f) => f.id === flicker.contentIDs[flicker.contentIDs.length - 1]
+  );
+  const startT = flicker.createDT || firstFlash?.createDT || 0;
+  const endT = lastFlash ? lastFlash.createDT + lastFlash.tSpan : 0;
+  if (!endT || !startT) return 0;
+  return Math.max(0, endT - startT);
+};
 
 
 // ==========================================
@@ -708,6 +843,224 @@ const DB_NAME = 'WritersBlockDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'SaveStates';
 const SAVE_KEY = 'manual_save';
+
+const buildSessionSnapshot = () => ({
+  // Local module counters
+  nextFlashID,
+  nextStreamID,
+  nextFlickerID,
+  nextViewSpaceID,
+  nextChainID,
+
+  // Settings
+  flickerDelayT: flickerDelayT(),
+  flickerModeOn: flickerModeOn(),
+  flashDelayT: flashDelayT(),
+  backspaceDisabled: backspaceDisabled(),
+  inflectionOn: inflectionOn(),
+
+  // Session UI / Write-mode state (saved for session memory & optional stateful restore)
+  activeViewSpaceID: activeViewSpaceID(),
+  writerTargetID: writerTargetID(),
+  openFloaters: unwrap(openFloaters).map((e) => ({ ...e })),
+  focusedEntity: focusedEntity() ? { ...focusedEntity()! } : null,
+  focusedStreamID: focusedStreamID(),
+  userMode: userMode(),
+
+  // Stores (unwrapped to remove proxies)
+  allFlashes: unwrap(allFlashes).map((f) => ({ ...f, log: cloneKeymotes(f.log) })),
+  allStreams: unwrap(allStreams).map((s) => ({ ...s, contentIDs: [...s.contentIDs] })),
+  allFlickers: unwrap(allFlickers).map((b) => ({ ...b, contentIDs: [...b.contentIDs] })),
+  suspenBarTents: unwrap(suspenBarTents).map((e) => ({ ...e })),
+  viewSpaces: unwrap(viewSpaces).map((vs) => ({
+    ...vs,
+    tentsInSpace: (vs.tentsInSpace || []).map((e) => ({ ...e })),
+  })),
+  sparkChains: unwrap(sparkChains).map((c) => ({ ...c, sparkIDs: [...c.sparkIDs] })),
+});
+
+const reconcileCounters = (
+  flashes: Flash[],
+  streams: Stream[],
+  flickers: Flicker[],
+  spaces: ViewSpace[],
+  chains: SparkChain[],
+  hint?: any
+) => {
+  const maxFlash = flashes.reduce((m, f) => Math.max(m, f.id), 0);
+  const maxStream = streams.reduce((m, s) => Math.max(m, s.id), 0);
+  const minFlicker = flickers.reduce((m, b) => Math.min(m, b.id), 0);
+  const maxSpace = spaces.reduce((m, v) => Math.max(m, v.id), 0);
+  const maxChain = chains.reduce((m, c) => Math.max(m, c.id), 0);
+
+  nextFlashID = Math.max(hint?.nextFlashID || 1, maxFlash + 1);
+  nextStreamID = Math.max(hint?.nextStreamID || 2, maxStream + 1);
+  nextFlickerID = Math.min(hint?.nextFlickerID || -1, minFlicker - 1);
+  nextViewSpaceID = Math.max(hint?.nextViewSpaceID || 2, maxSpace + 1);
+  nextChainID = Math.max(hint?.nextChainID || 1, maxChain + 1);
+};
+
+// Merges a session payload's contents additively without wiping existing data or resetting UI state
+const mergeSessionContentsStateless = (data: any) => {
+  const rawFlashes: Flash[] = data.allFlashes || [];
+  const rawFlickers: Flicker[] = data.allFlickers || [];
+  const rawStreams: Stream[] = data.allStreams || [];
+  const rawViewSpaces: ViewSpace[] = data.viewSpaces || [];
+  const rawSuspen: MultEnt[] = data.suspenBarTents || [];
+  const rawChains: SparkChain[] = data.sparkChains || [];
+
+  const flashIdMap = new Map<number, number>();
+  const clonedFlashes: Flash[] = rawFlashes.map((f) => {
+    const newId = nextFlashID++;
+    flashIdMap.set(f.id, newId);
+    return { ...f, id: newId, log: cloneKeymotes(f.log ?? null) };
+  });
+
+  const flickerIdMap = new Map<number, number>();
+  const clonedFlickers: Flicker[] = rawFlickers.map((b) => {
+    const newId = nextFlickerID--;
+    flickerIdMap.set(b.id, newId);
+    const remappedContentIDs = (b.contentIDs || [])
+      .map((fid) => flashIdMap.get(fid))
+      .filter((id): id is number => id !== undefined);
+    return { ...b, id: newId, contentIDs: remappedContentIDs };
+  });
+
+  const streamIdMap = new Map<number, number>();
+  const clonedStreams: Stream[] = rawStreams.map((s) => {
+    const newId = nextStreamID++;
+    streamIdMap.set(s.id, newId);
+    const remappedContentIDs = (s.contentIDs || [])
+      .map((id) => (id > 0 ? flashIdMap.get(id) : flickerIdMap.get(id)))
+      .filter((id): id is number => id !== undefined);
+    return { ...s, id: newId, contentIDs: remappedContentIDs };
+  });
+
+  const remapEnt = (ent: MultEnt): MultEnt | null => {
+    if (ent.entityType === 'stream') {
+      const mapped = streamIdMap.get(ent.refID);
+      return mapped !== undefined ? { entityType: 'stream', refID: mapped } : null;
+    }
+    if (ent.entityType === 'flicker') {
+      const mapped = flickerIdMap.get(ent.refID);
+      return mapped !== undefined ? { entityType: 'flicker', refID: mapped } : null;
+    }
+    if (ent.entityType === 'flash') {
+      const mapped = flashIdMap.get(ent.refID);
+      return mapped !== undefined ? { entityType: 'flash', refID: mapped } : null;
+    }
+    return null;
+  };
+
+  const clonedViewSpaces: ViewSpace[] = rawViewSpaces.map((vs) => {
+    const newId = nextViewSpaceID++;
+    const remappedTents = (vs.tentsInSpace || [])
+      .map(remapEnt)
+      .filter((e): e is MultEnt => e !== null);
+    return {
+      id: newId,
+      title: vs.title || `ViewSpace ${newId}`,
+      createDT: vs.createDT || Date.now(),
+      tentsInSpace: remappedTents,
+    };
+  });
+
+  const clonedSuspen: MultEnt[] = rawSuspen
+    .map(remapEnt)
+    .filter((e): e is MultEnt => e !== null);
+
+  const clonedChains: SparkChain[] = rawChains.map((c) => {
+    const newId = nextChainID++;
+    const remappedSparkIDs = (c.sparkIDs || [])
+      .map((id) => (id > 0 ? flashIdMap.get(id) : flickerIdMap.get(id)))
+      .filter((id): id is number => id !== undefined);
+    return {
+      id: newId,
+      title: c.title || `Chain ${newId}`,
+      sparkIDs: remappedSparkIDs,
+    };
+  });
+
+  batch(() => {
+    if (clonedFlashes.length > 0) setAllFlashes((prev) => [...prev, ...clonedFlashes]);
+    if (clonedFlickers.length > 0) setAllFlickers((prev) => [...prev, ...clonedFlickers]);
+    if (clonedStreams.length > 0) setAllStreams((prev) => [...prev, ...clonedStreams]);
+    if (clonedViewSpaces.length > 0) setViewSpaces((prev) => [...prev, ...clonedViewSpaces]);
+    if (clonedSuspen.length > 0) setSuspenBarTents((prev) => [...prev, ...clonedSuspen]);
+    if (clonedChains.length > 0) setSparkChains((prev) => [...prev, ...clonedChains]);
+  });
+};
+
+// Replaces stores AND restores saved UI/Write-mode state from a session snapshot
+const hydrateSessionStateful = (data: any) => {
+  const safeFlashes: Flash[] = data.allFlashes || [];
+  const safeStreams: Stream[] = data.allStreams || [];
+  const safeFlickers: Flicker[] = data.allFlickers || [];
+  const safeSuspen: MultEnt[] = data.suspenBarTents || [];
+  const safeChains: SparkChain[] = data.sparkChains || [];
+  const safeViewSpaces: ViewSpace[] =
+    data.viewSpaces && data.viewSpaces.length > 0
+      ? data.viewSpaces.map((vs: any) => ({
+          id: vs.id,
+          title: vs.title || `ViewSpace ${vs.id}`,
+          createDT: vs.createDT || Date.now(),
+          tentsInSpace: vs.tentsInSpace || [],
+        }))
+      : [{ id: 1, title: 'Initial Space', createDT: Date.now(), tentsInSpace: [] }];
+
+  batch(() => {
+    reconcileCounters(safeFlashes, safeStreams, safeFlickers, safeViewSpaces, safeChains, data);
+
+    setAllFlashes(safeFlashes);
+    setAllStreams(safeStreams);
+    setAllFlickers(safeFlickers);
+    setSuspenBarTents(safeSuspen);
+    setSparkChains(safeChains);
+    setViewSpaces(safeViewSpaces);
+
+    const savedVSID = data.activeViewSpaceID;
+    const validVSID =
+      savedVSID !== undefined && safeViewSpaces.some((vs) => vs.id === savedVSID)
+        ? savedVSID
+        : safeViewSpaces[0].id;
+    setActiveViewSpaceID(validVSID);
+
+    // Fix legacy PascalCase key fallback while supporting boolean false via ??
+    const savedFlickerDelay = data.flickerDelayT ?? data.FlickerDelayT ?? 6;
+    const savedFlickerMode = data.flickerModeOn ?? data.FlickerModeOn ?? true;
+    const savedFlashDelay = data.flashDelayT ?? 2;
+    setFlickerDelayT(savedFlickerDelay);
+    setFlickerModeOn(savedFlickerMode);
+    setFlashDelayT(savedFlashDelay);
+    if (data.backspaceDisabled !== undefined) setBackspaceDisabled(Boolean(data.backspaceDisabled));
+    if (data.inflectionOn !== undefined) setInflectionOn(Boolean(data.inflectionOn));
+
+    // Restore Write-mode session memory & focus state if present
+    if (data.writerTargetID !== undefined) {
+      const validTarget =
+        data.writerTargetID === null ||
+        safeStreams.some((s) => s.id === data.writerTargetID)
+          ? data.writerTargetID
+          : null;
+      setWriterTargetID(validTarget);
+    }
+    if (Array.isArray(data.openFloaters)) {
+      const validOpen = data.openFloaters.filter((ent: MultEnt) => {
+        if (ent.entityType === 'stream') return safeStreams.some((s) => s.id === ent.refID);
+        if (ent.entityType === 'flicker') return safeFlickers.some((b) => b.id === ent.refID);
+        if (ent.entityType === 'flash') return safeFlashes.some((f) => f.id === ent.refID);
+        return false;
+      });
+      setOpenFloaters(validOpen);
+    }
+    if (data.focusedEntity !== undefined) {
+      setFocusedEntity(data.focusedEntity);
+    }
+    if (data.focusedStreamID !== undefined) {
+      setFocusedStreamID(data.focusedStreamID);
+    }
+  });
+};
 
 // Helper: Initialize and return the DB instance
 const initDB = (): Promise<IDBDatabase> => {
@@ -748,80 +1101,46 @@ const loadFromDB = async (key: string): Promise<any> => {
   });
 };
 
-// Action: Package the current app state and save it
+// Action: Package the current app contents + Write-mode session state and save to IndexedDB
 export const manualSaveApp = async () => {
-  const snapshot = {
-    // Local module counters
-    nextFlashID,
-    nextStreamID,
-    nextFlickerID,
-    nextViewSpaceID,
-    
-    // Signals (executed to get current value)
-    activeViewSpaceID: activeViewSpaceID(),
-    flickerDelayT: flickerDelayT(),
-    flickerModeOn: flickerModeOn(),
-    flashDelayT: flashDelayT(),
-    
-    // Stores (unwrapped to remove proxies)
-    allFlashes: unwrap(allFlashes),
-    allStreams: unwrap(allStreams),
-    allFlickers: unwrap(allFlickers),
-    suspenBarTents: unwrap(suspenBarTents),
-    viewSpaces: unwrap(viewSpaces),
-    sparkChains: unwrap(sparkChains),
-  };
+  const snapshot = buildSessionSnapshot();
 
   try {
     await saveToDB(SAVE_KEY, snapshot);
-    console.log('App state successfully saved to IndexedDB!');
   } catch (err) {
-    console.error('Failed to save app state:', err);
+    console.error('Failed to save app state to IndexedDB:', err);
   }
 };
 
-// Action: Load the snapshot and hydrate the app
-export const loadSavedApp = async () => {
+// Action: Hydrate full session + Write-mode memory from IndexedDB (used on app startup)
+export const loadSavedApp = async (): Promise<boolean> => {
   try {
     const data = await loadFromDB(SAVE_KEY);
     if (!data) {
-      console.log('No saved state found. Starting fresh.');
-      return;
+      return false;
     }
 
-    batch(() => {
-      // 1. Restore local module counters safely
-      nextFlashID = data.nextFlashID || 1;
-      nextStreamID = data.nextStreamID || 1;
-      nextFlickerID = data.nextFlickerID || -1;
-      nextViewSpaceID = data.nextViewSpaceID || 2;
-
-      // 2. Restore stores safely (ensuring backwards compatibility for layoutMode)
-      setAllFlashes(data.allFlashes || []);
-      setAllStreams(data.allStreams || []);
-      setAllFlickers(data.allFlickers || []);
-      setSuspenBarTents(data.suspenBarTents || []);
-      setSparkChains(data.sparkChains || []);
-      
-      const safeViewSpaces = (data.viewSpaces || []).map((vs: any) => ({
-        ...vs,
-        layoutMode: vs.layoutMode || 'spreadmixed'
-      }));
-      setViewSpaces(safeViewSpaces.length > 0 ? safeViewSpaces : [
-        { id: 1, title: 'Initial Space', tentsInSpace: [], layoutMode: 'spreadmixed' }
-      ]);
-      
-
-      // 3. Restore signals AFTER stores are prepped
-      setActiveViewSpaceID(data.activeViewSpaceID !== undefined ? data.activeViewSpaceID : 1);
-      setFlickerDelayT(data.FlickerDelayT !== undefined ? data.FlickerDelayT : 6);
-      setFlickerModeOn(data.FlickerModeOn || true);
-      setFlashDelayT(data.flashDelayT !== undefined ? data.flashDelayT : 2);
-    });
-
-    console.log('App state successfully loaded from IndexedDB!');
+    hydrateSessionStateful(data);
+    return true;
   } catch (err) {
-    console.error('Failed to load app state:', err);
+    console.error('Failed to load app state from IndexedDB:', err);
+    return false;
+  }
+};
+
+// Action: Load contents additively from IndexedDB without resetting active UI/target state
+export const loadSavedAppStateless = async (): Promise<boolean> => {
+  try {
+    const data = await loadFromDB(SAVE_KEY);
+    if (!data) {
+      return false;
+    }
+
+    mergeSessionContentsStateless(data);
+    return true;
+  } catch (err) {
+    console.error('Failed to load stateless app contents from IndexedDB:', err);
+    return false;
   }
 };
 
@@ -914,25 +1233,8 @@ export const saveToFile = async (streamID?: number) => {
 };
 
 export const saveSessionToFile = async () => {
-  const snapshot = {
-    nextFlashID,
-    nextStreamID,
-    nextFlickerID,
-    nextViewSpaceID,
-    nextChainID,
-
-    activeViewSpaceID: activeViewSpaceID(),
-    flickerDelayT: flickerDelayT(),
-    flickerModeOn: flickerModeOn(),
-    flashDelayT: flashDelayT(),
-
-    allFlashes: unwrap(allFlashes),
-    allStreams: unwrap(allStreams),
-    allFlickers: unwrap(allFlickers),
-    suspenBarTents: unwrap(suspenBarTents),
-    viewSpaces: unwrap(viewSpaces),
-    sparkChains: unwrap(sparkChains),
-  };
+  // Saves both contents and UI/session state for optional stateful loading later
+  const snapshot = buildSessionSnapshot();
 
   const payload = {
     type: 'wb-session',
@@ -1011,40 +1313,21 @@ export const saveSparkChainToFile = async (chainID: number) => {
   await saveJsonWithPicker(payload, `${safeTitle}.chain.json`);
 };
 
+// Stateless additive JSON import (default UI load): appends contents without resetting active state
 export const importLoadedJson = (json: any) => {
   if (!json || typeof json !== 'object') {
     triggerFileError('Invalid file format.');
     return;
   }
 
-  // Case 1: Session
+  // Case 1: Session (additive merge into existing ViewSpaces & Suspension Bar, preserving current UI state)
   if (json.type === 'wb-session' || (json.data && json.data.allStreams) || json.allStreams) {
     const data = json.data || json;
-    batch(() => {
-      nextFlashID = data.nextFlashID || nextFlashID;
-      nextStreamID = data.nextStreamID || nextStreamID;
-      nextFlickerID = data.nextFlickerID || nextFlickerID;
-      nextViewSpaceID = data.nextViewSpaceID || nextViewSpaceID;
-      nextChainID = data.nextChainID || nextChainID;
-
-      setAllFlashes(data.allFlashes || []);
-      setAllStreams(data.allStreams || []);
-      setAllFlickers(data.allFlickers || []);
-      setSuspenBarTents(data.suspenBarTents || []);
-      setSparkChains(data.sparkChains || []);
-      setViewSpaces(data.viewSpaces?.length ? data.viewSpaces : [
-        { id: 1, title: 'Initial Space', tentsInSpace: [], layoutMode: 'spreadmixed' }
-      ]);
-
-      setActiveViewSpaceID(data.activeViewSpaceID ?? 1);
-      setFlickerDelayT(data.flickerDelayT ?? 6);
-      setFlickerModeOn(data.flickerModeOn ?? true);
-      setFlashDelayT(data.flashDelayT ?? 2);
-    });
+    mergeSessionContentsStateless(data);
     return;
   }
 
-  // Case 2: Stream
+  // Case 2: Stream (appends to active ViewSpace without changing writerTargetID or open items)
   if (json.type === 'wb-stream' || (json.stream && json.flashes)) {
     const rawStream: Stream = json.stream;
     const rawFlashes: Flash[] = json.flashes || [];
@@ -1054,7 +1337,7 @@ export const importLoadedJson = (json: any) => {
     const clonedFlashes: Flash[] = rawFlashes.map(f => {
       const newId = nextFlashID++;
       flashIdMap.set(f.id, newId);
-      return { ...f, id: newId };
+      return { ...f, id: newId, log: cloneKeymotes(f.log ?? null) };
     });
 
     const flickerIdMap = new Map<number, number>();
@@ -1089,12 +1372,11 @@ export const importLoadedJson = (json: any) => {
           { entityType: 'stream' as const, refID: newStreamID },
         ]);
       }
-      setWriterTargetID(newStreamID);
     });
     return;
   }
 
-  // Case 3: SparkChain
+  // Case 3: SparkChain (stateless additive import)
   if (json.type === 'wb-sparkchain' || (json.chain && json.sparkIDs !== undefined) || (json.chain && json.flashes)) {
     const rawChain: SparkChain = json.chain || json;
     const rawFlashes: Flash[] = json.flashes || [];
@@ -1104,7 +1386,7 @@ export const importLoadedJson = (json: any) => {
     const clonedFlashes: Flash[] = rawFlashes.map(f => {
       const newId = nextFlashID++;
       flashIdMap.set(f.id, newId);
-      return { ...f, id: newId };
+      return { ...f, id: newId, log: cloneKeymotes(f.log ?? null) };
     });
 
     const flickerIdMap = new Map<number, number>();
@@ -1131,13 +1413,27 @@ export const importLoadedJson = (json: any) => {
       if (clonedFlashes.length > 0) setAllFlashes(prev => [...prev, ...clonedFlashes]);
       if (clonedFlickers.length > 0) setAllFlickers(prev => [...prev, ...clonedFlickers]);
       setSparkChains(prev => [...prev, newChain]);
-      setOpenChains(prev => [...prev, newChainID]);
-      setChainTargetID(newChainID);
     });
     return;
   }
 
   triggerFileError('Unrecognized file structure.');
+};
+
+// Stateful JSON import (preserved for future option allowing full session + state replacement)
+export const importLoadedJsonStateful = (json: any) => {
+  if (!json || typeof json !== 'object') {
+    triggerFileError('Invalid file format.');
+    return;
+  }
+
+  if (json.type === 'wb-session' || (json.data && json.data.allStreams) || json.allStreams) {
+    const data = json.data || json;
+    hydrateSessionStateful(data);
+    return;
+  }
+
+  importLoadedJson(json);
 };
 
 export const loadFromFile = async () => {

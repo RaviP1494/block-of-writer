@@ -160,17 +160,36 @@ const ReadBarSelect: Component<{
   });
 
   return (
-    <div class="vs-bar-select">
-      <button class="vs-btn-icon" onClick={props.onOpenGrid} title="Open Grid">🗖</button>
-      <button class="vs-btn-icon" onClick={scrollLeft} title="Scroll Left">&lt;</button>
-      <div class="vs-bar-scroll" ref={scrollRef} style={{ 'scroll-behavior': 'smooth' }}>
+    <div class="stream-bar-select stream-bar-select--read">
+      <button
+        type="button"
+        class="stream-btn-icon"
+        onClick={props.onOpenGrid}
+        title="Browse Items in Grid"
+        aria-label="Browse Items in Grid"
+      >
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M1.5 3h11M1.5 7h11M1.5 11h7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="stream-btn-icon stream-btn-icon--scroll"
+        onClick={scrollLeft}
+        title="Scroll Left"
+        aria-label="Scroll items left"
+      >
+        &lt;
+      </button>
+      <div class="stream-bar-scroll" ref={scrollRef} style={{ 'scroll-behavior': 'smooth' }}>
         <For each={props.items}>
           {(ent) => {
             const isCur = () => props.focused()?.entityType === ent.entityType && props.focused()?.refID === ent.refID;
             return (
-              <button 
+              <button
+                type="button"
                 id={`read-ent-${ent.entityType}-${ent.refID}`}
-                class="vs-bar-title"
+                class="stream-bar-title"
                 classList={{ 'targeted-stream': isCur() }}
                 onClick={() => props.onSelect(ent)}
               >
@@ -180,12 +199,15 @@ const ReadBarSelect: Component<{
           }}
         </For>
       </div>
-      <button class="vs-btn-icon" onClick={scrollRight} title="Scroll Right">&gt;</button>
-      <button 
-        class="vs-btn-icon"
-        title="More options"
-        style={{ cursor: 'default' }}
-      >...</button>
+      <button
+        type="button"
+        class="stream-btn-icon stream-btn-icon--scroll"
+        onClick={scrollRight}
+        title="Scroll Right"
+        aria-label="Scroll items right"
+      >
+        &gt;
+      </button>
     </div>
   );
 };
@@ -221,26 +243,24 @@ export const VSReadPicker: Component<VSReadPickerProps> = (props) => {
   });
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      class="vs-lister-container read-picker-container"
+      class="stream-lister-container read-picker-container"
     >
-      <Show when={displayMode() === 'bar'}>
-        <ReadBarSelect 
-          items={items()}
-          focused={focusedEntity}
-          onOpenGrid={() => setDisplayMode('grid')} 
-          onSelect={handleSelect}
-        />
-      </Show>
+      <ReadBarSelect
+        items={items()}
+        focused={focusedEntity}
+        onOpenGrid={() => setDisplayMode((prev) => (prev === 'grid' ? 'bar' : 'grid'))}
+        onSelect={handleSelect}
+      />
       <Show when={displayMode() === 'grid'}>
-        <ReadGridSelect 
+        <ReadGridSelect
           items={items()}
           focused={focusedEntity}
           onSelect={(ent) => {
             handleSelect(ent);
             setDisplayMode('bar');
-          }} 
+          }}
         />
       </Show>
     </div>

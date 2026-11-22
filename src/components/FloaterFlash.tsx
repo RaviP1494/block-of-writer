@@ -1,18 +1,17 @@
-import { type Component, Show, createSignal } from 'solid-js';
-import { 
+import { type Component, Show, batch, createSignal } from 'solid-js';
+import {
   allFlashes,
   allFlickers,
   allStreams,
-  addToChain,
   deleteFlash,
-  makeStreamFrom,
-  openFloaters,
+  replaceInOpenFloaters,
   sendToSuspenBar,
   setFocusedEntity,
-  setOpenFloaters,
+  setSeedSource,
   setUserMode,
   viewSpaces,
-  type MultEnt } from '../store';
+  type MultEnt,
+} from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
 import {
@@ -28,10 +27,17 @@ interface FloaterFlashProps {
 }
 
 export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
-  const [bg, setBG] = createSignal(true);
+  const [hideContent, setHideContent] = createSignal(false);
   const [deleteClicked, setDeleteClicked] = createSignal(false);
   const holdingFlicker = () =>
     allFlickers.find((f) => f.contentIDs.includes(props.id)) || null;
+
+  const holdingStream = () => {
+    const flk = holdingFlicker();
+    return allStreams.find((s) =>
+      s.contentIDs.includes(flk ? flk.id : props.id)
+    ) || null;
+  };
 
   const flash = () => allFlashes.find((f) => f.id === props.id);
 
@@ -39,10 +45,8 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
 
   const heldBy = () => {
     const flk = holdingFlicker();
-    const holdingStream = allStreams.find((s) =>
-      s.contentIDs.includes(flk ? flk.id || props.id : props.id)
-    );
-    if (holdingStream) return holdingStream.title;
+    const stream = holdingStream();
+    if (stream) return stream.title;
     const vs = viewSpaces.find((v) =>
       v.tentsInSpace.some(
         (ent) =>
@@ -55,20 +59,47 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
 
   const handleMinimize = () => {
     const flk = holdingFlicker();
+    const stream = holdingStream();
+    const parent: MultEnt | null = flk
+      ? { entityType: 'flicker', refID: flk.id }
+      : stream
+        ? { entityType: 'stream', refID: stream.id }
+        : null;
+
     if (props.innerClickMode === 'multi') {
-      setOpenFloaters(() =>
-        openFloaters.filter(
-          (ent) => !(ent.entityType === 'flash' && ent.refID === props.id)
-        )
-      );
-    } else if (flk) {
-      setFocusedEntity({ entityType: 'flicker', refID: flk.id });
+      replaceInOpenFloaters({ entityType: 'flash', refID: props.id }, parent);
     } else {
-      setFocusedEntity(null);
+      setFocusedEntity(parent);
     }
   };
 
-  const handleDelete = () => deleteFlash(flash()!.id) && handleMinimize();
+  const handleDelete = () => {
+    const id = props.id;
+    const flk = holdingFlicker();
+    const parentStream = holdingStream();
+
+    batch(() => {
+      deleteFlash(id);
+
+      let nextParent: MultEnt | null = null;
+      if (flk) {
+        const updatedFlk = allFlickers.find((f) => f.id === flk.id);
+        if (updatedFlk && updatedFlk.contentIDs.length > 0) {
+          nextParent = { entityType: 'flicker', refID: flk.id };
+        } else if (parentStream) {
+          nextParent = { entityType: 'stream', refID: parentStream.id };
+        }
+      } else if (parentStream) {
+        nextParent = { entityType: 'stream', refID: parentStream.id };
+      }
+
+      if (props.innerClickMode === 'multi') {
+        replaceInOpenFloaters({ entityType: 'flash', refID: id }, nextParent);
+      } else {
+        setFocusedEntity(nextParent);
+      }
+    });
+  };
 
   const replay = createReplayController(
     () => [{ type: 'flashes', flashIDs: [props.id], flickerID: null }],
@@ -77,7 +108,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
 
   return (
     <Show when={flash()}>
-      <div class={bg() ? 'floater-flash white-bg' : 'floater-flash parchment-bg'}>
+      <div class="floater-flash">
         <header class="stream-title">
           <div
             onMouseLeave={() => setDeleteClicked(false)}
@@ -88,22 +119,12 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class="stream-action-pill"
-                title='"Seed" New Stream with Copy'
+                title="Seed a new stream from a copy of this flash"
                 onClick={() =>
-                  makeStreamFrom({ entityType: 'flash', refID: flash()!.id })
+                  setSeedSource({ entityType: 'flash', refID: props.id })
                 }
               >
-                ⚵
-              </button>
-              <button
-                type="button"
-                class="stream-action-pill"
-                title="Add to Target SparkChain"
-                onClick={() => {
-                  if (flash()?.id) addToChain(flash()!.id);
-                }}
-              >
-                ☍
+                Seed
               </button>
               <Show when={props.innerClickMode !== 'focus'}>
                 <button
@@ -142,7 +163,13 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                 type="button"
                 class={deleteClicked() ? 'delete-hide stream-icon-btn' : 'delete-reveal stream-icon-btn'}
                 onClick={() => handleMinimize()}
-                title={holdingFlicker() ? 'Back to Flicker' : 'Minimize Flash'}
+                title={
+                  holdingFlicker()
+                    ? 'Back to Flicker'
+                    : holdingStream()
+                      ? 'Back to Stream'
+                      : 'Minimize Flash'
+                }
               >
                 −
               </button>
@@ -183,9 +210,9 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
             <div class="tiny-fun flex-wide" role="group" aria-label="Flash display options">
               <button
                 type="button"
-                classList={{ 'optic-active': !bg() }}
-                title="Change Background"
-                onClick={() => setBG((p) => !p)}
+                classList={{ 'optic-active': hideContent() }}
+                title={hideContent() ? 'Show Text Content' : 'Hide Text Content'}
+                onClick={() => setHideContent((p) => !p)}
               >
                 ⬚
               </button>
@@ -193,25 +220,27 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
           </div>
         </header>
 
-        <div class="stream-text">
-          <Show
-            when={!replay.isReplaying()}
-            fallback={
-              <ReplayTextView
-                controller={replay}
+        <Show when={!hideContent()}>
+          <div class="stream-text">
+            <Show
+              when={!replay.isReplaying()}
+              fallback={
+                <ReplayTextView
+                  controller={replay}
+                  showTimes={() => false}
+                  isSpaced={() => true}
+                />
+              }
+            >
+              <DisplayFlash
+                id={props.id}
                 showTimes={() => false}
                 isSpaced={() => true}
+                renderedBy="flash"
               />
-            }
-          >
-            <DisplayFlash
-              id={props.id}
-              showTimes={() => false}
-              isSpaced={() => true}
-              renderedBy="flash"
-            />
-          </Show>
-        </div>
+            </Show>
+          </div>
+        </Show>
       </div>
     </Show>
   );

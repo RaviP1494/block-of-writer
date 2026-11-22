@@ -1,8 +1,10 @@
-import { createSignal, For, Show, type Component } from 'solid-js';
+import { batch, createSignal, For, Show, type Component } from 'solid-js';
 import {
   activeViewSpaceID,
   createNewViewSpace,
   setActiveViewSpaceID,
+  setFocusedEntity,
+  setFocusedStreamID,
   updateSpaceName,
   viewSpaces,
   streamFlashes,
@@ -134,7 +136,14 @@ const VSGridSelect: Component<{ onSelect: () => void }> = (props) => {
             <VSSummaryCell
               vs={vs}
               onSelect={() => {
-                setActiveViewSpaceID(vs.id);
+                batch(() => {
+                  setActiveViewSpaceID(vs.id);
+                  // Write mode preserves writerTargetID & openFloaters cross-space; Read mode does a clean switch
+                  if (userMode() === 'Read') {
+                    setFocusedStreamID(0);
+                    setFocusedEntity(null);
+                  }
+                });
                 props.onSelect();
               }}
             />
@@ -150,56 +159,75 @@ const ActiveVSDisplay: Component<{ onOpenGrid: () => void }> = (props) => {
   const activeVS = () => viewSpaces.find((vs) => vs.id === activeViewSpaceID());
 
   return (
-    <div class="active-vs-display">
+    <div class="active-vs-display" role="region" aria-label="Active ViewSpace">
       <button
         type="button"
-        class="stream-btn-icon stream-btn-icon--compact"
+        class="stream-btn-icon stream-btn-icon--compact active-vs-switch-btn"
         onClick={props.onOpenGrid}
-        title="Expand ViewSpaces Grid"
+        title="Browse or switch ViewSpaces"
+        aria-label="Browse or switch ViewSpaces"
       >
-        🗖
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" stroke-width="1.4" />
+          <rect x="8" y="1" width="5" height="5" rx="1.2" stroke="currentColor" stroke-width="1.4" />
+          <rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" stroke-width="1.4" />
+          <rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" stroke-width="1.4" />
+        </svg>
       </button>
-      <Show
-        when={isEditingTitle()}
-        fallback={
-          <div
-            class="active-vs-title-wrapper"
-            onClick={() => setIsEditingTitle(true)}
-            title="Click to rename ViewSpace"
-          >
-            <span class="active-vs-title">{activeVS()?.title}</span>
-            <span class="active-vs-edit-icon">✎</span>
-          </div>
-        }
-      >
-        <EditTitle
-          initialValue={activeVS()!.title}
-          onSave={(title: string) => {
-            updateSpaceName(activeVS()!.id, title);
-            setIsEditingTitle(false);
-          }}
-          onCancel={() => setIsEditingTitle(false)}
-        />
-      </Show>
+      <div class="active-vs-identity">
+        <span class="active-vs-eyebrow">Space</span>
+        <Show
+          when={isEditingTitle()}
+          fallback={
+            <div
+              class="active-vs-title-wrapper"
+              onClick={() => setIsEditingTitle(true)}
+              title="Click to rename active ViewSpace"
+            >
+              <span class="active-vs-title">{activeVS()?.title}</span>
+              <span class="active-vs-edit-icon" aria-hidden="true">✎</span>
+            </div>
+          }
+        >
+          <EditTitle
+            initialValue={activeVS()!.title}
+            onSave={(title: string) => {
+              updateSpaceName(activeVS()!.id, title);
+              setIsEditingTitle(false);
+            }}
+            onCancel={() => setIsEditingTitle(false)}
+          />
+        </Show>
+      </div>
     </div>
   );
 };
 
-export const VSLister: Component = () => {
+export interface VSListerProps {
+  mode?: 'bar' | 'grid';
+}
+
+export const VSLister: Component<VSListerProps> = (props) => {
+  const showGrid = () =>
+    props.mode ? props.mode === 'grid' : vsDisplayMode() === 'grid';
+
   return (
     <div
       class="wb-unified-selector"
-      classList={{ 'wb-unified-selector--bus-stop': vsDisplayMode() === 'grid' }}
+      classList={{ 'wb-unified-selector--bus-stop': showGrid() }}
     >
       <Show
-        when={vsDisplayMode() === 'active'}
+        when={!showGrid()}
         fallback={<VSGridSelect onSelect={() => setVsDisplayMode('active')} />}
       >
-        <div class="wb-stream-dock">
+        <div class="wb-dock-row">
           <ActiveVSDisplay onOpenGrid={() => setVsDisplayMode('grid')} />
-          <Show when={userMode() === 'Write'} fallback={<VSReadPicker />}>
-            <StreamSelector />
-          </Show>
+          <div class="wb-dock-divider" aria-hidden="true" />
+          <div class="wb-dock-picker">
+            <Show when={userMode() === 'Write'} fallback={<VSReadPicker />}>
+              <StreamSelector />
+            </Show>
+          </div>
         </div>
       </Show>
     </div>

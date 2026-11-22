@@ -1,4 +1,4 @@
-import { type Component, For, Show } from 'solid-js';
+import { type Component, For, Show, batch, createSignal } from 'solid-js';
 import {
   suspenBarTents,
   setSuspenBarTents,
@@ -12,13 +12,66 @@ import {
   textWordCount,
   flickerWordCount,
   userMode,
-  setUserMode,
-  setWriterTargetID,
   setFocusedEntity,
   setFocusedStreamID,
   setOpenFloaters,
+  deleteStream,
+  deleteFlicker,
+  deleteFlash,
   type MultEnt,
 } from '../store';
+
+const SuspenPill: Component<{
+  ent: MultEnt;
+  label: string;
+  onOpen: () => void;
+  onDelete: () => void;
+}> = (props) => {
+  const [confirmDelete, setConfirmDelete] = createSignal(false);
+
+  return (
+    <div
+      class="wb-suspen-pill"
+      classList={{ 'wb-suspen-pill--confirming': confirmDelete() }}
+      data-ent-type={props.ent.entityType}
+      onMouseLeave={() => setConfirmDelete(false)}
+    >
+      <button
+        type="button"
+        class="wb-suspen-pill__main"
+        onClick={props.onOpen}
+        title="Restore to active ViewSpace and open"
+      >
+        {props.label}
+      </button>
+      <Show
+        when={!confirmDelete()}
+        fallback={
+          <button
+            type="button"
+            class="wb-suspen-pill__action wb-suspen-pill__action--confirm"
+            onClick={() => {
+              props.onDelete();
+              setConfirmDelete(false);
+            }}
+            title="Confirm permanent deletion"
+          >
+            Confirm?
+          </button>
+        }
+      >
+        <button
+          type="button"
+          class="wb-suspen-pill__action wb-suspen-pill__action--remove"
+          onClick={() => setConfirmDelete(true)}
+          title="Delete item"
+        >
+          ×
+        </button>
+      </Show>
+    </div>
+  );
+};
 
 export const SuspenBar: Component = () => {
   const getLabel = (ent: MultEnt) => {
@@ -33,49 +86,68 @@ export const SuspenBar: Component = () => {
     return `Flash (${textWordCount(fl.textContents)}w)`;
   };
 
-  const handleInspect = (ent: MultEnt) => {
-    if (userMode() === 'Write') {
-      if (ent.entityType === 'stream') {
-        setWriterTargetID(ent.refID);
+  const handleOpenFromSuspension = (ent: MultEnt) => {
+    batch(() => {
+      const targetVS = activeViewSpaceID();
+      const alreadyInTarget = viewSpaces
+        .find((vs) => vs.id === targetVS)
+        ?.tentsInSpace.some(
+          (e) => e.entityType === ent.entityType && e.refID === ent.refID
+        );
+
+      if (!alreadyInTarget) {
+        setViewSpaces(
+          (vs) => vs.id !== targetVS && vs.tentsInSpace.length > 0,
+          'tentsInSpace',
+          (prev) =>
+            prev.filter(
+              (e) => !(e.entityType === ent.entityType && e.refID === ent.refID)
+            )
+        );
+        sendToViewSpace(ent.entityType, ent.refID);
       }
-      setOpenFloaters((prev) =>
-        prev.some((e) => e.entityType === ent.entityType && e.refID === ent.refID)
-          ? prev
-          : [...prev, { entityType: ent.entityType, refID: ent.refID }]
+
+      setSuspenBarTents((prev) =>
+        prev.filter(
+          (e) => !(e.entityType === ent.entityType && e.refID === ent.refID)
+        )
       );
-    } else {
-      if (ent.entityType === 'stream') setFocusedStreamID(ent.refID);
-      setFocusedEntity({ entityType: ent.entityType, refID: ent.refID });
-      setUserMode('Read');
+
+      if (userMode() === 'Write') {
+        setOpenFloaters((prev) =>
+          prev.some((e) => e.entityType === ent.entityType && e.refID === ent.refID)
+            ? prev
+            : [...prev, { entityType: ent.entityType, refID: ent.refID }]
+        );
+      } else {
+        if (ent.entityType === 'stream') setFocusedStreamID(ent.refID);
+        setFocusedEntity({ entityType: ent.entityType, refID: ent.refID });
+      }
+    });
+
+    if (userMode() === 'Write') {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`companion-${ent.entityType}-${ent.refID}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      });
     }
   };
 
-  const handleDropToActiveSpace = (ent: MultEnt, index: number) => {
-    const targetVS = activeViewSpaceID();
-    const alreadyInTarget = viewSpaces
-      .find((vs) => vs.id === targetVS)
-      ?.tentsInSpace.some(
-        (e) => e.entityType === ent.entityType && e.refID === ent.refID
+  const handleDeleteFromSuspension = (ent: MultEnt) => {
+    batch(() => {
+      if (ent.entityType === 'stream') {
+        deleteStream(ent.refID);
+      } else if (ent.entityType === 'flicker') {
+        deleteFlicker(ent.refID);
+      } else {
+        deleteFlash(ent.refID);
+      }
+      setSuspenBarTents((prev) =>
+        prev.filter(
+          (e) => !(e.entityType === ent.entityType && e.refID === ent.refID)
+        )
       );
-
-    if (!alreadyInTarget) {
-      // Remove from previous ViewSpaces so moving across ViewSpaces doesn't duplicate
-      setViewSpaces(
-        (vs) => vs.id !== targetVS && vs.tentsInSpace.length > 0,
-        'tentsInSpace',
-        (prev) =>
-          prev.filter(
-            (e) => !(e.entityType === ent.entityType && e.refID === ent.refID)
-          )
-      );
-      sendToViewSpace(ent.entityType, ent.refID);
-    }
-
-    setSuspenBarTents((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleRemove = (index: number) => {
-    setSuspenBarTents((prev) => prev.filter((_, i) => i !== index));
+    });
   };
 
   return (
@@ -90,33 +162,13 @@ export const SuspenBar: Component = () => {
       >
         <div class="wb-suspen-track">
           <For each={suspenBarTents}>
-            {(ent, index) => (
-              <div class="wb-suspen-pill" data-ent-type={ent.entityType}>
-                <button
-                  type="button"
-                  class="wb-suspen-pill__main"
-                  onClick={() => handleInspect(ent)}
-                  title="Inspect or target item"
-                >
-                  {getLabel(ent)}
-                </button>
-                <button
-                  type="button"
-                  class="wb-suspen-pill__action"
-                  onClick={() => handleDropToActiveSpace(ent, index())}
-                  title="Move into active ViewSpace"
-                >
-                  ⊕
-                </button>
-                <button
-                  type="button"
-                  class="wb-suspen-pill__action wb-suspen-pill__action--remove"
-                  onClick={() => handleRemove(index())}
-                  title="Remove from Suspension Bar"
-                >
-                  ×
-                </button>
-              </div>
+            {(ent) => (
+              <SuspenPill
+                ent={ent}
+                label={getLabel(ent)}
+                onOpen={() => handleOpenFromSuspension(ent)}
+                onDelete={() => handleDeleteFromSuspension(ent)}
+              />
             )}
           </For>
         </div>

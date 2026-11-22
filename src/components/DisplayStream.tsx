@@ -1,23 +1,20 @@
-import { type Component, createMemo, createSignal, Show, For } from 'solid-js';
+import { type Component, batch, createMemo, createSignal, Show, For } from 'solid-js';
 import { EditTitle } from './EditTitle';
 import {
   allStreams, updateStreamTitle,
   groupedFlashIDs,
   deleteStream,
-  openFloaters,
-  setOpenFloaters,
+  replaceInOpenFloaters,
   setFocusedStreamID,
   viewSpaces,
   getStreamTSpan,
   hoverEnt,
   setHoverEnt,
-  addToChain,
   saveStreamToFile,
-  writerTargetID,
-  setWriterTargetID,
   setUserMode,
   setFocusedEntity,
-  sendToSuspenBar
+  sendToSuspenBar,
+  setSeedSource,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 import {
@@ -52,22 +49,24 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
 
   const handleMinimize = () => {
     if (props.innerClickMode === 'multi') {
-      setOpenFloaters(() => [
-        ...openFloaters.filter(
-          (ent) => ent.refID !== stream()?.id || ent.entityType !== 'stream'
-        ),
-      ]);
-      if (writerTargetID() === stream()?.id) {
-        setWriterTargetID(null);
-      }
+      // Minimizing a stream does NOT clear it as writerTargetID
+      replaceInOpenFloaters({ entityType: 'stream', refID: props.id }, null);
     } else if (props.innerClickMode === 'focus') {
       setFocusedStreamID(0);
       setFocusedEntity(null);
-    } else if (writerTargetID() === stream()?.id) {
-      setWriterTargetID(null);
     }
   };
-  const handleDelete = () => deleteStream(stream()!.id) && handleMinimize();
+  const handleDelete = () => {
+    const id = props.id;
+    batch(() => {
+      replaceInOpenFloaters({ entityType: 'stream', refID: id }, null);
+      if (props.innerClickMode === 'focus') {
+        setFocusedStreamID(0);
+        setFocusedEntity(null);
+      }
+      deleteStream(id);
+    });
+  };
 
   const groupedContent = createMemo(() => {
     let groups = [...groupedFlashIDs(props.id)];
@@ -105,6 +104,14 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                 title="Save Stream to File"
               >
                 Save
+              </button>
+              <button
+                type="button"
+                class="stream-action-pill"
+                onClick={() => setSeedSource({ entityType: 'stream', refID: props.id })}
+                title="Seed a new stream from a copy of this stream"
+              >
+                Seed
               </button>
               <Show when={props.innerClickMode !== 'focus'}>
                 <button
@@ -197,8 +204,9 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             <div class="tiny-fun flex-wide" role="group" aria-label="Stream display options">
               <button
                 type="button"
-                title="Hide Text Content"
-                onClick={() => setHideContent((p)=>!p)}
+                classList={{ 'optic-active': hideContent() }}
+                title={hideContent() ? 'Show Text Content' : 'Hide Text Content'}
+                onClick={() => setHideContent((p) => !p)}
               >
                 ⬚
               </button>
@@ -265,8 +273,11 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   classList={{
                     ['paragraph']: true,
                     ['flicker-highlight']:
-                      hoverEnt()?.entityType === group.type &&
-                      hoverEnt()?.refID === group.flickerID,
+                      Boolean(group.flickerID) &&
+                      ((hoverEnt()?.entityType === 'flicker' &&
+                        hoverEnt()?.refID === group.flickerID) ||
+                        (hoverEnt()?.entityType === 'flash' &&
+                          group.flashIDs.includes(hoverEnt()!.refID))),
                   }}
                   onMouseOver={() =>
                     group.flickerID &&
@@ -277,31 +288,9 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                   }
                   onMouseLeave={() => setHoverEnt(null)}
                 >
-                  <Show when={group.flickerID && props.innerClickMode === 'chain'}>
-                    <button
-                      class="chain-add-flicker-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToChain(group.flickerID!);
-                      }}
-                      title="Add flicker to target chain"
-                      style={{
-                        background: 'transparent',
-                        border: '1px dashed #ff8000',
-                        color: '#ff8000',
-                        'border-radius': '3px',
-                        'font-size': '0.75rem',
-                        cursor: 'pointer',
-                        margin: '0 4px',
-                        padding: '0 4px',
-                      }}
-                    >
-                      + Flicker
-                    </button>
-                  </Show>
                   <For each={group.flashIDs}>
                     {(flashID, index) => {
-                      const prevID = index() > 0 ? group.flashIDs[index() - 1] : null;
+                      const prevID = () => (index() > 0 ? group.flashIDs[index() - 1] : null);
                       return (
                         <DisplayFlash
                           id={flashID}
@@ -309,6 +298,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                           showTimes={() => showTimes()}
                           isSpaced={() => flashSpacing()}
                           renderedBy="stream"
+                          parentStreamID={props.id}
                           clickDo={props.innerClickMode}
                           isHovered={
                             hoverEnt()?.entityType === 'flash' &&

@@ -7,7 +7,7 @@ import {
   Show,
   batch,
 } from 'solid-js';
-import { allFlashes, userMode } from '../store';
+import { allFlashes, formatClock12h, userMode } from '../store';
 import { DisplayFlash } from './DisplayFlash';
 
 export interface ReplayGroup {
@@ -372,11 +372,7 @@ export const ReplayTextView: Component<{
     if (!fl) return '';
     const prevID = props.controller.activePrevFlashID();
     if (!prevID) {
-      const d = new Date(fl.createDT);
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      const hours = pad(d.getHours() % 12);
-      const suffix = d.getHours() > 12 ? 'PM' : 'AM';
-      return `${hours}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${suffix}`;
+      return formatClock12h(fl.createDT);
     }
     const prevFlash = allFlashes.find((f) => f.id === prevID);
     if (prevFlash) {
@@ -394,7 +390,7 @@ export const ReplayTextView: Component<{
         <div class="paragraph">
           <For each={grp.completedFlashIDs}>
             {(flashID, index) => {
-              const prevID = index() > 0 ? grp.completedFlashIDs[index() - 1] : null;
+              const prevID = () => (index() > 0 ? grp.completedFlashIDs[index() - 1] : null);
               return (
                 <DisplayFlash
                   id={flashID}

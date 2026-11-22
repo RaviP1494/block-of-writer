@@ -75,7 +75,7 @@ body, html {
   overflow-x: clip;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
   background: var(--bg-atmosphere);
   background-attachment: fixed;
 }
@@ -174,9 +174,17 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.45rem 1rem 0.25rem;
-  z-index: 25;
+  width: min(100%, 820px);
+  margin-inline: auto;
+  padding: 0;
+  z-index: 30;
   min-height: 0;
+}
+
+.wb-context-deck--grid {
+  width: 100%;
+  padding: 1rem;
+  overflow-y: auto;
 }
 
 /* When the ViewSpace Bus Stop Grid is open, let the context deck fill the 1fr space */
@@ -191,22 +199,26 @@ body, html {
 }
 
 /* ==========================================================================
-   4. WORKSPACE: PRIMARY STAGE (Z3) + COMPANION BAY (Z4)
+   4. WORKSPACE: VERTICAL FLOW (Writer -> VSLister -> ViewMultItems)
+      + Preserved Companion Bay Grid Styling for Future Use
    ========================================================================== */
 .wb-workspace {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   max-width: 1800px;
   min-height: 0;
   margin-inline: auto;
-  padding: 0.6rem clamp(0.75rem, 2.5vw, 2.5rem);
-  gap: 1.5rem;
-  align-items: start;
-  /* Default (Solo Focal Mode): Single centered column */
-  grid-template-columns: minmax(0, 1fr);
+  padding: 0.75rem clamp(0.75rem, 2.5vw, 2.5rem) 1.25rem;
+  gap: 0.9rem;
 }
 
-/* Lock Desktop Viewport to 100dvh so the navbar & page never scroll */
+.wb-workspace--hidden {
+  display: none !important;
+}
+
+/* Lock Desktop Viewport to 100dvh so the navbar & suspension bar stay anchored */
 @media (min-width: 961px) {
   .wb-app {
     height: 100dvh;
@@ -216,10 +228,16 @@ body, html {
 
   .wb-workspace {
     height: 100%;
-    overflow: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 
+  /* Preserved Companion Bay layout for future use */
   .wb-app[data-companion="open"] .wb-workspace {
+    display: grid;
+    overflow: hidden;
+    align-items: start;
+    gap: 1.5rem;
     /* Primary stage guaranteed >= 50vw; Companion bay gets remaining space for 34-48ch cards */
     grid-template-columns: minmax(50vw, 1fr) minmax(36ch, 46ch);
   }
@@ -231,19 +249,22 @@ body, html {
 .wb-stage {
   container-type: inline-size;
   container-name: focal-stage;
-  /* Guarantees at least 50% screen width on desktop, up to 100% on mobile, always centered */
-  width: clamp(50vw, 100%, 100vw);
+  width: min(100%, 820px);
   max-width: 100%;
   min-width: 0;
   min-height: 0;
-  max-height: 100%;
-  overflow-y: auto;
-  scrollbar-width: none;
   margin-inline: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+}
+
+.wb-app[data-companion="open"] .wb-stage {
+  width: clamp(50vw, 100%, 100vw);
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .wb-stage::-webkit-scrollbar {
@@ -499,6 +520,30 @@ body, html {
   margin-inline: auto;
 }
 
+/* Vertical Reader Stack (Placed below VSLister in Write Mode) */
+.wb-reader-stack {
+  width: min(100%, 820px);
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  padding-bottom: 0.75rem;
+}
+
+.wb-reader-stack .multi-reader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.wb-reader-stack .wb-companion-card {
+  width: 100%;
+  max-width: 56ch;
+  min-width: 0;
+  margin-inline: auto;
+}
+
 /* ==========================================================================
    7. ZONE 5: SUSPENSION BAR (Bottom Transit Dock)
    ========================================================================== */
@@ -615,55 +660,113 @@ body, html {
 }
 
 /* ==========================================================================
-   10. VIEWSPACE & STREAM SELECTOR (Bar & Grid Modes)
+   10. VIEWSPACE & STREAM SELECTOR (Unified Single-Row Dock & Grid Modes)
    ========================================================================== */
-.vs-lister-container {
+.vs-lister-container,
+.stream-lister-container {
+  position: static;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Single-Row Dock: Distinct ViewSpace Context Anchor + Stream/Item Picker */
+.wb-dock-row {
   position: relative;
-  width: min(94vw, 68ch);
-  min-height: 2.35rem;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-stage);
+  z-index: 30;
 }
 
-/* Unified Dock: Fuses ActiveVSDisplay directly onto the top of StreamSelector */
-.wb-stream-dock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: min(94vw, 68ch);
+/* Backdrop blur on pseudo-element so fixed modals inside StreamSelector aren't clipped */
+.wb-dock-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  z-index: -1;
+  pointer-events: none;
 }
 
-/* --- ACTIVE VIEWSPACE DISPLAY (Low-Profile Reference Tab Atop StreamSelector) --- */
+/* --- ACTIVE VIEWSPACE DISPLAY (Distinct Parent-Container Anchor on Left) --- */
 .active-vs-display {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.15rem 0.65rem 0.1rem 0.35rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-bottom: none;
-  border-radius: 10px 10px 0 0;
-  backdrop-filter: blur(12px);
-  max-width: 85%;
-  margin-bottom: -1px; /* Physically joins with the StreamSelector top border */
-  z-index: 2;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.45rem;
+  background: var(--bg-elevated);
+  border-radius: 13px 0 0 13px;
+  flex-shrink: 0;
+  max-width: 40%;
+  min-width: 0;
 }
 
+.active-vs-switch-btn {
+  border-radius: 8px;
+  color: var(--accent-primary);
+  background: var(--flicker-hover-bg);
+  border-color: var(--border-subtle);
+}
+
+.active-vs-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.active-vs-eyebrow {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  line-height: 1;
+  padding-left: 0.25rem;
+  user-select: none;
+}
+
+.wb-dock-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.wb-dock-picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.stream-btn-icon--compact,
 .vs-btn-icon--compact {
-  width: 1.35rem;
-  height: 1.35rem;
-  font-size: 0.72rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.78rem;
 }
 
 .active-vs-title-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.05rem 0.35rem;
+  gap: 0.3rem;
+  padding: 0.05rem 0.25rem;
   border-radius: 6px;
   cursor: pointer;
   user-select: none;
+  max-width: 100%;
+  min-width: 0;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -676,25 +779,26 @@ body, html {
 }
 
 .active-vs-title {
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 34ch;
+  max-width: 22ch;
   transition: color 0.2s ease;
 }
 
 .active-vs-title-wrapper:hover .active-vs-title {
-  color: var(--text-primary);
+  color: var(--accent-primary);
 }
 
 .active-vs-edit-icon {
   font-size: 0.7rem;
   color: var(--text-muted);
   opacity: 0;
+  flex-shrink: 0;
   transform: translateX(-2px);
   transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
@@ -709,33 +813,37 @@ body, html {
   color: var(--text-primary) !important;
   border-bottom: 1px dashed var(--accent-primary) !important;
   font-family: inherit !important;
-  font-size: 0.78rem !important;
+  font-size: 0.8rem !important;
   font-weight: 600 !important;
-  max-width: 26ch;
+  max-width: 20ch;
   background-color: transparent !important;
   outline: none !important;
-  text-align: center;
+  text-align: left;
+  padding: 0 0.2rem;
 }
 
-/* --- BAR MODE (.vs-bar-select) --- */
+/* --- BAR MODE (.stream-bar-select) --- */
 .stream-bar-select {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   width: 100%;
-  padding: 0.25rem 0.4rem;
-  background: var(--bg-surface);
-  border-radius: 999px;
-  box-shadow: var(--shadow-stage);
-  backdrop-filter: blur(12px);
+  min-width: 0;
+  padding: 0.28rem 0.45rem;
+  background: transparent;
+}
+
+.stream-bar-select--read {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
 }
 
 /* Icon Controls (Open Grid, Scroll < >, Create +) */
 .stream-btn-icon {
   appearance: none;
-  width: 1.85rem;
-  height: 1.85rem;
+  touch-action: manipulation;
+  width: 1.8rem;
+  height: 1.8rem;
   padding: 0;
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
@@ -749,7 +857,7 @@ body, html {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease, background-color 0.2s ease;
 }
 
 .stream-btn-icon:hover {
@@ -758,10 +866,12 @@ body, html {
   box-shadow: 0 0 8px -2px var(--accent-primary);
 }
 
+.stream-btn-icon:active,
 .vs-btn-icon:active {
   transform: scale(0.94);
 }
 
+.stream-btn-icon:focus-visible,
 .vs-btn-icon:focus-visible {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
@@ -775,11 +885,12 @@ body, html {
   overflow-x: auto;
   scrollbar-width: none;
   padding: 0.15rem 0.35rem;
+  min-width: 0;
   mask-image: linear-gradient(
     to right,
     transparent 0%,
-    #000 12px,
-    #000 calc(100% - 12px),
+    #000 10px,
+    #000 calc(100% - 10px),
     transparent 100%
   );
 }
@@ -791,9 +902,13 @@ body, html {
 /* Individual Stream Pill Button in Bar */
 .stream-bar-title {
   appearance: none;
+  touch-action: manipulation;
   flex-shrink: 0;
   white-space: nowrap;
-  padding: 0.25rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.26rem 0.78rem;
   border-radius: 999px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
@@ -816,22 +931,55 @@ body, html {
   outline-offset: 2px;
 }
 
-/* Active / Targeted State */
+/* Floating (Unstreamed) Pill Modifier */
+.stream-bar-title--floating {
+  border-style: dashed;
+}
+
+/* Open in ViewMultItems State (2nd click) */
+.stream-bar-title.opened-stream-pill {
+  color: var(--text-primary);
+  background: var(--flicker-hover-bg);
+  border-color: rgba(72, 191, 227, 0.5);
+}
+
+/* Active / Targeted State (1st click) */
 .stream-bar-title.targeted-stream,
 .stream-bar-title.active-vs {
   color: var(--text-primary);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 12px -2px var(--accent-primary);
+  box-shadow: 0 0 11px -2px var(--accent-primary);
+}
+
+.stream-bar-title.targeted-stream::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--accent-primary);
+  box-shadow: 0 0 6px var(--accent-primary);
+}
+
+/* Targeted + Open (ready for 3rd click -> Focus in Review mode) */
+.stream-bar-title.targeted-stream.opened-stream-pill {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 12px -2px var(--border-focus);
+}
+
+.stream-bar-title.targeted-stream.opened-stream-pill::before {
+  background: var(--border-focus);
+  box-shadow: 0 0 6px var(--border-focus);
 }
 
 /* --- GRID MODE (.vs-grid-select & .vs-summary-cell) --- */
 .vs-grid-select {
   position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(94vw, 68ch);
-  max-height: min(65dvh, 24rem);
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: min(60dvh, 24rem);
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -843,6 +991,32 @@ body, html {
   box-shadow: var(--shadow-stage);
   backdrop-filter: blur(16px);
   z-index: 50;
+}
+
+@media (max-width: 600px) {
+  .active-vs-display {
+    padding: 0.25rem 0.5rem 0.25rem 0.35rem;
+    gap: 0.35rem;
+    max-width: 44%;
+  }
+
+  .active-vs-title {
+    font-size: 0.76rem;
+    max-width: 14ch;
+  }
+
+  .stream-bar-select {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0.25rem 0.35rem;
+  }
+
+  .stream-bar-select--read {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .stream-btn-icon--scroll {
+    display: none;
+  }
 }
 
 .vs-summary-cell {
@@ -910,6 +1084,7 @@ body, html {
 .floater-flicker {
   width: 100%;
   border-radius: 14px;
+  background: var(--stream-bg-primary);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-stage);
   backdrop-filter: blur(12px);
@@ -1194,14 +1369,22 @@ body, html {
   padding: 0.15rem 0.3rem;
 }
 
-/* Hover highlights for Flickers and Flashes */
-.flicker-highlight {
-  background-color: var(--flicker-hover-bg);
+/* Simultaneous Hover Styling: Underline Flickers + Highlight Individual Flashes */
+.flicker-highlight > span,
+.flicker-highlight > .paragraph.flash {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-primary);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
 }
 
 .flash-highlight {
   background-color: var(--flash-hover-bg);
   border-radius: 4px;
+}
+
+.flash-clickable {
+  cursor: pointer;
 }
 
 /* Timestamps (Underline for initial time, Overline for ⊦Δs gap) */
@@ -1252,6 +1435,21 @@ body, html {
   padding: clamp(1.25rem, 3cqi, 2.25rem) clamp(1rem, 4cqi, 2rem);
 }
 
+.wb-reader-empty {
+  width: 100%;
+  max-width: 48ch;
+  margin: 1.5rem auto;
+  padding: 2rem 1.5rem;
+  border-radius: 14px;
+  border: 1px dashed var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-style: italic;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
 /* ==========================================================================
    13. NEW STREAM MODAL, INFLECTION POINT & SUSPENSION BAR
    ========================================================================== */
@@ -1296,6 +1494,13 @@ body, html {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.wb-modal-card__subtitle {
+  margin: -0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .wb-modal-card__input {
@@ -1477,6 +1682,24 @@ body, html {
   color: var(--accent-flash);
 }
 
+.wb-suspen-pill--confirming {
+  border-color: var(--accent-flash);
+}
+
+.wb-suspen-pill__action--confirm {
+  background: var(--accent-flash);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.22rem 0.55rem;
+}
+
+.wb-suspen-pill__action--confirm:hover {
+  background: var(--accent-flash);
+  color: #ffffff;
+  opacity: 0.92;
+}
+
 /* ==========================================================================
    14. REPLAY ENGINE CONTROLS & LIVE CARET
    ========================================================================== */
@@ -1507,7 +1730,7 @@ body, html {
 }
 
 /* ==========================================================================
-   15. UNIFIED SELECTOR DECK, STREAMLESS PILL & MULTI-READER BAY
+   15. UNIFIED SELECTOR DECK, FLOATING PILL & MULTI-READER BAY
    ========================================================================== */
 .wb-unified-selector {
   display: flex;
@@ -1517,20 +1740,16 @@ body, html {
   width: 100%;
 }
 
-.vs-bar-title--streamless {
+.vs-summary-cell--floating {
   border-style: dashed;
 }
 
-.vs-bar-title.opened-stream-pill:not(.targeted-stream) {
-  color: var(--text-primary);
-  border-color: rgba(132, 145, 186, 0.45);
+.vs-summary-cell.opened-stream-pill:not(.targeted-stream) {
+  background: var(--flicker-hover-bg);
+  border-color: rgba(72, 191, 227, 0.45);
 }
 
-.vs-summary-cell--streamless {
-  border-style: dashed;
-}
-
-/* Ensures ViewMultItems (.multi-reader) stacks and scrolls cleanly inside .wb-companion-track */
+/* Preserved Companion Bay multi-reader styles for future use */
 .wb-companion-track .multi-reader {
   display: flex;
   flex-direction: column;
@@ -1619,4 +1838,277 @@ body, html {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.85rem;
   width: 100%;
+}
+
+/* ==========================================================================
+   17. SETTINGS MODAL (Themed Space/Reef + WritersHandBar Swirling Animation)
+   ========================================================================== */
+.wb-modal-backdrop--settings {
+  overflow: hidden;
+}
+
+.wb-settings-card {
+  width: min(92vw, 34ch);
+  min-height: 15.5rem;
+  padding: 1.15rem 1.3rem 1.25rem;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-stage);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  position: relative;
+  transition: min-height 0.75s ease-out, border-color 0.25s ease;
+}
+
+.wb-settings-card--timers-open {
+  min-height: 22.5rem;
+  border-color: var(--accent-primary);
+}
+
+.wb-settings-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.wb-settings-lock-note {
+  font-size: 0.74rem;
+  color: var(--accent-flash);
+  background: rgba(255, 107, 91, 0.1);
+  border: 1px dashed var(--accent-flash);
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  text-align: center;
+}
+
+/* Swirling Finger / Knuckle / Nail Timer Stage */
+.wb-finger {
+  position: relative;
+  width: 100%;
+  min-height: 3.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: min-height 0.75s ease-out;
+}
+
+.wb-finger--open {
+  min-height: 9.8rem;
+}
+
+.wb-finger--disabled {
+  opacity: 0.55;
+}
+
+.wb-knuckle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  appearance: none;
+  touch-action: manipulation;
+  font-family: 'Caveat', cursive;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.35rem 1.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0) scale(1) rotate(0deg);
+  transition:
+    transform 0.8s ease-out,
+    opacity 0.7s ease-out,
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    font-size 0.35s ease;
+}
+
+.wb-knuckle:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  background: var(--flicker-hover-bg);
+  box-shadow: 0 0 16px -3px var(--accent-primary);
+  font-size: 1.5rem;
+}
+
+.wb-knuckle:disabled {
+  cursor: not-allowed;
+}
+
+.wb-finger--open > .wb-knuckle {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(45dvh) scale(0.1) rotate(1080deg);
+  transition: transform 0.95s ease-in, opacity 0.8s ease-in;
+}
+
+.wb-nail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(45dvh) scale(0.1) rotate(-1080deg);
+  transition: transform 0.95s ease-in, opacity 0.75s ease-in;
+}
+
+.wb-finger--open > .wb-nail {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1) rotate(0deg);
+  transition: transform 0.8s ease-out, opacity 0.7s ease-out;
+}
+
+.wb-nail__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wb-nail__collapse {
+  font-size: 0.72rem;
+}
+
+.wb-delay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.wb-delay-row__label {
+  font-family: 'Caveat', cursive;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wb-delay-stepper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 7.4rem;
+  padding: 0.16rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.wb-delay-stepper__val {
+  font-family: 'Syne Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: center;
+  flex: 1;
+}
+
+.wb-delay-stepper__btn {
+  appearance: none;
+  touch-action: manipulation;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wb-delay-stepper__btn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.wb-delay-stepper__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.wb-delay-stepper__btn--minus {
+  background: var(--accent-flash);
+  color: #ffffff;
+}
+
+.wb-delay-stepper__btn--plus {
+  background: var(--accent-primary);
+  color: #06070e;
+}
+
+[data-theme="reef"] .wb-delay-stepper__btn--plus {
+  color: #ffffff;
+}
+
+/* Settings Toggles Section */
+.wb-settings-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.wb-settings-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.wb-settings-check:hover {
+  border-color: var(--border-subtle);
+  background: var(--flicker-hover-bg);
+}
+
+.wb-settings-check input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.wb-settings-check__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.wb-settings-check__label small {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
 }

@@ -1,15 +1,18 @@
-import { createEffect, createMemo, createSignal, onCleanup, onMount, For, Show, type Component } from 'solid-js';
-import { 
-  activeViewSpaceID, 
-  createNewStream, 
-  getEmacsDateString, 
-  getStream, 
-  streamFlashes, 
-  viewSpaces, 
-  writerTargetID, 
-  setWriterTargetID, 
+import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, For, Show, type Component } from 'solid-js';
+import {
+  activeViewSpaceID,
+  createNewStream,
+  getEmacsDateString,
+  getStream,
+  streamFlashes,
+  viewSpaces,
+  writerTargetID,
+  setWriterTargetID,
   openFloaters,
   setOpenFloaters,
+  setFocusedStreamID,
+  setFocusedEntity,
+  setUserMode,
   type Stream,
   type MultEnt
 } from '../store';
@@ -31,15 +34,20 @@ const getStreamStats = (streamID: number, streamCreateDT: number) => {
 const StreamSummaryCell: Component<{
   stream: Stream;
   isTargeted: boolean;
+  isOpen: boolean;
   onSelect: () => void;
 }> = (props) => {
   const stats = () => getStreamStats(props.stream.id, props.stream.createDT);
   const timeStr = () => stats().lastEntry ? getEmacsDateString(stats().lastEntry) : 'No Entries';
 
   return (
-    <button 
+    <button
+      type="button"
       class="vs-summary-cell"
-      classList={{ 'targeted-stream': props.isTargeted }}
+      classList={{
+        'targeted-stream': props.isTargeted,
+        'opened-stream-pill': props.isOpen,
+      }}
       onClick={props.onSelect}
     >
       <div class="vs-cell-title">{props.stream.title}</div>
@@ -53,32 +61,44 @@ const StreamSummaryCell: Component<{
 
 const StreamGridSelect: Component<{
   streams: Stream[];
-  streamlessCount: () => number;
-  hasOpenStreamless: () => boolean;
-  onToggleStreamless: () => void;
+  floatingCount: () => number;
+  hasOpenFloating: () => boolean;
+  onFloatingClick: () => void;
   targetedID: () => number | null;
   onSelect: (streamID: number) => void;
 }> = (props) => {
+  const isFloatingTargeted = () => props.targetedID() === null;
+
   return (
     <div class="vs-grid-select">
       <button
         type="button"
-        class="vs-summary-cell vs-summary-cell--streamless"
-        classList={{ 'targeted-stream': props.hasOpenStreamless() }}
-        onClick={props.onToggleStreamless}
+        class="vs-summary-cell vs-summary-cell--floating"
+        classList={{
+          'targeted-stream': isFloatingTargeted(),
+          'opened-stream-pill': props.hasOpenFloating(),
+        }}
+        onClick={props.onFloatingClick}
       >
-        <div class="vs-cell-title">Streamless: {props.streamlessCount()}</div>
+        <div class="vs-cell-title">Floating: {props.floatingCount()}</div>
         <div class="vs-cell-stats">Loose Flashes &amp; Flickers</div>
         <div class="vs-cell-date">
-          {props.hasOpenStreamless() ? 'Click to minimize all' : 'Click to open all'}
+          {!isFloatingTargeted()
+            ? 'Click to clear stream target'
+            : props.hasOpenFloating()
+              ? 'Click to minimize all'
+              : 'Click to open all'}
         </div>
       </button>
       <For each={props.streams}>
         {(stream) => (
-          <StreamSummaryCell 
-            stream={stream} 
+          <StreamSummaryCell
+            stream={stream}
             isTargeted={props.targetedID() === stream.id}
-            onSelect={() => props.onSelect(stream.id)} 
+            isOpen={openFloaters.some(
+              (e) => e.entityType === 'stream' && e.refID === stream.id
+            )}
+            onSelect={() => props.onSelect(stream.id)}
           />
         )}
       </For>
@@ -88,9 +108,9 @@ const StreamGridSelect: Component<{
 
 const StreamBarSelect: Component<{
   streams: Stream[];
-  streamlessCount: () => number;
-  hasOpenStreamless: () => boolean;
-  onToggleStreamless: () => void;
+  floatingCount: () => number;
+  hasOpenFloating: () => boolean;
+  onFloatingClick: () => void;
   targetedID: () => number | null;
   onOpenGrid: () => void;
   onSelect: (streamID: number) => void;
@@ -142,48 +162,99 @@ const StreamBarSelect: Component<{
     prevCount = currentCount;
   });
 
+  const isFloatingTargeted = () => props.targetedID() === null;
+
   return (
     <div class="stream-bar-select">
-      <button class="stream-btn-icon" onClick={props.onOpenGrid} title="Open Grid">🗖</button>
-      <button class="stream-btn-icon" onClick={scrollLeft} title="Scroll Left">&lt;</button>
+      <button
+        type="button"
+        class="stream-btn-icon"
+        onClick={props.onOpenGrid}
+        title="Browse Streams in Grid"
+        aria-label="Browse Streams in Grid"
+      >
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M1.5 3h11M1.5 7h11M1.5 11h7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="stream-btn-icon stream-btn-icon--scroll"
+        onClick={scrollLeft}
+        title="Scroll Left"
+        aria-label="Scroll streams left"
+      >
+        &lt;
+      </button>
       <div class="stream-bar-scroll" ref={scrollRef} style={{ 'scroll-behavior': 'smooth' }}>
         <button
           type="button"
-          class="stream-bar-title stream-bar-title--streamless"
-          classList={{ 'targeted-stream': props.hasOpenStreamless() }}
-          onClick={props.onToggleStreamless}
+          class="stream-bar-title stream-bar-title--floating"
+          classList={{
+            'targeted-stream': isFloatingTargeted(),
+            'opened-stream-pill': props.hasOpenFloating(),
+          }}
+          onClick={props.onFloatingClick}
           title={
-            props.hasOpenStreamless()
-              ? 'Minimize loose flashes and flickers'
-              : 'Open loose flashes and flickers'
+            !isFloatingTargeted()
+              ? 'Click to write floating (clear stream target)'
+              : props.hasOpenFloating()
+                ? 'Floating target active — click to minimize floating items'
+                : 'Floating target active — click to open floating items'
           }
         >
-          Streamless: {props.streamlessCount()}
+          Floating: {props.floatingCount()}
         </button>
         <For each={props.streams}>
-          {(stream) => (
-            <button 
-              id={'stream' + stream.id.toString()}
-              class="stream-bar-title"
-              classList={{
-                'targeted-stream': props.targetedID() === stream.id,
-                'opened-stream-pill': openFloaters.some(
-                  (e) => e.entityType === 'stream' && e.refID === stream.id
-                ),
-              }}
-              onClick={() => props.onSelect(stream.id)}
-            >
-              {stream.title}
-            </button>
-          )}
+          {(stream) => {
+            const isTargeted = () => props.targetedID() === stream.id;
+            const isOpen = () =>
+              openFloaters.some(
+                (e) => e.entityType === 'stream' && e.refID === stream.id
+              );
+
+            return (
+              <button
+                type="button"
+                id={'stream' + stream.id.toString()}
+                class="stream-bar-title"
+                classList={{
+                  'targeted-stream': isTargeted(),
+                  'opened-stream-pill': isOpen(),
+                }}
+                onClick={() => props.onSelect(stream.id)}
+                title={
+                  !isTargeted()
+                    ? 'Click to set as write target'
+                    : !isOpen()
+                      ? 'Targeted — click again to open'
+                      : 'Targeted & open — click again to focus in Review mode'
+                }
+              >
+                {stream.title}
+              </button>
+            );
+          }}
         </For>
       </div>
-      <button class="stream-btn-icon" onClick={scrollRight} title="Scroll Right">&gt;</button>
-      <button 
-        class="stream-btn-icon"
+      <button
+        type="button"
+        class="stream-btn-icon stream-btn-icon--scroll"
+        onClick={scrollRight}
+        title="Scroll Right"
+        aria-label="Scroll streams right"
+      >
+        &gt;
+      </button>
+      <button
+        type="button"
+        class="stream-btn-icon stream-btn-icon--add"
         onClick={props.onCreateNew}
         title="Create New Stream"
-      >+</button>
+        aria-label="Create New Stream"
+      >
+        +
+      </button>
     </div>
   );
 };
@@ -222,19 +293,19 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
       .filter((s): s is Stream => Boolean(s));
   });
 
-  const streamlessEnts = createMemo<MultEnt[]>(() =>
+  const floatingEnts = createMemo<MultEnt[]>(() =>
     (currentVS()?.tentsInSpace || []).filter(
       (ent) => ent.entityType === 'flash' || ent.entityType === 'flicker'
     )
   );
 
-  const hasOpenStreamless = createMemo(() =>
+  const hasOpenFloating = createMemo(() =>
     openFloaters.some(
       (ent) => ent.entityType === 'flash' || ent.entityType === 'flicker'
     )
   );
 
-  const scrollCompanionCardIntoView = (entityType: string, refID: number) => {
+  const scrollReaderCardIntoView = (entityType: string, refID: number) => {
     requestAnimationFrame(() => {
       const el = document.getElementById(`companion-${entityType}-${refID}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
@@ -242,25 +313,41 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
   };
 
   const handleStreamClick = (streamID: number) => {
-    const alreadyOpen = openFloaters.some(
+    const isTargeted = writerTargetID() === streamID;
+    const isOpen = openFloaters.some(
       (ent) => ent.entityType === 'stream' && ent.refID === streamID
     );
-    setWriterTargetID(streamID);
 
-    if (!alreadyOpen) {
+    if (!isTargeted) {
+      // 1st click: target only
+      setWriterTargetID(streamID);
+    } else if (!isOpen) {
+      // 2nd click: open into ViewMultItems below
       setOpenFloaters((prev) => [...prev, { entityType: 'stream', refID: streamID }]);
+      scrollReaderCardIntoView('stream', streamID);
+    } else {
+      // 3rd click: focus selected stream in Read mode
+      batch(() => {
+        setFocusedStreamID(streamID);
+        setFocusedEntity({ entityType: 'stream', refID: streamID });
+        setUserMode('Read');
+      });
     }
-    scrollCompanionCardIntoView('stream', streamID);
   };
 
-  const handleToggleStreamless = () => {
-    if (hasOpenStreamless()) {
+  const handleFloatingClick = () => {
+    if (writerTargetID() !== null) {
+      // Always clear stream target on click
+      setWriterTargetID(null);
+      return;
+    }
+
+    if (hasOpenFloating()) {
       setOpenFloaters((prev) =>
         prev.filter((ent) => ent.entityType !== 'flash' && ent.entityType !== 'flicker')
       );
     } else {
-      setWriterTargetID(null);
-      const loose = streamlessEnts();
+      const loose = floatingEnts();
       if (loose.length > 0) {
         setOpenFloaters((prev) => [
           ...prev,
@@ -287,36 +374,35 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
   });
 
   return (
-    <div 
+    <div
       ref={containerRef}
       class="stream-lister-container stream-selector-container"
     >
-      <Show when={displayMode() === 'bar'}>
-        <StreamBarSelect 
-          streams={streams()}
-          streamlessCount={() => streamlessEnts().length}
-          hasOpenStreamless={hasOpenStreamless}
-          onToggleStreamless={handleToggleStreamless}
-          targetedID={writerTargetID}
-          onOpenGrid={() => setDisplayMode('grid')} 
-          onSelect={handleStreamClick}
-          onCreateNew={openNewStreamModal}
-        />
-      </Show>
+      <StreamBarSelect
+        streams={streams()}
+        floatingCount={() => floatingEnts().length}
+        hasOpenFloating={hasOpenFloating}
+        onFloatingClick={handleFloatingClick}
+        targetedID={writerTargetID}
+        onOpenGrid={() => setDisplayMode((prev) => (prev === 'grid' ? 'bar' : 'grid'))}
+        onSelect={handleStreamClick}
+        onCreateNew={openNewStreamModal}
+      />
+
       <Show when={displayMode() === 'grid'}>
-        <StreamGridSelect 
+        <StreamGridSelect
           streams={streams()}
-          streamlessCount={() => streamlessEnts().length}
-          hasOpenStreamless={hasOpenStreamless}
-          onToggleStreamless={() => {
-            handleToggleStreamless();
+          floatingCount={() => floatingEnts().length}
+          hasOpenFloating={hasOpenFloating}
+          onFloatingClick={() => {
+            handleFloatingClick();
             setDisplayMode('bar');
           }}
           targetedID={writerTargetID}
           onSelect={(streamID) => {
             handleStreamClick(streamID);
             setDisplayMode('bar');
-          }} 
+          }}
         />
       </Show>
 
@@ -364,5 +450,6 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
           </div>
         </div>
       </Show>
-    </div>  );
+    </div>
+  );
 };

@@ -4,11 +4,11 @@ import { FloaterFlash } from "./FloaterFlash";
 import { FloaterFlicker } from "./FloaterFlicker";
 import { focusedStreamID, focusedEntity, chainTargetID } from "../store";
 
-export interface ViewFocusedProps {
+export interface FocusViewerProps {
   innerClickMode?: string;
 }
 
-export const ViewFocused: Component<ViewFocusedProps> = (props) => {
+export const FocusViewer: Component<FocusViewerProps> = (props) => {
   const viewed = () => focusedEntity()
     ? focusedEntity()
     : focusedStreamID() 
@@ -18,7 +18,14 @@ export const ViewFocused: Component<ViewFocusedProps> = (props) => {
   const clickMode = () => props.innerClickMode ?? (chainTargetID() ? 'chain' : 'focus');
 
   return (
-    <Show when={viewed()}>
+    <Show
+      when={viewed()}
+      fallback={
+        <div class="wb-reader-empty">
+          Select a stream or floating item above to review.
+        </div>
+      }
+    >
       {(entity) =>
         <Switch fallback={<div class='mistake'>Nothing Here</div>}>
           <Match

@@ -1,0 +1,87 @@
+#+TITLE: Writers Block — Blocking Fixes & Follow-Up Issues
+#+DATE: 2026-11-21
+#+OPTIONS: toc:2 num:nil
+
+* Directly Blocking Fixes Applied in This Pass
+
+The following issues directly blocked the requested features and were fixed alongside the requested changes.
+
+** Broken CSS Class Mismatches Across VSLister, StreamSelector, and VSReadPicker
+- *Files:* [[file:src/App.css]], [[file:src/components/VSLister.tsx]], [[file:src/components/StreamSelector.tsx]], [[file:src/components/VSReadPicker.tsx]]
+- *Issue:* A prior partial rename from =.vs-*= to =.stream-*= left =VSReadPicker= unstyled, left =.stream-btn-icon--compact= and =.stream-bar-title.opened-stream-pill= unmatched, and dropped =position: relative= on the selector container so the dropdown grid misaligned.
+- *Fix Applied:* Unified the single-row dock CSS classes under =.wb-dock-row= and =.stream-*=, added distinct visual states for =targeted-stream=, =opened-stream-pill=, and =stream-bar-title--floating=, and anchored =.vs-grid-select= directly to =.wb-dock-row=.
+
+** Missing Backdrop-Filter Containment Fix for Modals Inside the Dock
+- *Files:* [[file:src/App.css]], [[file:src/components/SeedModal.tsx]], [[file:src/App.tsx]]
+- *Issue:* Applying =backdrop-filter= directly on an ancestor creates a CSS containing block that clips =position: fixed= modals (like New Stream and Seed).
+- *Fix Applied:* Placed the dock blur on =.wb-dock-row::before= and mounted =SeedModal= at the top level inside =.wb-app=.
+
+** Duplicate Flashes & Shallow Log Clones in =makeStreamFrom=
+- *File:* [[file:src/store/index.ts]]
+- *Issue:* =makeStreamFrom('stream')= appended top-level cloned flashes to =allFlashes= twice (once inside the =forEach= loop and again after it), creating duplicate flash IDs. All three branches also shallow-copied =flash.log=, lacked custom title support, lacked =batch()=, and returned =void=.
+- *Fix Applied:* Removed the duplicate insert, deep-cloned =Keymote[]= logs, normalized =createDT= to =Date.now()=, wrapped store mutations in =batch()=, added optional =customTitle=, and returned the new stream ID so =SeedModal= can immediately target it.
+
+** Non-Reactive =holdingFlicker= & Missing ='multi'= Click Handler in =DisplayFlash=
+- *File:* [[file:src/components/DisplayFlash.tsx]]
+- *Issue:* =holdingFlicker= was evaluated once on mount instead of reactively, and =handleClick= ignored ='multi'= mode, preventing users from clicking into flickers/flashes from a stream card in =ViewMultItems=.
+- *Fix Applied:* Converted =holdingFlicker= to a reactive accessor, wired ='multi'= drill-down via =replaceInOpenFloaters= (minimizing the parent stream in-place without clearing =writerTargetID=), and added pointer cursor styling.
+
+** Ghost Open Cards & Lost Parent Reference on Delete/Minimize
+- *Files:* [[file:src/components/DisplayStream.tsx]], [[file:src/components/FloaterFlicker.tsx]], [[file:src/components/FloaterFlash.tsx]], [[file:src/store/index.ts]]
+- *Issue:*
+  1. =deleteStream(stream()!.id) && handleMinimize()= read =stream()?.id= *after* deletion (now =undefined=), leaving ghost entries in =openFloaters=.
+  2. =FloaterFlicker= and =FloaterFlash= called =deleteFlicker=/=deleteFlash= before inspecting =holdingStream()=/=holdingFlicker()=, so deleting an opened child could not reopen its parent stream.
+  3. =FloaterFlash.handleMinimize= checked =holdingFlicker()= but not =holdingStream()=, so standalone flashes opened from a stream did not return to their stream.
+- *Fix Applied:* Captured parent entities *before* deleting, updated =deleteStream= to scrub =openFloaters=/=focusedStreamID=/=focusedEntity=, and restored parents in-place inside =batch()= using =replaceInOpenFloaters=.
+
+** Floating Button Failing to Clear Stream Target
+- *File:* [[file:src/components/StreamSelector.tsx]]
+- *Issue:* When floating items were already open and a stream was targeted, clicking the Streamless/Floating button minimized the floating items without clearing =writerTargetID=. Its highlight also reflected open state rather than target state.
+- *Fix Applied:* Clicking Floating when =writerTargetID() !== null= now unconditionally clears =writerTargetID= to =null=; when already targeting Floating, clicking toggles opening/minimizing loose items.
+
+** Suspended Items Remaining Viewable via Open Child Cards
+- *File:* [[file:src/store/index.ts]]
+- *Issue:* =sendToSuspenBar('stream', id)= and =sendToSuspenBar('flicker', id)= removed the entity itself from =openFloaters= and =focusedEntity=, but did not clear child flickers or flashes of that suspended entity if they were currently open.
+- *Fix Applied:* Scrubbed all descendant flickers and flashes from =openFloaters= and =focusedEntity= when suspending a stream or flicker.
+
+** Missing Card Backgrounds on =DisplayStream=, =FloaterFlash=, and =FloaterFlicker=
+- *File:* [[file:src/App.css]]
+- *Issue:* =.stream-box=, =.floater-flash=, and =.floater-flicker= had no background rule in =App.css=, and =.white-bg= / =.parchment-bg= only existed in =oldApp.css=.
+- *Fix Applied:* Applied =var(--stream-bg-primary)= by default and defined =.white-bg= and =.parchment-bg= using existing theme tokens so vertical reader cards are readable in both Space and Reef themes.
+
+* Unaddressed Bugs, Fixes & Open Questions (Resolved in Pass 2)
+
+All 11 items below have now been implemented per your instructions.
+
+** DONE 1. ViewSpace Selection Mode + Cross-Space Write Memory + Additive File Load
+- *Resolution:* ViewSpace Selection now hides =.wb-workspace= via CSS (=.wb-workspace--hidden=) while keeping =FocusWriter= and timers mounted and running. Write mode preserves =writerTargetID= and =openFloaters= cross-space and auto-persists session memory via IndexedDB; Read mode performs a clean switch (=focusedEntity= and =focusedStreamID= cleared) whenever a ViewSpace is opened. Loading a JSON session/stream appends ViewSpaces and Suspension items additively without wiping existing data or resetting state.
+
+** DONE 2. Review Button Focus Behavior & Empty State
+- *Resolution:* Clicking =Review= focuses =writerTargetID()= if it points to a stream; otherwise focuses the last entity in the active ViewSpace. Added =.wb-reader-empty= fallback in =FocusViewer= when nothing is focused.
+
+** DONE 3. Time & Clock Calculation Fixes
+- *Resolution:* Fixed =getStreamTSpan= minutes math (=(sec % 3600) / 60=), included =+ lastFlash.tSpan= and removed read side effect in =getFlickerTSpan=, and extracted shared =formatClock12h= fixing noon/midnight (=12= instead of =00=) and =12:xx PM= across =DisplayFlash= and =ReplayEngine=.
+
+** DONE 4. Simultaneous Hover Styling (Underline Flickers + Highlight Flashes)
+- *Resolution:* Stopped flash =onMouseOver= propagation so individual flashes stay highlighted while =DisplayStream= simultaneously applies =.flicker-highlight= (accent underline) to the enclosing flicker.
+
+** DONE 5. Reactive =prevID= & Stray =console.log= Cleanup
+- *Resolution:* Updated =DisplayFlash= to accept reactive =prevID= getters across =DisplayStream=, =FloaterFlicker=, and =ReplayEngine=, and removed stray =console.log(prevFlash)=.
+
+** DONE 6. Auto-Delete Empty Flickers
+- *Resolution:* =deleteFlash= and =sendToSuspenBar('flash', ...)= now automatically call =deleteFlicker= whenever a flicker's =contentIDs= becomes empty.
+
+** DONE 7. IndexedDB Fixes & Stateless / Stateful Load Separation
+- *Resolution:* Fixed legacy casing bugs (=FlickerDelayT= / =FlickerModeOn= + =??=) and counter reconciliation. Both IndexedDB and JSON exports save full contents + settings + UI state. Active UI =Load= uses stateless additive =importLoadedJson=; exported =importLoadedJsonStateful= and =loadSavedAppStateless= alongside =loadSavedApp= for future UI choice.
+
+** DONE 8. =index.css= Cascade & Import Order Fix
+- *Resolution:* Imported =./index.css= before =App= in =src/index.tsx= and stripped conflicting =html, body=, =*=, and legacy theme rules from =src/index.css=.
+
+** DONE 9. Standardize =⬚= to Toggle Text Content Display
+- *Resolution:* Removed background-change toggle from =FloaterFlash= and =FloaterFlicker= (plus =.white-bg=/=.parchment-bg= CSS) and unified =⬚= across =DisplayStream=, =FloaterFlash=, and =FloaterFlicker= to show/hide text content with active indicator.
+
+** DONE 10. Themed Settings Modal + Moved Inflection Toggle
+- *Resolution:* Created =src/components/SettingsModal.tsx= wired to navbar =Settings= (keeping =<s>Account</s>=), moved Inflection toggle out of =FocusWriter= into Settings alongside Disable Backspace, and preserved the swirling =1080deg= =knuckle=/=nail= timer expansion animation in Space/Reef themes.
+
+** DONE 11. Deleted =src/oldApp.tsx=
+- *Resolution:* Removed =src/oldApp.tsx=, resolving the pre-existing =tsc -b= build error.
