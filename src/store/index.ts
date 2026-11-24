@@ -1,5 +1,6 @@
 import { createSignal, batch } from 'solid-js';
 import { createStore, unwrap } from 'solid-js/store';
+import { trackEvent } from '../analytics';
 
 // ==========================================
 // 1. TYPES & INTERFACES
@@ -129,6 +130,7 @@ let nextViewSpaceID = 2;
 
 export const addFlash = (flash: Flash) => {
   const newFlash: Flash = { ...flash, id: nextFlashID++ };
+  trackEvent('flash_created');
 
   if (!flickerModeOn()) {
     if (!inflectionOn()) {
