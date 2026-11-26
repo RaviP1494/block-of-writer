@@ -43,7 +43,9 @@ export const [appTheme, setAppTheme] = createSignal<'space' | 'reef'>('space');
 const App: Component = () => {
   const [saveStatus, setSaveStatus] = createSignal<string | null>(null);
   const [showSettings, setShowSettings] = createSignal(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = createSignal(false);
   const [dbReady, setDbReady] = createSignal(false);
+  let mobileMenuRef: HTMLDivElement | undefined;
 
   onMount(async () => {
     await loadSavedApp();
@@ -55,13 +57,38 @@ const App: Component = () => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') flushToDB();
     };
+    const handleDocClick = (e: MouseEvent) => {
+      if (!mobileMenuOpen()) return;
+      if (
+        mobileMenuRef &&
+        !mobileMenuRef.contains(e.target as Node) &&
+        !e.composedPath().includes(mobileMenuRef)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen()) {
+        setMobileMenuOpen(false);
+      }
+    };
 
     window.addEventListener('beforeunload', flushToDB);
     document.addEventListener('visibilitychange', handleVisibility);
+    document.addEventListener('click', handleDocClick);
+    window.addEventListener('keydown', handleKeyDown);
     onCleanup(() => {
       window.removeEventListener('beforeunload', flushToDB);
       document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('click', handleDocClick);
+      window.removeEventListener('keydown', handleKeyDown);
     });
+  });
+
+  createEffect(() => {
+    if (isActiveTimer() && mobileMenuOpen()) {
+      setMobileMenuOpen(false);
+    }
   });
 
   // Debounced per-session IndexedDB auto-save (contents + Write-mode memory + settings)
@@ -199,6 +226,9 @@ const App: Component = () => {
               >
                 Review
               </button>
+            </nav>
+
+            <div class="wb-navbar__desktop-actions">
               <button
                 type="button"
                 class="wb-ghost-slot"
@@ -207,18 +237,109 @@ const App: Component = () => {
               >
                 Theme: {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
               </button>
-            </nav>
-            <button
-              type="button"
-              class="wb-navbar__btn"
-              classList={{ 'wb-navbar__btn--active': showSettings() }}
-              disabled={isActiveTimer()}
-              onClick={() => setShowSettings((prev) => !prev)}
-              title="Open Writer Settings"
-            >
-              Settings
-            </button>
-            <button type="button" class="wb-ghost-slot" disabled={isActiveTimer()}><s>Account</s></button>
+              <button
+                type="button"
+                class="wb-navbar__btn"
+                classList={{ 'wb-navbar__btn--active': showSettings() }}
+                disabled={isActiveTimer()}
+                onClick={() => setShowSettings((prev) => !prev)}
+                title="Open Writer Settings"
+              >
+                Settings
+              </button>
+              <button type="button" class="wb-ghost-slot" disabled={isActiveTimer()}><s>Account</s></button>
+            </div>
+
+            <div class="wb-navbar__mobile-menu-wrap" ref={mobileMenuRef}>
+              <button
+                type="button"
+                class="wb-navbar__hamburger"
+                classList={{ 'wb-navbar__btn--active': mobileMenuOpen() }}
+                disabled={isActiveTimer()}
+                aria-expanded={mobileMenuOpen()}
+                aria-haspopup="menu"
+                aria-label="Open menu"
+                title="Menu"
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+              >
+                <Show
+                  when={!mobileMenuOpen()}
+                  fallback={
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                      <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  }
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                    <path d="M2.5 4.5h13M2.5 9h13M2.5 13.5h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                  </svg>
+                </Show>
+              </button>
+
+              <Show when={mobileMenuOpen()}>
+                <div class="wb-mobile-menu" role="menu" aria-label="Navigation Menu">
+                  <div class="wb-mobile-menu__brand">Writers Block</div>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-mobile-menu__item"
+                    disabled={isActiveTimer()}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      void handleSave();
+                    }}
+                  >
+                    {saveStatus() || 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-mobile-menu__item"
+                    disabled={isActiveTimer()}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      void handleLoad();
+                    }}
+                  >
+                    Load
+                  </button>
+
+                  <div class="wb-mobile-menu__divider" role="separator" />
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-mobile-menu__item"
+                    disabled={isActiveTimer()}
+                    onClick={toggleTheme}
+                  >
+                    Theme: {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-mobile-menu__item"
+                    classList={{ 'wb-mobile-menu__item--active': showSettings() }}
+                    disabled={isActiveTimer()}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowSettings((prev) => !prev);
+                    }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-mobile-menu__item wb-mobile-menu__item--ghost"
+                    disabled={isActiveTimer()}
+                  >
+                    <s>Account</s>
+                  </button>
+                </div>
+              </Show>
+            </div>
           </div>
         </header>
 
