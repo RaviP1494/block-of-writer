@@ -2,27 +2,15 @@ import { type Component, Show, For } from 'solid-js';
 import {
   setInflectionOn,
   inflecTents,
-  setInflecTents,
   flickerModeOn,
   isFlickerOpen,
-  setIsFlickerOpen,
   outFlect,
 } from '../store';
-import { reclaimToWriter } from './FocusWriter';
+import { isActiveTimer, reclaimLastFromInflection } from './FocusWriter';
 
 export const InflectionPoint: Component = () => {
   const handleReclaimLast = () => {
-    const current = inflecTents();
-    if (!current || current.length === 0) return;
-    const last = current[current.length - 1];
-    const remaining = current.slice(0, -1);
-    if (remaining.length === 0) {
-      setInflecTents(null);
-      setIsFlickerOpen(false);
-    } else {
-      setInflecTents(remaining);
-    }
-    reclaimToWriter(last);
+    reclaimLastFromInflection();
   };
 
   return (
@@ -48,6 +36,7 @@ export const InflectionPoint: Component = () => {
               <button
                 type="button"
                 class="stream-action-pill"
+                disabled={isActiveTimer()}
                 onClick={() => setInflectionOn(false)}
               >
                 Close
@@ -57,6 +46,7 @@ export const InflectionPoint: Component = () => {
             <button
               type="button"
               class="stream-action-pill"
+              disabled={isActiveTimer()}
               onClick={handleReclaimLast}
               title="Bring the last flash back to the writer"
             >
@@ -65,6 +55,7 @@ export const InflectionPoint: Component = () => {
             <button
               type="button"
               class="stream-action-pill"
+              disabled={isActiveTimer()}
               onClick={() => outFlect()}
               title="Send held flashes to target stream or space"
             >

@@ -13,7 +13,13 @@ import {
   inflecTents,
   outFlect,
 } from '../store';
-import { isActiveTimer } from './FocusWriter';
+import {
+  isActiveTimer,
+  hideTypedText,
+  setHideTypedText,
+  showTimeBars,
+  setShowTimeBars,
+} from './FocusWriter';
 
 export interface SettingsModalProps {
   isOpen: () => boolean;
@@ -209,6 +215,30 @@ export const SettingsModal: Component<SettingsModalProps> = (props) => {
           </div>
 
           <div class="wb-settings-toggles">
+            <label class="wb-settings-check">
+              <input
+                type="checkbox"
+                checked={hideTypedText()}
+                onChange={() => setHideTypedText((prev) => !prev)}
+              />
+              <span class="wb-settings-check__label">
+                Invisible Ink
+                <small>Hide typed glyphs while keeping the caret visible</small>
+              </span>
+            </label>
+
+            <label class="wb-settings-check">
+              <input
+                type="checkbox"
+                checked={showTimeBars()}
+                onChange={() => setShowTimeBars((prev) => !prev)}
+              />
+              <span class="wb-settings-check__label">
+                Time Bars
+                <small>Show flash &amp; flicker countdown bars under the block</small>
+              </span>
+            </label>
+
             <label class="wb-settings-check">
               <input
                 type="checkbox"

@@ -364,6 +364,29 @@ export const ReplayTextView: Component<{
   showTimes: () => boolean;
   isSpaced: () => boolean;
 }> = (props) => {
+  let caretRef: HTMLSpanElement | undefined;
+
+  // Keep viewport / workspace scrolled smoothly with live generated replay text
+  createEffect(() => {
+    const isPlaying = props.controller.status() === 'playing';
+    void props.controller.beforeCaret();
+    void props.controller.activeFlashID();
+    void props.controller.completedGroups().length;
+
+    if (!isPlaying) return;
+
+    requestAnimationFrame(() => {
+      const el = caretRef;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const topBuffer = 80;
+      const bottomBuffer = 110;
+      if (rect.bottom > window.innerHeight - bottomBuffer || rect.top < topBuffer) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      }
+    });
+  });
+
   const activeFlash = () =>
     allFlashes.find((f) => f.id === props.controller.activeFlashID());
 
@@ -418,7 +441,7 @@ export const ReplayTextView: Component<{
                   }}
                 >
                   {props.controller.beforeCaret()}
-                  <span class="replay-caret" aria-hidden="true" />
+                  <span ref={(el) => (caretRef = el)} class="replay-caret" aria-hidden="true" />
                   {props.controller.afterCaret()}&nbsp;
                 </span>
               }
@@ -436,7 +459,7 @@ export const ReplayTextView: Component<{
               </div>
               <div class="paragraph flash replay-active-flash">
                 {props.controller.beforeCaret()}
-                <span class="replay-caret" aria-hidden="true" />
+                <span ref={(el) => (caretRef = el)} class="replay-caret" aria-hidden="true" />
                 {props.controller.afterCaret()}&nbsp;
               </div>
             </Show>

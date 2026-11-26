@@ -13,6 +13,7 @@ import {
   type MultEnt,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
+import { isActiveTimer } from './FocusWriter';
 
 import {
   createReplayController,
@@ -119,6 +120,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class="stream-action-pill"
+                disabled={isActiveTimer()}
                 title="Seed a new stream from a copy of this flash"
                 onClick={() =>
                   setSeedSource({ entityType: 'flash', refID: props.id })
@@ -130,6 +132,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                 <button
                   type="button"
                   class="stream-action-pill"
+                  disabled={isActiveTimer()}
                   onClick={() => {
                     setFocusedEntity({ entityType: 'flash', refID: flash()!.id });
                     setUserMode('Read');
@@ -147,6 +150,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class="stream-action-pill"
+                disabled={isActiveTimer()}
                 title="Suspend"
                 onClick={() => sendToSuspenBar('flash', flash()!.id)}
               >
@@ -155,6 +159,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-reveal confirm-delete-btn' : 'delete-hide'}
+                disabled={isActiveTimer()}
                 onClick={() => (deleteClicked() ? handleDelete() : '')}
               >
                 Confirm?
@@ -162,6 +167,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-hide stream-icon-btn' : 'delete-reveal stream-icon-btn'}
+                disabled={isActiveTimer()}
                 onClick={() => handleMinimize()}
                 title={
                   holdingFlicker()
@@ -180,6 +186,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                     ? 'delete-hide stream-icon-btn stream-icon-btn--danger'
                     : 'delete-reveal stream-icon-btn stream-icon-btn--danger'
                 }
+                disabled={isActiveTimer()}
                 onClick={() => setDeleteClicked(true)}
                 title="Delete Flash"
               >
@@ -210,6 +217,7 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
             <div class="tiny-fun flex-wide" role="group" aria-label="Flash display options">
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 classList={{ 'optic-active': hideContent() }}
                 title={hideContent() ? 'Show Text Content' : 'Hide Text Content'}
                 onClick={() => setHideContent((p) => !p)}

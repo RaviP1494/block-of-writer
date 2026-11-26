@@ -16,6 +16,7 @@ import {
   type Stream,
   type MultEnt
 } from '../store';
+import { isActiveTimer } from './FocusWriter';
 
 type DisplayMode = 'bar' | 'grid';
 
@@ -80,7 +81,7 @@ const StreamGridSelect: Component<{
         }}
         onClick={props.onFloatingClick}
       >
-        <div class="vs-cell-title">Floating: {props.floatingCount()}</div>
+        <div class="vs-cell-title">Free: {props.floatingCount()}</div>
         <div class="vs-cell-stats">Loose Flashes &amp; Flickers</div>
         <div class="vs-cell-date">
           {!isFloatingTargeted()
@@ -169,6 +170,7 @@ const StreamBarSelect: Component<{
       <button
         type="button"
         class="stream-btn-icon"
+        disabled={isActiveTimer()}
         onClick={props.onOpenGrid}
         title="Browse Streams in Grid"
         aria-label="Browse Streams in Grid"
@@ -180,6 +182,8 @@ const StreamBarSelect: Component<{
       <button
         type="button"
         class="stream-btn-icon stream-btn-icon--scroll"
+        tabindex="-1"
+        disabled={isActiveTimer()}
         onClick={scrollLeft}
         title="Scroll Left"
         aria-label="Scroll streams left"
@@ -194,16 +198,19 @@ const StreamBarSelect: Component<{
             'targeted-stream': isFloatingTargeted(),
             'opened-stream-pill': props.hasOpenFloating(),
           }}
+          onMouseDown={(e) => {
+            if (isActiveTimer()) e.preventDefault();
+          }}
           onClick={props.onFloatingClick}
           title={
             !isFloatingTargeted()
-              ? 'Click to write floating (clear stream target)'
+              ? 'Click to write free (clear stream target)'
               : props.hasOpenFloating()
-                ? 'Floating target active — click to minimize floating items'
-                : 'Floating target active — click to open floating items'
+                ? 'Free target active — click to minimize free items'
+                : 'Free target active — click to open free items'
           }
         >
-          Floating: {props.floatingCount()}
+          Free: {props.floatingCount()}
         </button>
         <For each={props.streams}>
           {(stream) => {
@@ -222,13 +229,18 @@ const StreamBarSelect: Component<{
                   'targeted-stream': isTargeted(),
                   'opened-stream-pill': isOpen(),
                 }}
+                onMouseDown={(e) => {
+                  if (isActiveTimer()) e.preventDefault();
+                }}
                 onClick={() => props.onSelect(stream.id)}
                 title={
-                  !isTargeted()
-                    ? 'Click to set as write target'
-                    : !isOpen()
-                      ? 'Targeted — click again to open'
-                      : 'Targeted & open — click again to focus in Review mode'
+                  isActiveTimer()
+                    ? 'Click to redirect active flash/flicker target'
+                    : !isTargeted()
+                      ? 'Click to set as write target'
+                      : !isOpen()
+                        ? 'Targeted — click again to open'
+                        : 'Targeted & open — click again to focus in Review mode'
                 }
               >
                 {stream.title}
@@ -240,6 +252,8 @@ const StreamBarSelect: Component<{
       <button
         type="button"
         class="stream-btn-icon stream-btn-icon--scroll"
+        tabindex="-1"
+        disabled={isActiveTimer()}
         onClick={scrollRight}
         title="Scroll Right"
         aria-label="Scroll streams right"
@@ -249,6 +263,7 @@ const StreamBarSelect: Component<{
       <button
         type="button"
         class="stream-btn-icon stream-btn-icon--add"
+        disabled={isActiveTimer()}
         onClick={props.onCreateNew}
         title="Create New Stream"
         aria-label="Create New Stream"
@@ -313,6 +328,12 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
   };
 
   const handleStreamClick = (streamID: number) => {
+    // While generating a flash/flicker, stream buttons only retarget without opening cards or leaving Write mode
+    if (isActiveTimer()) {
+      setWriterTargetID(streamID);
+      return;
+    }
+
     const isTargeted = writerTargetID() === streamID;
     const isOpen = openFloaters.some(
       (ent) => ent.entityType === 'stream' && ent.refID === streamID
@@ -336,6 +357,11 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
   };
 
   const handleFloatingClick = () => {
+    if (isActiveTimer()) {
+      setWriterTargetID(null);
+      return;
+    }
+
     if (writerTargetID() !== null) {
       // Always clear stream target on click
       setWriterTargetID(null);
@@ -358,6 +384,12 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
       }
     }
   };
+
+  createEffect(() => {
+    if (isActiveTimer() && displayMode() === 'grid') {
+      setDisplayMode('bar');
+    }
+  });
 
   onMount(() => {
     const handleClickOutside = (e: MouseEvent) => {

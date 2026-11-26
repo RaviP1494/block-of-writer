@@ -4,11 +4,12 @@ import { spawnParticle, triggerDespawn, type PointTuple } from './AnimationOverl
 import {
   type Flash, type Keymote, flashDelayT,
   flickerModeOn, flickerDelayT,
-  backspaceDisabled, inflecTents,
+  backspaceDisabled, inflecTents, setInflecTents,
   typingStartTime, setTypingStartTime,
   setIsFlickerOpen,
   inflectionOn,
-  writerTargetID,
+  writerTargetID, setWriterTargetID,
+  openFloaters, setOpenFloaters, replaceInOpenFloaters,
   addFlash,
   outFlect,
   focusedEntity,
@@ -102,6 +103,21 @@ export const reclaimToWriter = (flash: Flash) => {
   setCurrentText(restoredBuffer);
   setCursorIndex(restoredBuffer.length);
   focusTextareaFn?.(restoredBuffer.length);
+};
+
+export const reclaimLastFromInflection = (): boolean => {
+  const current = inflecTents();
+  if (!current || current.length === 0) return false;
+  const last = current[current.length - 1];
+  const remaining = current.slice(0, -1);
+  if (remaining.length === 0) {
+    setInflecTents(null);
+    setIsFlickerOpen(false);
+  } else {
+    setInflecTents(remaining);
+  }
+  reclaimToWriter(last);
+  return true;
 };
 
 export const FocusWriter: Component = () => {
@@ -302,6 +318,18 @@ export const FocusWriter: Component = () => {
       return;
     }
 
+    // Pull last flash from Inflection Point back into empty Writers Block on Backspace
+    if (
+      e.key === 'Backspace' &&
+      inflectionOn() &&
+      text.trim().length === 0 &&
+      (inflecTents()?.length ?? 0) > 0
+    ) {
+      e.preventDefault();
+      reclaimLastFromInflection();
+      return;
+    }
+
     // Block Shift+Navigation range selection
     if (
       e.shiftKey &&
@@ -365,7 +393,34 @@ export const FocusWriter: Component = () => {
       return s ? `Stream: ${s.title}` : 'Stream';
     }
     const vs = viewSpaces.find((v) => v.id === activeViewSpaceID());
-    return vs ? `Space: ${vs.title} (Floating)` : 'Floating in Space';
+    return vs ? `Space: ${vs.title} (Free)` : 'Free in Space';
+  };
+
+  const isTargetStreamOpen = () => {
+    const streamId = writerTargetID();
+    if (streamId === null) return false;
+    return openFloaters.some(
+      (e) => e.entityType === 'stream' && e.refID === streamId
+    );
+  };
+
+  const handleClearTarget = () => {
+    setWriterTargetID(null);
+    textareaRef?.focus();
+  };
+
+  const handleToggleTargetStream = () => {
+    const streamId = writerTargetID();
+    if (streamId === null) return;
+    if (isTargetStreamOpen()) {
+      replaceInOpenFloaters({ entityType: 'stream', refID: streamId }, null);
+    } else {
+      setOpenFloaters((prev) => [...prev, { entityType: 'stream', refID: streamId }]);
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`companion-stream-${streamId}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      });
+    }
   };
 
   return (
@@ -377,34 +432,137 @@ export const FocusWriter: Component = () => {
         '--flicker-pct': `${(flickerProgress() * 100).toFixed(1)}%`,
       }}
     >
-      <div class="focus-writer__meta">
+      <div class="focus-writer__surface">
+        <textarea
+          ref={textareaRef}
+          class="writers-block"
+          classList={{ 'writers-block--hidden-text': hideTypedText() }}
+          aria-label="Writing Input"
+          spellcheck={false}
+          autocorrect="off"
+          autocapitalize="off"
+          value={currentText()}
+          onBeforeInput={(e) => {
+            if (
+              !backspaceDisabled() &&
+              inflectionOn() &&
+              e.inputType === 'deleteContentBackward' &&
+              currentText().trim().length === 0 &&
+              (inflecTents()?.length ?? 0) > 0
+            ) {
+              e.preventDefault();
+              reclaimLastFromInflection();
+            }
+          }}
+          onInput={(e) => {
+            const el = e.currentTarget;
+            const prevText = currentText();
+            const val = el.value;
 
-        <span class="focus-writer__target-badge">{targetLabel()}</span>
-        <div class="focus-writer__toggles" role="group" aria-label="Writer view toggles">
+            // Catch mobile Return/Enter keys that bypass keydown via IME
+            if (
+              e.inputType === 'insertLineBreak' ||
+              e.inputType === 'insertParagraph' ||
+              val.includes('\n')
+            ) {
+              const cleaned = val.replace(/\n/g, '');
+              if (cleaned !== prevText) {
+                recordMutationAndResetTimer(prevText, cleaned, el.selectionStart ?? cleaned.length);
+                setCurrentText(cleaned);
+              }
+              handleEnterAction();
+              return;
+            }
+
+            // Catch mobile Backspace when backspaceDisabled() is active
+            if (backspaceDisabled() && e.inputType?.startsWith('deleteContent')) {
+              if (prevText.trim().length > 0) initFlash();
+              else el.value = prevText;
+              return;
+            }
+
+            // Catch mobile Backspace reclaim when inflectionOn() and block is empty
+            if (
+              inflectionOn() &&
+              e.inputType?.startsWith('deleteContent') &&
+              prevText.trim().length === 0 &&
+              (inflecTents()?.length ?? 0) > 0
+            ) {
+              reclaimLastFromInflection();
+              return;
+            }
+
+            const caretAfter = el.selectionStart ?? val.length;
+            recordMutationAndResetTimer(prevText, val, caretAfter);
+            setCurrentText(val);
+            syncCursorIndex(el);
+          }}
+          onKeyUp={(e) => syncCursorIndex(e.currentTarget)}
+          onClick={(e) => syncCursorIndex(e.currentTarget)}
+          onMouseUp={(e) => syncCursorIndex(e.currentTarget)}
+          onMouseMove={(e) => {
+            if (e.buttons === 1) syncCursorIndex(e.currentTarget);
+          }}
+          onDblClick={(e) => {
+            e.preventDefault();
+            syncCursorIndex(e.currentTarget);
+          }}
+          onSelect={(e) => syncCursorIndex(e.currentTarget)}
+          onPaste={(e) => e.preventDefault()}
+          onDrop={(e) => e.preventDefault()}
+          onKeyDown={(e) => { handleKeyDown(e) }}
+          placeholder="Write on!"
+          autofocus
+        />
+
+        <Show when={showTimeBars()}>
+          <div class="focus-writer__timers" aria-hidden="true">
+            <div class="focus-writer__timer-bar focus-writer__timer-bar--flash" />
+            <Show when={flickerModeOn()}>
+              <div class="focus-writer__timer-bar focus-writer__timer-bar--flicker" />
+            </Show>
+          </div>
+        </Show>
+      </div>
+
+      <div class="focus-writer__meta">
+        <div class="focus-writer__meta-spacer" aria-hidden="true" />
+
+        <div class="focus-writer__target-control">
+          <Show when={writerTargetID() !== null}>
+            <button
+              type="button"
+              class="focus-writer__clear-target"
+              disabled={isActiveTimer()}
+              onClick={handleClearTarget}
+              title="Free Target"
+              aria-label="Free Target"
+              data-tooltip="Free Target"
+            >
+              🗙
+            </button>
+          </Show>
           <button
             type="button"
-            class="focus-writer__toggle-btn"
-            aria-pressed={hideTypedText()}
-            onClick={() => {
-              setHideTypedText((prev) => !prev);
-              textareaRef?.focus();
+            class="focus-writer__target-badge"
+            classList={{
+              'focus-writer__target-badge--open': isTargetStreamOpen(),
+              'focus-writer__target-badge--floating': writerTargetID() === null,
             }}
+            disabled={isActiveTimer() || writerTargetID() === null}
+            aria-pressed={writerTargetID() !== null ? isTargetStreamOpen() : undefined}
+            onClick={handleToggleTargetStream}
+            title={
+              writerTargetID() === null
+                ? 'Free target active'
+                : isTargetStreamOpen()
+                  ? 'Hide Target Stream'
+                  : 'Show Target Stream'
+            }
           >
-          Invisible Ink
-          </button>
-          <button
-            type="button"
-            class="focus-writer__toggle-btn"
-            aria-pressed={showTimeBars()}
-            onClick={() => {
-              setShowTimeBars((prev) => !prev);
-              textareaRef?.focus();
-            }}
-          >
-            Time Bars
+            {targetLabel()}
           </button>
         </div>
-
 
         <span class="focus-writer__stats">
           {textWordCount(currentText())}w
@@ -415,75 +573,6 @@ export const FocusWriter: Component = () => {
           </Show>
         </span>
       </div>
-        <div class="focus-writer__surface">
-          <textarea
-            ref={textareaRef}
-            class="writers-block"
-            classList={{ 'writers-block--hidden-text': hideTypedText() }}
-            aria-label="Writing Input"
-            spellcheck={false}
-            autocorrect="off"
-            autocapitalize="off"
-            value={currentText()}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              const prevText = currentText();
-              const val = el.value;
-
-              // Catch mobile Return/Enter keys that bypass keydown via IME
-              if (
-                e.inputType === 'insertLineBreak' ||
-                e.inputType === 'insertParagraph' ||
-                val.includes('\n')
-              ) {
-                const cleaned = val.replace(/\n/g, '');
-                if (cleaned !== prevText) {
-                  recordMutationAndResetTimer(prevText, cleaned, el.selectionStart ?? cleaned.length);
-                  setCurrentText(cleaned);
-                }
-                handleEnterAction();
-                return;
-              }
-
-              // Catch mobile Backspace when backspaceDisabled() is active
-              if (backspaceDisabled() && e.inputType?.startsWith('deleteContent')) {
-                if (prevText.trim().length > 0) initFlash();
-                else el.value = prevText;
-                return;
-              }
-
-              const caretAfter = el.selectionStart ?? val.length;
-              recordMutationAndResetTimer(prevText, val, caretAfter);
-              setCurrentText(val);
-              syncCursorIndex(el);
-            }}
-            onKeyUp={(e) => syncCursorIndex(e.currentTarget)}
-            onClick={(e) => syncCursorIndex(e.currentTarget)}
-            onMouseUp={(e) => syncCursorIndex(e.currentTarget)}
-            onMouseMove={(e) => {
-              if (e.buttons === 1) syncCursorIndex(e.currentTarget);
-            }}
-            onDblClick={(e) => {
-              e.preventDefault();
-              syncCursorIndex(e.currentTarget);
-            }}
-            onSelect={(e) => syncCursorIndex(e.currentTarget)}
-            onPaste={(e) => e.preventDefault()}
-            onDrop={(e) => e.preventDefault()}
-            onKeyDown={(e) => { handleKeyDown(e) }}
-            placeholder="Write on!"
-            autofocus
-          />
-
-          <Show when={showTimeBars()}>
-            <div class="focus-writer__timers" aria-hidden="true">
-              <div class="focus-writer__timer-bar focus-writer__timer-bar--flash" />
-              <Show when={flickerModeOn()}>
-                <div class="focus-writer__timer-bar focus-writer__timer-bar--flicker" />
-              </Show>
-            </div>
-          </Show>
-        </div>
     </div>
   );
 };

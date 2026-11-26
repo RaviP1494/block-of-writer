@@ -17,6 +17,7 @@ import {
 import { EditTitle } from './EditTitle';
 import { StreamSelector } from './StreamSelector';
 import { VSReadPicker } from './VSReadPicker';
+import { isActiveTimer } from './FocusWriter';
 
 export type VSDisplayMode = 'active' | 'grid';
 export const [vsDisplayMode, setVsDisplayMode] = createSignal<VSDisplayMode>('active');
@@ -163,6 +164,7 @@ const ActiveVSDisplay: Component<{ onOpenGrid: () => void }> = (props) => {
       <button
         type="button"
         class="stream-btn-icon stream-btn-icon--compact active-vs-switch-btn"
+        disabled={isActiveTimer()}
         onClick={props.onOpenGrid}
         title="Browse or switch ViewSpaces"
         aria-label="Browse or switch ViewSpaces"
@@ -181,7 +183,9 @@ const ActiveVSDisplay: Component<{ onOpenGrid: () => void }> = (props) => {
           fallback={
             <div
               class="active-vs-title-wrapper"
-              onClick={() => setIsEditingTitle(true)}
+              onClick={() => {
+                if (!isActiveTimer()) setIsEditingTitle(true);
+              }}
               title="Click to rename active ViewSpace"
             >
               <span class="active-vs-title">{activeVS()?.title}</span>

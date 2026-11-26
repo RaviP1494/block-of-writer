@@ -9,7 +9,9 @@ export interface ViewMultItemsProps {
 }
 
 export const ViewMultItems: Component<ViewMultItemsProps> = (props) => {
-  const items = createMemo(() => openFloaters.filter(f => f && f.refID !== 0));
+  const items = createMemo(() =>
+    openFloaters.filter(f => f && f.refID !== 0).reverse()
+  );
 
   return (
     <div class="multi-reader">

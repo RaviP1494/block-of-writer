@@ -1,6 +1,6 @@
 import './App.css'
 import { type Component, batch, createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js';
-import { FocusWriter } from './components/FocusWriter';
+import { FocusWriter, isActiveTimer } from './components/FocusWriter';
 import { VSLister, vsDisplayMode } from './components/VSLister';
 import { FocusViewer } from './components/FocusViewer';
 import { ViewMultItems } from './components/ViewMultItems';
@@ -150,6 +150,7 @@ const App: Component = () => {
         data-theme={appTheme()}
         data-mode={userMode().toLowerCase()}
         data-vs-grid={vsDisplayMode() === 'grid' ? 'open' : 'closed'}
+        data-generating={isActiveTimer() ? 'true' : 'false'}
         data-companion="closed"
       >
         <SeedModal />
@@ -160,6 +161,7 @@ const App: Component = () => {
             <button 
               type="button" 
               class="wb-navbar__btn" 
+              disabled={isActiveTimer()}
               onClick={handleSave}
               title="Save session to file"
             >
@@ -168,6 +170,7 @@ const App: Component = () => {
             <button 
               type="button" 
               class="wb-navbar__btn" 
+              disabled={isActiveTimer()}
               onClick={handleLoad}
               title="Load session or stream from file (adds to current session)"
             >
@@ -182,6 +185,7 @@ const App: Component = () => {
                 type="button"
                 class="wb-navbar__btn"
                 classList={{ 'wb-navbar__btn--active': userMode() === 'Write' }}
+                disabled={isActiveTimer()}
                 onClick={() => setUserMode('Write')}
               >
                 Write
@@ -190,11 +194,17 @@ const App: Component = () => {
                 type="button"
                 class="wb-navbar__btn"
                 classList={{ 'wb-navbar__btn--active': userMode() === 'Read' }}
+                disabled={isActiveTimer()}
                 onClick={handleEnterReviewMode}
               >
                 Review
               </button>
-              <button type="button" class="wb-ghost-slot" onClick={toggleTheme}>
+              <button
+                type="button"
+                class="wb-ghost-slot"
+                disabled={isActiveTimer()}
+                onClick={toggleTheme}
+              >
                 {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
               </button>
             </nav>
@@ -202,12 +212,13 @@ const App: Component = () => {
               type="button"
               class="wb-navbar__btn"
               classList={{ 'wb-navbar__btn--active': showSettings() }}
+              disabled={isActiveTimer()}
               onClick={() => setShowSettings((prev) => !prev)}
               title="Open Writer Settings"
             >
               Settings
             </button>
-            <button type="button" class="wb-ghost-slot"><s>Account</s></button>
+            <button type="button" class="wb-ghost-slot" disabled={isActiveTimer()}><s>Account</s></button>
           </div>
         </header>
 
@@ -222,20 +233,21 @@ const App: Component = () => {
           class="wb-workspace"
           classList={{ 'wb-workspace--hidden': vsDisplayMode() === 'grid' }}
         >
+          <section
+            class="wb-context-deck"
+            aria-label={userMode() === 'Write' ? 'View Space and Stream Selectors' : 'View Space and Item Selectors'}
+          >
+            <VSLister mode="bar" />
+          </section>
+
           <Show
             when={userMode() === 'Write'}
             fallback={
-              <>
-                <section class="wb-context-deck" aria-label="View Space and Item Selectors">
-                  <VSLister mode="bar" />
-                </section>
-
-                <main class="wb-stage" id="focal-stage" tabindex="-1">
-                  <article class="wb-focal-chamber wb-focal-chamber--reader" data-measure="narrow">
-                    <FocusViewer innerClickMode="focus" />
-                  </article>
-                </main>
-              </>
+              <main class="wb-stage" id="focal-stage" tabindex="-1">
+                <article class="wb-focal-chamber wb-focal-chamber--reader" data-measure="narrow">
+                  <FocusViewer innerClickMode="focus" />
+                </article>
+              </main>
             }
           >
             <main class="wb-stage" id="focal-stage" tabindex="-1">
@@ -249,10 +261,6 @@ const App: Component = () => {
                 </section>
               </Show>
             </main>
-
-            <section class="wb-context-deck" aria-label="View Space and Stream Selectors">
-              <VSLister mode="bar" />
-            </section>
 
             <Show when={openFloaters.length > 0}>
               <section class="wb-reader-stack" aria-label="Open Streams and Floating Items">

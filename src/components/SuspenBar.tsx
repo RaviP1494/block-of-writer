@@ -20,6 +20,7 @@ import {
   deleteFlash,
   type MultEnt,
 } from '../store';
+import { isActiveTimer } from './FocusWriter';
 
 const SuspenPill: Component<{
   ent: MultEnt;
@@ -39,6 +40,7 @@ const SuspenPill: Component<{
       <button
         type="button"
         class="wb-suspen-pill__main"
+        disabled={isActiveTimer()}
         onClick={props.onOpen}
         title="Restore to active ViewSpace and open"
       >
@@ -50,6 +52,7 @@ const SuspenPill: Component<{
           <button
             type="button"
             class="wb-suspen-pill__action wb-suspen-pill__action--confirm"
+            disabled={isActiveTimer()}
             onClick={() => {
               props.onDelete();
               setConfirmDelete(false);
@@ -63,6 +66,7 @@ const SuspenPill: Component<{
         <button
           type="button"
           class="wb-suspen-pill__action wb-suspen-pill__action--remove"
+          disabled={isActiveTimer()}
           onClick={() => setConfirmDelete(true)}
           title="Delete item"
         >

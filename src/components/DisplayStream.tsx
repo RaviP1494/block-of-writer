@@ -14,9 +14,9 @@ import {
   setUserMode,
   setFocusedEntity,
   sendToSuspenBar,
-  setSeedSource,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
+import { isActiveTimer } from './FocusWriter';
 import {
   createReplayController,
   ReplayHeaderControl,
@@ -97,26 +97,11 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             classList={{ 'display-top-box--confirming': deleteClicked() }}
           >
             <div class="stream-header__actions-left">
-              <button
-                type="button"
-                class="stream-action-pill"
-                onClick={() => saveStreamToFile(stream()!.id)}
-                title="Save Stream to File"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                class="stream-action-pill"
-                onClick={() => setSeedSource({ entityType: 'stream', refID: props.id })}
-                title="Seed a new stream from a copy of this stream"
-              >
-                Seed
-              </button>
               <Show when={props.innerClickMode !== 'focus'}>
                 <button
                   type="button"
                   class="stream-action-pill"
+                  disabled={isActiveTimer()}
                   onClick={() => {
                     setFocusedStreamID(stream()!.id);
                     setFocusedEntity({ entityType: 'stream', refID: stream()!.id });
@@ -132,9 +117,20 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             <ReplayHeaderControl controller={replay} />
 
             <div class="stream-header__actions-right">
-            <button
+              <button
                 type="button"
                 class="stream-action-pill"
+                disabled={isActiveTimer()}
+                onClick={() => saveStreamToFile(stream()!.id)}
+                title="Save to File"
+                aria-label="Save to File"
+              >
+                [↓]
+              </button>
+              <button
+                type="button"
+                class="stream-action-pill"
+                disabled={isActiveTimer()}
                 onClick={() => sendToSuspenBar('stream', stream()!.id)}
                 title="Suspend"
               >
@@ -143,6 +139,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-reveal confirm-delete-btn' : 'delete-hide'}
+                disabled={isActiveTimer()}
                 onClick={() => (deleteClicked() ? handleDelete() : '')}
               >
                 Confirm?
@@ -150,6 +147,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-hide stream-icon-btn' : 'delete-reveal stream-icon-btn'}
+                disabled={isActiveTimer()}
                 onClick={() => handleMinimize()}
                 title="Minimize Stream"
               >
@@ -162,6 +160,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
                     ? 'delete-hide stream-icon-btn stream-icon-btn--danger'
                     : 'delete-reveal stream-icon-btn stream-icon-btn--danger'
                 }
+                disabled={isActiveTimer()}
                 onClick={() => setDeleteClicked(true)}
                 title="Delete Stream"
               >
@@ -186,7 +185,9 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             >
               <h1
                 class="grav-pt stream-header__title"
-                onClick={() => setIsEditingTitle(true)}
+                onClick={() => {
+                  if (!isActiveTimer()) setIsEditingTitle(true);
+                }}
                 title="Click to rename stream"
               >
                 {stream()?.title}
@@ -204,6 +205,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             <div class="tiny-fun flex-wide" role="group" aria-label="Stream display options">
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 classList={{ 'optic-active': hideContent() }}
                 title={hideContent() ? 'Show Text Content' : 'Hide Text Content'}
                 onClick={() => setHideContent((p) => !p)}
@@ -212,6 +214,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
               </button>
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 title="Flip Order"
                 class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
                 onClick={() => {
@@ -223,6 +226,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
               </button>
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 title="Toggle Spacing"
                 class={
                   showTimes()
@@ -237,6 +241,7 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
               </button>
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 title="Toggle Timestamps"
                 class={
                   flowUp()

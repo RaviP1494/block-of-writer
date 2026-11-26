@@ -9,6 +9,7 @@ import {
   setHoverEnt,
 } from "../store";
 import { } from './InStreamFloaters';
+import { isActiveTimer } from './FocusWriter';
 
 interface DisplayFlashProps {
   id: number;
@@ -36,6 +37,7 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
     props.renderedBy !== 'replay';
 
   const handleClick = () => {
+    if (isActiveTimer()) return;
     const flk = holdingFlicker();
     if (props.clickDo === 'chain') {
       addToChain(props.id);

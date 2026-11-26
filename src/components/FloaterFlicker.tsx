@@ -13,6 +13,7 @@ import {
   viewSpaces,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
+import { isActiveTimer } from './FocusWriter';
 import {
   createReplayController,
   ReplayHeaderControl,
@@ -108,6 +109,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class="stream-action-pill"
+                disabled={isActiveTimer()}
                 title="Seed a new stream from a copy of this flicker"
                 onClick={() =>
                   setSeedSource({ entityType: 'flicker', refID: props.id })
@@ -119,6 +121,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                 <button
                   type="button"
                   class="stream-action-pill"
+                  disabled={isActiveTimer()}
                   onClick={() => {
                     setFocusedEntity({ entityType: 'flicker', refID: flicker()!.id });
                     setUserMode('Read');
@@ -136,6 +139,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class="stream-action-pill"
+                disabled={isActiveTimer()}
                 title="Suspend"
                 onClick={() => sendToSuspenBar('flicker', flicker()!.id)}
               >
@@ -145,6 +149,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-reveal confirm-delete-btn' : 'delete-hide'}
+                disabled={isActiveTimer()}
                 onClick={() => (deleteClicked() ? handleDelete() : '')}
               >
                 Confirm?
@@ -152,6 +157,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               <button
                 type="button"
                 class={deleteClicked() ? 'delete-hide stream-icon-btn' : 'delete-reveal stream-icon-btn'}
+                disabled={isActiveTimer()}
                 onClick={() => handleMinimize()}
                 title={holdingStream() ? 'Back to Stream' : 'Minimize Flicker'}
               >
@@ -164,6 +170,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                     ? 'delete-hide stream-icon-btn stream-icon-btn--danger'
                     : 'delete-reveal stream-icon-btn stream-icon-btn--danger'
                 }
+                disabled={isActiveTimer()}
                 onClick={() => setDeleteClicked(true)}
                 title="Delete Flicker"
               >
@@ -194,6 +201,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
             <div class="tiny-fun flex-wide" role="group" aria-label="Flicker display options">
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 classList={{ 'optic-active': hideContent() }}
                 title={hideContent() ? 'Show Text Content' : 'Hide Text Content'}
                 onClick={() => setHideContent((p) => !p)}
@@ -202,6 +210,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               </button>
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 class={flowUp() ? 'anim-flip-on' : 'anim-flip-off'}
                 title="Flip Order"
                 onClick={() => {
@@ -213,6 +222,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               </button>
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 title="Toggle Spacing"
                 class={
                   showTimes()
@@ -227,6 +237,7 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
               </button>
               <button
                 type="button"
+                disabled={isActiveTimer()}
                 title="Toggle Timestamps"
                 class={
                   flowUp()
