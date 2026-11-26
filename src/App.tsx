@@ -205,7 +205,7 @@ const App: Component = () => {
                 disabled={isActiveTimer()}
                 onClick={toggleTheme}
               >
-                {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
+                Theme: {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
               </button>
             </nav>
             <button
