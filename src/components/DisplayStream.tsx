@@ -195,7 +195,16 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             </Show>
 
             <div class="reader-stats">
-              <span>{createDateTime().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span
+                title={createDateTime().toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              >
+                {createDateTime().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              </span>
               <span>{heldBy()}</span>
               <span>{getStreamTSpan(props.id)}</span>
             </div>

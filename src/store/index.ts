@@ -70,7 +70,7 @@ export const [flickerDelayT, setFlickerDelayT] = createSignal<number>(6);
 export const [isFlickerOpen, setIsFlickerOpen] = createSignal<boolean>(false);
 
 export const [inflecTents, setInflecTents] = createSignal<Flash[] | null>(null);
-export const [inflectionOn, setInflectionOn] = createSignal<boolean>(false);
+export const [inflectionOn, setInflectionOn] = createSignal<boolean>(true);
 export const [backspaceDisabled, setBackspaceDisabled] = createSignal<boolean>(false);
 
 export const [typingStartTime, setTypingStartTime] = createSignal<number | null>(null);

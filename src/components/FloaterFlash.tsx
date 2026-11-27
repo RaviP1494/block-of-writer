@@ -200,7 +200,14 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
               Flash
             </h1>
             <div class="reader-stats">
-              <span>
+              <span
+                title={createDateTime().toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              >
                 {createDateTime().toLocaleTimeString('en-US', {
                   hour: '2-digit',
                   minute: '2-digit',

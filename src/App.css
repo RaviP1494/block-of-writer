@@ -370,6 +370,10 @@ body, html {
   gap: 0.75rem;
 }
 
+.wb-app[data-mode="read"] .wb-stage {
+  width: min(100%, 1180px);
+}
+
 .wb-app[data-companion="open"] .wb-stage {
   width: clamp(50vw, 100%, 100vw);
   min-height: 0;
@@ -1700,10 +1704,10 @@ body, html {
   width: 100%;
 }
 
-/* Scales focal stream typography fluidly while strictly locking line width to 34-48ch */
+/* Review mode text width is double Write mode's 44ch measure (88ch) */
 .wb-focal-chamber--reader .stream-text {
-  font-size: clamp(1.08rem, 2.3cqi, 1.45rem);
-  max-width: 44ch;
+  font-size: clamp(1rem, 1.55cqi, 1.2rem);
+  max-width: 88ch;
   padding: clamp(1.25rem, 3cqi, 2.25rem) clamp(1rem, 4cqi, 2rem);
 }
 
@@ -2383,4 +2387,110 @@ body, html {
   font-size: 0.72rem;
   font-weight: 400;
   color: var(--text-muted);
+}
+
+/* ==========================================================================
+   18. HELP / WELCOME EXPLANATION MODAL (.wb-help-card)
+   ========================================================================== */
+.wb-help-card {
+  width: min(92vw, 64ch);
+  max-height: min(86dvh, 46rem);
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-stage);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: wb-fade-in 0.18s ease;
+}
+
+.wb-help-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.35rem 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.wb-help-card__title {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+}
+
+.wb-help-card__body {
+  padding: 1.1rem 1.35rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.wb-help-card__body p {
+  margin: 0;
+}
+
+.wb-help-card__lead {
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.wb-help-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.wb-help-card__heading {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent-primary);
+}
+
+.wb-help-card__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wb-help-card__contact {
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.wb-help-card__contact a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wb-help-card__contact a:hover {
+  color: var(--border-focus);
+}
+
+.wb-help-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.8rem 1.35rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  flex-shrink: 0;
 }

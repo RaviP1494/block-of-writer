@@ -8,6 +8,7 @@ import { InflectionPoint } from './components/InflectionPoint';
 import { SuspenBar } from './components/SuspenBar';
 import { SeedModal } from './components/SeedModal';
 import { SettingsModal } from './components/SettingsModal';
+import { HelpModal } from './components/HelpModal';
 import {
   saveToFile,
   loadFromFile,
@@ -40,14 +41,34 @@ export const [spawnDots, setSpawnDots] = createSignal(false);
 export const [appTheme, setAppTheme] = createSignal<'space' | 'reef'>('space');
 
 
+const HELP_SEEN_KEY = 'wb_help_seen';
+
 const App: Component = () => {
   const [saveStatus, setSaveStatus] = createSignal<string | null>(null);
   const [showSettings, setShowSettings] = createSignal(false);
+  const [showHelp, setShowHelp] = createSignal(false);
   const [mobileMenuOpen, setMobileMenuOpen] = createSignal(false);
   const [dbReady, setDbReady] = createSignal(false);
   let mobileMenuRef: HTMLDivElement | undefined;
 
+  const closeHelp = () => {
+    setShowHelp(false);
+    try {
+      localStorage.setItem(HELP_SEEN_KEY, '1');
+    } catch {
+      // Ignore storage errors in restricted browsing modes
+    }
+  };
+
   onMount(async () => {
+    try {
+      if (!localStorage.getItem(HELP_SEEN_KEY)) {
+        setShowHelp(true);
+      }
+    } catch {
+      setShowHelp(true);
+    }
+
     await loadSavedApp();
     setDbReady(true);
 
@@ -182,6 +203,7 @@ const App: Component = () => {
       >
         <SeedModal />
         <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+        <HelpModal isOpen={showHelp} onClose={closeHelp} />
 
         <header class="wb-navbar" role="banner">
           <div class="wb-navbar__left">
@@ -247,7 +269,16 @@ const App: Component = () => {
               >
                 Settings
               </button>
-              <button type="button" class="wb-ghost-slot" disabled={isActiveTimer()}><s>Account</s></button>
+              <button
+                type="button"
+                class="wb-navbar__btn"
+                classList={{ 'wb-navbar__btn--active': showHelp() }}
+                disabled={isActiveTimer()}
+                onClick={() => setShowHelp((prev) => !prev)}
+                title="How Writers Block works"
+              >
+                Help
+              </button>
             </div>
 
             <div class="wb-navbar__mobile-menu-wrap" ref={mobileMenuRef}>
@@ -332,10 +363,15 @@ const App: Component = () => {
                   <button
                     type="button"
                     role="menuitem"
-                    class="wb-mobile-menu__item wb-mobile-menu__item--ghost"
+                    class="wb-mobile-menu__item"
+                    classList={{ 'wb-mobile-menu__item--active': showHelp() }}
                     disabled={isActiveTimer()}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setShowHelp(true);
+                    }}
                   >
-                    <s>Account</s>
+                    Help
                   </button>
                 </div>
               </Show>
