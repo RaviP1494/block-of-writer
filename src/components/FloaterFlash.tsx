@@ -9,6 +9,7 @@ import {
   setFocusedEntity,
   setSeedSource,
   setUserMode,
+  setWriteOpenItem,
   viewSpaces,
   type MultEnt,
 } from '../store';
@@ -67,7 +68,9 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
         ? { entityType: 'stream', refID: stream.id }
         : null;
 
-    if (props.innerClickMode === 'multi') {
+    if (props.innerClickMode === 'write') {
+      setWriteOpenItem(parent);
+    } else if (props.innerClickMode === 'multi') {
       replaceInOpenFloaters({ entityType: 'flash', refID: props.id }, parent);
     } else {
       setFocusedEntity(parent);
@@ -94,7 +97,9 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
         nextParent = { entityType: 'stream', refID: parentStream.id };
       }
 
-      if (props.innerClickMode === 'multi') {
+      if (props.innerClickMode === 'write') {
+        setWriteOpenItem(nextParent);
+      } else if (props.innerClickMode === 'multi') {
         replaceInOpenFloaters({ entityType: 'flash', refID: id }, nextParent);
       } else {
         setFocusedEntity(nextParent);
@@ -134,10 +139,12 @@ export const FloaterFlash: Component<FloaterFlashProps> = (props) => {
                   class="stream-action-pill"
                   disabled={isActiveTimer()}
                   onClick={() => {
-                    setFocusedEntity({ entityType: 'flash', refID: flash()!.id });
-                    setUserMode('Read');
+                    batch(() => {
+                      setFocusedEntity({ entityType: 'flash', refID: flash()!.id });
+                      setUserMode('Focus');
+                    });
                   }}
-                  title="Focus Flash in Reader Mode"
+                  title="Open Flash in Focus Mode"
                 >
                   Focus
                 </button>

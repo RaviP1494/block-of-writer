@@ -10,6 +10,7 @@ import {
   setFocusedEntity,
   setSeedSource,
   setUserMode,
+  setWriteOpenItem,
   viewSpaces,
 } from '../store';
 import { DisplayFlash } from './DisplayFlash';
@@ -50,31 +51,33 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
 
   const handleMinimize = () => {
     const parentStream = holdingStream();
-    if (props.innerClickMode === 'multi') {
-      replaceInOpenFloaters(
-        { entityType: 'flicker', refID: props.id },
-        parentStream ? { entityType: 'stream', refID: parentStream.id } : null
-      );
-    } else if (parentStream) {
-      setFocusedEntity({ entityType: 'stream', refID: parentStream.id });
+    const parentEnt = parentStream
+      ? { entityType: 'stream' as const, refID: parentStream.id }
+      : null;
+
+    if (props.innerClickMode === 'write') {
+      setWriteOpenItem(parentEnt);
+    } else if (props.innerClickMode === 'multi') {
+      replaceInOpenFloaters({ entityType: 'flicker', refID: props.id }, parentEnt);
     } else {
-      setFocusedEntity(null);
+      setFocusedEntity(parentEnt);
     }
   };
 
   const handleDelete = () => {
     const id = props.id;
     const parentStream = holdingStream();
+    const parentEnt = parentStream
+      ? { entityType: 'stream' as const, refID: parentStream.id }
+      : null;
+
     batch(() => {
-      if (props.innerClickMode === 'multi') {
-        replaceInOpenFloaters(
-          { entityType: 'flicker', refID: id },
-          parentStream ? { entityType: 'stream', refID: parentStream.id } : null
-        );
+      if (props.innerClickMode === 'write') {
+        setWriteOpenItem(parentEnt);
+      } else if (props.innerClickMode === 'multi') {
+        replaceInOpenFloaters({ entityType: 'flicker', refID: id }, parentEnt);
       } else {
-        setFocusedEntity(
-          parentStream ? { entityType: 'stream', refID: parentStream.id } : null
-        );
+        setFocusedEntity(parentEnt);
       }
       deleteFlicker(id);
     });
@@ -123,10 +126,12 @@ export const FloaterFlicker: Component<FloaterFlashProps> = (props) => {
                   class="stream-action-pill"
                   disabled={isActiveTimer()}
                   onClick={() => {
-                    setFocusedEntity({ entityType: 'flicker', refID: flicker()!.id });
-                    setUserMode('Read');
+                    batch(() => {
+                      setFocusedEntity({ entityType: 'flicker', refID: flicker()!.id });
+                      setUserMode('Focus');
+                    });
                   }}
-                  title="Focus Flicker in Reader Mode"
+                  title="Open Flicker in Focus Mode"
                 >
                   Focus
                 </button>

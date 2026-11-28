@@ -1,5 +1,5 @@
 import './App.css'
-import { type Component, batch, createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { type Component, Match, Show, Switch, batch, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import { FocusWriter, isActiveTimer } from './components/FocusWriter';
 import { VSLister, vsDisplayMode } from './components/VSLister';
 import { FocusViewer } from './components/FocusViewer';
@@ -16,6 +16,8 @@ import {
   loadSavedApp,
   fileErrorMessage,
   openFloaters,
+  setOpenFloaters,
+  writeOpenItem,
   userMode,
   setUserMode,
   inflectionOn,
@@ -23,8 +25,6 @@ import {
   getStream,
   viewSpaces,
   activeViewSpaceID,
-  setFocusedEntity,
-  setFocusedStreamID,
   focusedEntity,
   focusedStreamID,
   allFlashes,
@@ -40,16 +40,15 @@ import {
 export const [spawnDots, setSpawnDots] = createSignal(false);
 export const [appTheme, setAppTheme] = createSignal<'space' | 'reef'>('space');
 
-
 const HELP_SEEN_KEY = 'wb_help_seen';
 
 const App: Component = () => {
   const [saveStatus, setSaveStatus] = createSignal<string | null>(null);
   const [showSettings, setShowSettings] = createSignal(false);
   const [showHelp, setShowHelp] = createSignal(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = createSignal(false);
+  const [navMenuOpen, setNavMenuOpen] = createSignal(false);
   const [dbReady, setDbReady] = createSignal(false);
-  let mobileMenuRef: HTMLDivElement | undefined;
+  let navMenuRef: HTMLDivElement | undefined;
 
   const closeHelp = () => {
     setShowHelp(false);
@@ -79,18 +78,18 @@ const App: Component = () => {
       if (document.visibilityState === 'hidden') flushToDB();
     };
     const handleDocClick = (e: MouseEvent) => {
-      if (!mobileMenuOpen()) return;
+      if (!navMenuOpen()) return;
       if (
-        mobileMenuRef &&
-        !mobileMenuRef.contains(e.target as Node) &&
-        !e.composedPath().includes(mobileMenuRef)
+        navMenuRef &&
+        !navMenuRef.contains(e.target as Node) &&
+        !e.composedPath().includes(navMenuRef)
       ) {
-        setMobileMenuOpen(false);
+        setNavMenuOpen(false);
       }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileMenuOpen()) {
-        setMobileMenuOpen(false);
+      if (e.key === 'Escape' && navMenuOpen()) {
+        setNavMenuOpen(false);
       }
     };
 
@@ -107,8 +106,8 @@ const App: Component = () => {
   });
 
   createEffect(() => {
-    if (isActiveTimer() && mobileMenuOpen()) {
-      setMobileMenuOpen(false);
+    if (isActiveTimer() && navMenuOpen()) {
+      setNavMenuOpen(false);
     }
   });
 
@@ -125,6 +124,7 @@ const App: Component = () => {
     void suspenBarTents.map((e) => `${e.entityType}:${e.refID}`);
     void sparkChains.map((c) => `${c.id}:${c.title}:${c.sparkIDs.length}`);
     void openFloaters.map((e) => `${e.entityType}:${e.refID}`);
+    void writeOpenItem();
     void activeViewSpaceID();
     void writerTargetID();
     void focusedEntity();
@@ -150,23 +150,26 @@ const App: Component = () => {
 
   const handleEnterReviewMode = () => {
     batch(() => {
-      const targetID = writerTargetID();
-      if (targetID !== null && getStream(targetID)) {
-        setFocusedStreamID(targetID);
-        setFocusedEntity({ entityType: 'stream', refID: targetID });
-      } else {
-        const activeVS = viewSpaces.find((vs) => vs.id === activeViewSpaceID());
-        const tents = activeVS?.tentsInSpace || [];
-        const lastEnt = tents.length > 0 ? tents[tents.length - 1] : null;
-        if (lastEnt) {
-          setFocusedStreamID(lastEnt.entityType === 'stream' ? lastEnt.refID : 0);
-          setFocusedEntity({ entityType: lastEnt.entityType, refID: lastEnt.refID });
+      if (openFloaters.length === 0) {
+        const curFocus = focusedEntity();
+        const curWriteRef = writeOpenItem();
+        const targetID = writerTargetID();
+        if (userMode() === 'Focus' && curFocus) {
+          setOpenFloaters([{ entityType: curFocus.entityType, refID: curFocus.refID }]);
+        } else if (curWriteRef) {
+          setOpenFloaters([{ entityType: curWriteRef.entityType, refID: curWriteRef.refID }]);
+        } else if (targetID !== null && getStream(targetID)) {
+          setOpenFloaters([{ entityType: 'stream', refID: targetID }]);
         } else {
-          setFocusedStreamID(0);
-          setFocusedEntity(null);
+          const activeVS = viewSpaces.find((vs) => vs.id === activeViewSpaceID());
+          const tents = activeVS?.tentsInSpace || [];
+          const lastEnt = tents.length > 0 ? tents[tents.length - 1] : null;
+          if (lastEnt) {
+            setOpenFloaters([{ entityType: lastEnt.entityType, refID: lastEnt.refID }]);
+          }
         }
       }
-      setUserMode('Read');
+      setUserMode('Review');
     });
   };
 
@@ -202,33 +205,16 @@ const App: Component = () => {
         data-companion="closed"
       >
         <SeedModal />
-        <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          theme={appTheme}
+          onToggleTheme={toggleTheme}
+        />
         <HelpModal isOpen={showHelp} onClose={closeHelp} />
 
         <header class="wb-navbar" role="banner">
           <div class="wb-navbar__left">
-            <button 
-              type="button" 
-              class="wb-navbar__btn" 
-              disabled={isActiveTimer()}
-              onClick={handleSave}
-              title="Save session to file"
-            >
-              {saveStatus() || 'Save'}
-            </button>
-            <button 
-              type="button" 
-              class="wb-navbar__btn" 
-              disabled={isActiveTimer()}
-              onClick={handleLoad}
-              title="Load session or stream from file (adds to current session)"
-            >
-              Load
-            </button>
-          </div>
-
-          <h1 class="wb-navbar__brand">Writers Block</h1>
-          <div class="wb-navbar__right">
             <nav aria-label="Workspace Mode" class="wb-mode-ReadRecollect">
               <button
                 type="button"
@@ -242,59 +228,32 @@ const App: Component = () => {
               <button
                 type="button"
                 class="wb-navbar__btn"
-                classList={{ 'wb-navbar__btn--active': userMode() === 'Read' }}
+                classList={{ 'wb-navbar__btn--active': userMode() === 'Review' }}
                 disabled={isActiveTimer()}
                 onClick={handleEnterReviewMode}
               >
                 Review
               </button>
             </nav>
+          </div>
 
-            <div class="wb-navbar__desktop-actions">
-              <button
-                type="button"
-                class="wb-ghost-slot"
-                disabled={isActiveTimer()}
-                onClick={toggleTheme}
-              >
-                Theme: {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
-              </button>
-              <button
-                type="button"
-                class="wb-navbar__btn"
-                classList={{ 'wb-navbar__btn--active': showSettings() }}
-                disabled={isActiveTimer()}
-                onClick={() => setShowSettings((prev) => !prev)}
-                title="Open Writer Settings"
-              >
-                Settings
-              </button>
-              <button
-                type="button"
-                class="wb-navbar__btn"
-                classList={{ 'wb-navbar__btn--active': showHelp() }}
-                disabled={isActiveTimer()}
-                onClick={() => setShowHelp((prev) => !prev)}
-                title="How Writers Block works"
-              >
-                Help
-              </button>
-            </div>
+          <h1 class="wb-navbar__brand">Writers Block</h1>
 
-            <div class="wb-navbar__mobile-menu-wrap" ref={mobileMenuRef}>
+          <div class="wb-navbar__right">
+            <div class="wb-navbar__menu-wrap" ref={navMenuRef}>
               <button
                 type="button"
                 class="wb-navbar__hamburger"
-                classList={{ 'wb-navbar__btn--active': mobileMenuOpen() }}
+                classList={{ 'wb-navbar__btn--active': navMenuOpen() }}
                 disabled={isActiveTimer()}
-                aria-expanded={mobileMenuOpen()}
+                aria-expanded={navMenuOpen()}
                 aria-haspopup="menu"
                 aria-label="Open menu"
                 title="Menu"
-                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                onClick={() => setNavMenuOpen((prev) => !prev)}
               >
                 <Show
-                  when={!mobileMenuOpen()}
+                  when={!navMenuOpen()}
                   fallback={
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                       <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -307,54 +266,18 @@ const App: Component = () => {
                 </Show>
               </button>
 
-              <Show when={mobileMenuOpen()}>
-                <div class="wb-mobile-menu" role="menu" aria-label="Navigation Menu">
-                  <div class="wb-mobile-menu__brand">Writers Block</div>
+              <Show when={navMenuOpen()}>
+                <div class="wb-nav-menu" role="menu" aria-label="Navigation Menu">
+                  <div class="wb-nav-menu__brand">Writers Block</div>
 
                   <button
                     type="button"
                     role="menuitem"
-                    class="wb-mobile-menu__item"
+                    class="wb-nav-menu__item"
+                    classList={{ 'wb-nav-menu__item--active': showSettings() }}
                     disabled={isActiveTimer()}
                     onClick={() => {
-                      setMobileMenuOpen(false);
-                      void handleSave();
-                    }}
-                  >
-                    {saveStatus() || 'Save'}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    class="wb-mobile-menu__item"
-                    disabled={isActiveTimer()}
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      void handleLoad();
-                    }}
-                  >
-                    Load
-                  </button>
-
-                  <div class="wb-mobile-menu__divider" role="separator" />
-
-                  <button
-                    type="button"
-                    role="menuitem"
-                    class="wb-mobile-menu__item"
-                    disabled={isActiveTimer()}
-                    onClick={toggleTheme}
-                  >
-                    Theme: {appTheme() === 'space' ? '✦ Space' : '≈ Reef'}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    class="wb-mobile-menu__item"
-                    classList={{ 'wb-mobile-menu__item--active': showSettings() }}
-                    disabled={isActiveTimer()}
-                    onClick={() => {
-                      setMobileMenuOpen(false);
+                      setNavMenuOpen(false);
                       setShowSettings((prev) => !prev);
                     }}
                   >
@@ -363,11 +286,35 @@ const App: Component = () => {
                   <button
                     type="button"
                     role="menuitem"
-                    class="wb-mobile-menu__item"
-                    classList={{ 'wb-mobile-menu__item--active': showHelp() }}
+                    class="wb-nav-menu__item"
                     disabled={isActiveTimer()}
                     onClick={() => {
-                      setMobileMenuOpen(false);
+                      setNavMenuOpen(false);
+                      void handleSave();
+                    }}
+                  >
+                    {saveStatus() || 'Save Session to File'}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-nav-menu__item"
+                    disabled={isActiveTimer()}
+                    onClick={() => {
+                      setNavMenuOpen(false);
+                      void handleLoad();
+                    }}
+                  >
+                    Load from File
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="wb-nav-menu__item"
+                    classList={{ 'wb-nav-menu__item--active': showHelp() }}
+                    disabled={isActiveTimer()}
+                    onClick={() => {
+                      setNavMenuOpen(false);
                       setShowHelp(true);
                     }}
                   >
@@ -397,34 +344,53 @@ const App: Component = () => {
             <VSLister mode="bar" />
           </section>
 
-          <Show
-            when={userMode() === 'Write'}
-            fallback={
+          <Switch>
+            <Match when={userMode() === 'Write'}>
+              <main class="wb-stage" id="focal-stage" tabindex="-1">
+                <article class="wb-focal-chamber" data-measure="wide">
+                  <FocusWriter />
+                </article>
+
+                <Show when={inflectionOn()}>
+                  <section class="wb-inflection-slot" aria-label="Inflection Point">
+                    <InflectionPoint />
+                  </section>
+                </Show>
+              </main>
+
+              <Show when={writeOpenItem()}>
+                <section class="wb-reader-stack" aria-label="Open Reference Item">
+                  <ViewMultItems
+                    innerClickMode="write"
+                    items={() => (writeOpenItem() ? [writeOpenItem()!] : [])}
+                  />
+                </section>
+              </Show>
+            </Match>
+
+            <Match when={userMode() === 'Review'}>
+              <main class="wb-review-deck" id="focal-stage" tabindex="-1" aria-label="Review Streams and Free Items">
+                <Show
+                  when={openFloaters.length > 0}
+                  fallback={
+                    <div class="wb-reader-empty">
+                      Select streams or free items above to open them in Review.
+                    </div>
+                  }
+                >
+                  <ViewMultItems innerClickMode="multi" />
+                </Show>
+              </main>
+            </Match>
+
+            <Match when={userMode() === 'Focus'}>
               <main class="wb-stage" id="focal-stage" tabindex="-1">
                 <article class="wb-focal-chamber wb-focal-chamber--reader" data-measure="narrow">
                   <FocusViewer innerClickMode="focus" />
                 </article>
               </main>
-            }
-          >
-            <main class="wb-stage" id="focal-stage" tabindex="-1">
-              <article class="wb-focal-chamber" data-measure="wide">
-                <FocusWriter />
-              </article>
-
-              <Show when={inflectionOn()}>
-                <section class="wb-inflection-slot" aria-label="Inflection Point">
-                  <InflectionPoint />
-                </section>
-              </Show>
-            </main>
-
-            <Show when={openFloaters.length > 0}>
-              <section class="wb-reader-stack" aria-label="Open Streams and Floating Items">
-                <ViewMultItems innerClickMode="multi" />
-              </section>
-            </Show>
-          </Show>
+            </Match>
+          </Switch>
         </div>
 
         <aside class="wb-suspension-bar" aria-label="Suspension Bar for items in transit">

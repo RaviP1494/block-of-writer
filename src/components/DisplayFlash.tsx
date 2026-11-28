@@ -7,6 +7,7 @@ import {
   replaceInOpenFloaters,
   setFocusedEntity,
   setHoverEnt,
+  setWriteOpenItem,
 } from "../store";
 import { } from './InStreamFloaters';
 import { isActiveTimer } from './FocusWriter';
@@ -32,7 +33,7 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
   const holdingFlicker = () => allFlickers.find(f => f.contentIDs.includes(props.id));
   const isHighlighted = createMemo(() => props.isHovered);
   const isClickable = () =>
-    (props.clickDo === 'multi' || props.clickDo === 'focus') &&
+    (props.clickDo === 'write' || props.clickDo === 'multi' || props.clickDo === 'focus') &&
     props.renderedBy !== 'flash' &&
     props.renderedBy !== 'replay';
 
@@ -46,6 +47,16 @@ export const DisplayFlash: Component<DisplayFlashProps> = (props) => {
         setFocusedEntity({ refID: flk.id, entityType: 'flicker' });
       } else if (props.renderedBy !== 'flash') {
         setFocusedEntity({ refID: props.id, entityType: 'flash' });
+      }
+    } else if (props.clickDo === 'write') {
+      if (props.renderedBy === 'stream') {
+        setWriteOpenItem(
+          flk
+            ? { entityType: 'flicker', refID: flk.id }
+            : { entityType: 'flash', refID: props.id }
+        );
+      } else if (props.renderedBy === 'flicker') {
+        setWriteOpenItem({ entityType: 'flash', refID: props.id });
       }
     } else if (props.clickDo === 'multi') {
       if (props.renderedBy === 'stream' && props.parentStreamID !== undefined) {

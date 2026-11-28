@@ -9,7 +9,7 @@ import { trackEvent } from '../analytics';
 export type EntityType = 'flash' | 'flicker' | 'stream';
 export type FlickFlash = 'flash' | 'flicker';
 export type RenderContext = 'ViewSpace' | 'FlickerView' | 'StreamView' | 'ReflectionHold';
-export type FocusMode = 'Write' | 'Read' | 'Float';
+export type FocusMode = 'Write' | 'Review' | 'Focus';
 
 export type Keymote = [
   charTyped: string,
@@ -87,6 +87,7 @@ export const [activeViewSpaceID, setActiveViewSpaceID] = createSignal<number>(1)
 
 export const [showStats, setShowStats] = createSignal<MultEnt | null>(null);
 export const [seedSource, setSeedSource] = createSignal<MultEnt | null>(null);
+export const [writeOpenItem, setWriteOpenItem] = createSignal<MultEnt | null>(null);
 
 
 
@@ -432,6 +433,11 @@ export const sendToSuspenBar = (entityType: EntityType, refID: number) => {
 
     setOpenFloaters((prev) => prev.filter((e) => !isHiddenEnt(e)));
 
+    const currentWriteOpen = writeOpenItem();
+    if (currentWriteOpen && isHiddenEnt(currentWriteOpen)) {
+      setWriteOpenItem(null);
+    }
+
     const currentFocus = focusedEntity();
     if (currentFocus && isHiddenEnt(currentFocus)) {
       setFocusedEntity(null);
@@ -562,6 +568,9 @@ export const deleteStream = (streamID: number) => {
   if (focusedEntity()?.entityType === 'stream' && focusedEntity()?.refID === streamID) {
     setFocusedEntity(null);
   }
+  if (writeOpenItem()?.entityType === 'stream' && writeOpenItem()?.refID === streamID) {
+    setWriteOpenItem(null);
+  }
   setOpenFloaters(prev =>
     prev.filter(e => !(e.entityType === 'stream' && e.refID === streamID))
   );
@@ -675,9 +684,11 @@ export const createNewViewSpace = (name?: string) => {
   batch(() => {
     setViewSpaces(prev => [...prev, newVS]);
     setActiveViewSpaceID(newVS.id);
-    if (userMode() === 'Read') {
+    if (userMode() === 'Focus') {
       setFocusedStreamID(0);
       setFocusedEntity(null);
+    } else if (userMode() === 'Review') {
+      setOpenFloaters([]);
     }
   });
 };
@@ -864,6 +875,7 @@ const buildSessionSnapshot = () => ({
   // Session UI / Write-mode state (saved for session memory & optional stateful restore)
   activeViewSpaceID: activeViewSpaceID(),
   writerTargetID: writerTargetID(),
+  writeOpenItem: writeOpenItem() ? { ...writeOpenItem()! } : null,
   openFloaters: unwrap(openFloaters).map((e) => ({ ...e })),
   focusedEntity: focusedEntity() ? { ...focusedEntity()! } : null,
   focusedStreamID: focusedStreamID(),
@@ -1046,17 +1058,23 @@ const hydrateSessionStateful = (data: any) => {
           : null;
       setWriterTargetID(validTarget);
     }
+    const isValidEnt = (ent: MultEnt | null | undefined): ent is MultEnt => {
+      if (!ent) return false;
+      if (ent.entityType === 'stream') return safeStreams.some((s) => s.id === ent.refID);
+      if (ent.entityType === 'flicker') return safeFlickers.some((b) => b.id === ent.refID);
+      if (ent.entityType === 'flash') return safeFlashes.some((f) => f.id === ent.refID);
+      return false;
+    };
+
+    if (data.writeOpenItem !== undefined) {
+      setWriteOpenItem(isValidEnt(data.writeOpenItem) ? data.writeOpenItem : null);
+    }
     if (Array.isArray(data.openFloaters)) {
-      const validOpen = data.openFloaters.filter((ent: MultEnt) => {
-        if (ent.entityType === 'stream') return safeStreams.some((s) => s.id === ent.refID);
-        if (ent.entityType === 'flicker') return safeFlickers.some((b) => b.id === ent.refID);
-        if (ent.entityType === 'flash') return safeFlashes.some((f) => f.id === ent.refID);
-        return false;
-      });
+      const validOpen = data.openFloaters.filter(isValidEnt);
       setOpenFloaters(validOpen);
     }
     if (data.focusedEntity !== undefined) {
-      setFocusedEntity(data.focusedEntity);
+      setFocusedEntity(isValidEnt(data.focusedEntity) ? data.focusedEntity : null);
     }
     if (data.focusedStreamID !== undefined) {
       setFocusedStreamID(data.focusedStreamID);

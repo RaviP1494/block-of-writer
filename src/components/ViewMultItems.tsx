@@ -2,16 +2,18 @@ import { createMemo, For, Match, Switch, type Component } from "solid-js";
 import { DisplayStream } from "./DisplayStream";
 import { FloaterFlash } from "./FloaterFlash";
 import { FloaterFlicker } from "./FloaterFlicker";
-import { openFloaters } from "../store";
+import { openFloaters, type MultEnt } from "../store";
 
 export interface ViewMultItemsProps {
   innerClickMode: string;
+  items?: () => MultEnt[];
 }
 
 export const ViewMultItems: Component<ViewMultItemsProps> = (props) => {
-  const items = createMemo(() =>
-    openFloaters.filter(f => f && f.refID !== 0).reverse()
-  );
+  const items = createMemo(() => {
+    const source = props.items ? props.items() : openFloaters;
+    return source.filter((f) => f && f.refID !== 0).reverse();
+  });
 
   return (
     <div class="multi-reader">

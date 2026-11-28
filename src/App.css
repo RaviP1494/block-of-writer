@@ -170,14 +170,9 @@ body, html {
   justify-self: end;
 }
 
-.wb-navbar__desktop-actions {
+.wb-navbar__menu-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.wb-navbar__mobile-menu-wrap {
-  display: none;
   position: relative;
 }
 
@@ -212,11 +207,11 @@ body, html {
   outline-offset: 2px;
 }
 
-.wb-mobile-menu {
+.wb-nav-menu {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  min-width: min(74vw, 13.5rem);
+  min-width: min(76vw, 14.5rem);
   padding: 0.45rem;
   border-radius: 14px;
   background: var(--bg-elevated);
@@ -230,7 +225,8 @@ body, html {
   animation: wb-fade-in 0.15s ease;
 }
 
-.wb-mobile-menu__brand {
+.wb-nav-menu__brand {
+  display: none;
   padding: 0.35rem 0.65rem 0.45rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -240,13 +236,7 @@ body, html {
   margin-bottom: 0.2rem;
 }
 
-.wb-mobile-menu__divider {
-  height: 1px;
-  background: var(--border-subtle);
-  margin: 0.2rem 0.4rem;
-}
-
-.wb-mobile-menu__item {
+.wb-nav-menu__item {
   appearance: none;
   touch-action: manipulation;
   width: 100%;
@@ -258,24 +248,21 @@ body, html {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 9px;
-  padding: 0.5rem 0.7rem;
+  padding: 0.52rem 0.75rem;
   cursor: pointer;
+  white-space: nowrap;
   transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
-.wb-mobile-menu__item:hover:not(:disabled) {
+.wb-nav-menu__item:hover:not(:disabled) {
   background: var(--flicker-hover-bg);
   border-color: var(--border-subtle);
 }
 
-.wb-mobile-menu__item--active {
+.wb-nav-menu__item--active {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
   background: var(--flicker-hover-bg);
-}
-
-.wb-mobile-menu__item--ghost {
-  color: var(--text-muted);
 }
 
 .wb-context-deck {
@@ -370,7 +357,7 @@ body, html {
   gap: 0.75rem;
 }
 
-.wb-app[data-mode="read"] .wb-stage {
+.wb-app[data-mode="focus"] .wb-stage {
   width: min(100%, 1180px);
 }
 
@@ -793,6 +780,33 @@ body, html {
   margin-inline: auto;
 }
 
+/* Review Mode Multi-Item Flex-Wrap Deck (Row-wrapping on desktop, vertical on mobile) */
+.wb-review-deck {
+  flex: 0 0 auto;
+  width: min(100%, 1600px);
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  padding-bottom: 1rem;
+}
+
+.wb-review-deck .multi-reader {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.wb-review-deck .wb-companion-card {
+  flex: 1 1 42ch;
+  max-width: 50ch;
+  min-width: min(36ch, 100%);
+  margin-inline: 0;
+}
+
 /* ==========================================================================
    7. ZONE 5: SUSPENSION BAR (Bottom Transit Dock)
    ========================================================================== */
@@ -822,25 +836,30 @@ body, html {
     padding: 0.5rem 0.75rem;
   }
 
-  .wb-navbar__left,
-  .wb-navbar__brand,
-  .wb-navbar__desktop-actions {
+  .wb-navbar__brand {
     display: none;
   }
 
-  .wb-navbar__right {
-    width: 100%;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-  }
-
-  .wb-navbar__mobile-menu-wrap {
-    display: inline-flex;
-    align-items: center;
+  .wb-nav-menu__brand {
+    display: block;
   }
 
   .wb-stage {
     width: 100%; /* Takes full mobile width while keeping inner ch measure */
+  }
+
+  .wb-review-deck .multi-reader {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .wb-review-deck .wb-companion-card {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 56ch;
   }
 
   /* On mobile, Companion Bay becomes a horizontal swipeable deck above the dock */
@@ -2387,6 +2406,40 @@ body, html {
   font-size: 0.72rem;
   font-weight: 400;
   color: var(--text-muted);
+}
+
+.wb-settings-theme-btn {
+  appearance: none;
+  touch-action: manipulation;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.52rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.wb-settings-theme-btn:hover {
+  border-color: var(--accent-primary);
+  background: var(--flicker-hover-bg);
+  box-shadow: 0 0 10px -3px var(--accent-primary);
+}
+
+.wb-settings-theme-btn:active {
+  transform: scale(0.98);
+}
+
+.wb-settings-theme-btn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 
 /* ==========================================================================

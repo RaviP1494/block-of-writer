@@ -15,6 +15,7 @@ import {
   setFocusedEntity,
   setFocusedStreamID,
   setOpenFloaters,
+  setWriteOpenItem,
   deleteStream,
   deleteFlicker,
   deleteFlash,
@@ -118,6 +119,8 @@ export const SuspenBar: Component = () => {
       );
 
       if (userMode() === 'Write') {
+        setWriteOpenItem({ entityType: ent.entityType, refID: ent.refID });
+      } else if (userMode() === 'Review') {
         setOpenFloaters((prev) =>
           prev.some((e) => e.entityType === ent.entityType && e.refID === ent.refID)
             ? prev
@@ -129,7 +132,7 @@ export const SuspenBar: Component = () => {
       }
     });
 
-    if (userMode() === 'Write') {
+    if (userMode() === 'Write' || userMode() === 'Review') {
       requestAnimationFrame(() => {
         const el = document.getElementById(`companion-${ent.entityType}-${ent.refID}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });

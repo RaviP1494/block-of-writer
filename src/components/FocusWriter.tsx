@@ -9,7 +9,7 @@ import {
   setIsFlickerOpen,
   inflectionOn,
   writerTargetID, setWriterTargetID,
-  openFloaters, setOpenFloaters, replaceInOpenFloaters,
+  writeOpenItem, setWriteOpenItem,
   addFlash,
   outFlect,
   focusedEntity,
@@ -399,8 +399,9 @@ export const FocusWriter: Component = () => {
   const isTargetStreamOpen = () => {
     const streamId = writerTargetID();
     if (streamId === null) return false;
-    return openFloaters.some(
-      (e) => e.entityType === 'stream' && e.refID === streamId
+    return (
+      writeOpenItem()?.entityType === 'stream' &&
+      writeOpenItem()?.refID === streamId
     );
   };
 
@@ -413,9 +414,9 @@ export const FocusWriter: Component = () => {
     const streamId = writerTargetID();
     if (streamId === null) return;
     if (isTargetStreamOpen()) {
-      replaceInOpenFloaters({ entityType: 'stream', refID: streamId }, null);
+      setWriteOpenItem(null);
     } else {
-      setOpenFloaters((prev) => [...prev, { entityType: 'stream', refID: streamId }]);
+      setWriteOpenItem({ entityType: 'stream', refID: streamId });
       requestAnimationFrame(() => {
         const el = document.getElementById(`companion-stream-${streamId}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });

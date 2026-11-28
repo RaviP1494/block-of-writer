@@ -24,6 +24,8 @@ import {
 export interface SettingsModalProps {
   isOpen: () => boolean;
   onClose: () => void;
+  theme: () => 'space' | 'reef';
+  onToggleTheme: () => void;
 }
 
 export const SettingsModal: Component<SettingsModalProps> = (props) => {
@@ -262,6 +264,14 @@ export const SettingsModal: Component<SettingsModalProps> = (props) => {
                 <small>Backspace triggers Flash instead of deleting</small>
               </span>
             </label>
+
+            <button
+              type="button"
+              class="wb-settings-theme-btn"
+              onClick={props.onToggleTheme}
+            >
+              Change Theme: {props.theme() === 'space' ? 'Space' : 'Reef'}
+            </button>
           </div>
         </div>
       </div>

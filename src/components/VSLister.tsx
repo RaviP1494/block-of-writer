@@ -5,6 +5,7 @@ import {
   setActiveViewSpaceID,
   setFocusedEntity,
   setFocusedStreamID,
+  setOpenFloaters,
   updateSpaceName,
   viewSpaces,
   streamFlashes,
@@ -139,10 +140,12 @@ const VSGridSelect: Component<{ onSelect: () => void }> = (props) => {
               onSelect={() => {
                 batch(() => {
                   setActiveViewSpaceID(vs.id);
-                  // Write mode preserves writerTargetID & openFloaters cross-space; Read mode does a clean switch
-                  if (userMode() === 'Read') {
+                  // Write mode keeps target & reference cross-space; Review & Focus do a clean switch
+                  if (userMode() === 'Focus') {
                     setFocusedStreamID(0);
                     setFocusedEntity(null);
+                  } else if (userMode() === 'Review') {
+                    setOpenFloaters([]);
                   }
                 });
                 props.onSelect();

@@ -97,11 +97,11 @@ export const createReplayController = (
     });
   };
 
-  // Stop automatically if the user switches entities or leaves Read mode
+  // Stop automatically if the user switches entities or leaves Focus mode
   createEffect((prevKey) => {
     const nextKey = entityKey();
     const mode = userMode();
-    if ((prevKey !== undefined && prevKey !== nextKey) || mode !== 'Read') {
+    if ((prevKey !== undefined && prevKey !== nextKey) || mode !== 'Focus') {
       if (status() !== 'idle') stop();
     }
     return nextKey;
@@ -318,7 +318,7 @@ export const ReplayHeaderControl: Component<{
   controller: ReplayController;
 }> = (props) => {
   return (
-    <Show when={userMode() === 'Read'}>
+    <Show when={userMode() === 'Focus'}>
       <div class="stream-header__actions-center">
         <Show
           when={props.controller.isReplaying()}

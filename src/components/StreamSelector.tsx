@@ -8,8 +8,8 @@ import {
   viewSpaces,
   writerTargetID,
   setWriterTargetID,
-  openFloaters,
-  setOpenFloaters,
+  writeOpenItem,
+  setWriteOpenItem,
   setFocusedStreamID,
   setFocusedEntity,
   setUserMode,
@@ -96,9 +96,10 @@ const StreamGridSelect: Component<{
           <StreamSummaryCell
             stream={stream}
             isTargeted={props.targetedID() === stream.id}
-            isOpen={openFloaters.some(
-              (e) => e.entityType === 'stream' && e.refID === stream.id
-            )}
+            isOpen={
+              writeOpenItem()?.entityType === 'stream' &&
+              writeOpenItem()?.refID === stream.id
+            }
             onSelect={() => props.onSelect(stream.id)}
           />
         )}
@@ -216,9 +217,8 @@ const StreamBarSelect: Component<{
           {(stream) => {
             const isTargeted = () => props.targetedID() === stream.id;
             const isOpen = () =>
-              openFloaters.some(
-                (e) => e.entityType === 'stream' && e.refID === stream.id
-              );
+              writeOpenItem()?.entityType === 'stream' &&
+              writeOpenItem()?.refID === stream.id;
 
             return (
               <button
@@ -239,8 +239,8 @@ const StreamBarSelect: Component<{
                     : !isTargeted()
                       ? 'Click to set as write target'
                       : !isOpen()
-                        ? 'Targeted — click again to open'
-                        : 'Targeted & open — click again to focus in Review mode'
+                        ? 'Targeted — click again to open below'
+                        : 'Targeted & open — click again to open in Focus mode'
                 }
               >
                 {stream.title}
@@ -314,11 +314,10 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
     )
   );
 
-  const hasOpenFloating = createMemo(() =>
-    openFloaters.some(
-      (ent) => ent.entityType === 'flash' || ent.entityType === 'flicker'
-    )
-  );
+  const hasOpenFloating = createMemo(() => {
+    const open = writeOpenItem();
+    return Boolean(open && (open.entityType === 'flash' || open.entityType === 'flicker'));
+  });
 
   const scrollReaderCardIntoView = (entityType: string, refID: number) => {
     requestAnimationFrame(() => {
@@ -335,23 +334,23 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
     }
 
     const isTargeted = writerTargetID() === streamID;
-    const isOpen = openFloaters.some(
-      (ent) => ent.entityType === 'stream' && ent.refID === streamID
-    );
+    const isOpen =
+      writeOpenItem()?.entityType === 'stream' &&
+      writeOpenItem()?.refID === streamID;
 
     if (!isTargeted) {
-      // 1st click: target only
+      // 1st click: target only (keeps any currently open reference stream open!)
       setWriterTargetID(streamID);
     } else if (!isOpen) {
-      // 2nd click: open into ViewMultItems below
-      setOpenFloaters((prev) => [...prev, { entityType: 'stream', refID: streamID }]);
+      // 2nd click: open this single stream below Writers Block (replacing any previous open item)
+      setWriteOpenItem({ entityType: 'stream', refID: streamID });
       scrollReaderCardIntoView('stream', streamID);
     } else {
-      // 3rd click: focus selected stream in Read mode
+      // 3rd click: jump to Focus mode on selected stream
       batch(() => {
         setFocusedStreamID(streamID);
         setFocusedEntity({ entityType: 'stream', refID: streamID });
-        setUserMode('Read');
+        setUserMode('Focus');
       });
     }
   };
@@ -369,18 +368,13 @@ export const StreamSelector: Component<StreamSelectorProps> = (props) => {
     }
 
     if (hasOpenFloating()) {
-      setOpenFloaters((prev) =>
-        prev.filter((ent) => ent.entityType !== 'flash' && ent.entityType !== 'flicker')
-      );
+      setWriteOpenItem(null);
     } else {
       const loose = floatingEnts();
       if (loose.length > 0) {
-        setOpenFloaters((prev) => [
-          ...prev,
-          ...loose.filter(
-            (l) => !prev.some((p) => p.entityType === l.entityType && p.refID === l.refID)
-          ),
-        ]);
+        const newest = loose[loose.length - 1];
+        setWriteOpenItem({ entityType: newest.entityType, refID: newest.refID });
+        scrollReaderCardIntoView(newest.entityType, newest.refID);
       }
     }
   };

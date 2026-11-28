@@ -1,15 +1,19 @@
-import { createMemo, createSignal, onCleanup, onMount, For, Show, type Component } from 'solid-js';
-import { 
-  activeViewSpaceID, 
-  getEmacsDateString, 
-  getFlash, 
-  getFlicker, 
-  getStream, 
-  streamFlashes, 
-  viewSpaces, 
-  focusedEntity, 
-  setFocusedEntity, 
-  type MultEnt 
+import { batch, createMemo, createSignal, onCleanup, onMount, For, Show, type Component } from 'solid-js';
+import {
+  activeViewSpaceID,
+  getEmacsDateString,
+  getFlash,
+  getFlicker,
+  getStream,
+  streamFlashes,
+  viewSpaces,
+  focusedEntity,
+  setFocusedEntity,
+  setFocusedStreamID,
+  openFloaters,
+  setOpenFloaters,
+  userMode,
+  type MultEnt
 } from '../store';
 
 type DisplayMode = 'bar' | 'grid';
@@ -83,14 +87,19 @@ const getEntityStats = (ent: MultEnt) => {
 const ReadSummaryCell: Component<{
   ent: MultEnt;
   isFocused: boolean;
+  isOpen: boolean;
   onSelect: () => void;
 }> = (props) => {
   const stats = () => getEntityStats(props.ent);
 
   return (
-    <button 
+    <button
+      type="button"
       class="vs-summary-cell"
-      classList={{ 'targeted-stream': props.isFocused }}
+      classList={{
+        'targeted-stream': props.isFocused,
+        'opened-stream-pill': props.isOpen,
+      }}
       onClick={props.onSelect}
     >
       <div class="vs-cell-title">{stats().title}</div>
@@ -103,16 +112,27 @@ const ReadSummaryCell: Component<{
 const ReadGridSelect: Component<{
   items: MultEnt[];
   focused: () => MultEnt | null;
+  isReviewMode: () => boolean;
   onSelect: (ent: MultEnt) => void;
 }> = (props) => {
   return (
     <div class="vs-grid-select">
       <For each={props.items}>
         {(ent) => (
-          <ReadSummaryCell 
-            ent={ent} 
-            isFocused={props.focused()?.entityType === ent.entityType && props.focused()?.refID === ent.refID}
-            onSelect={() => props.onSelect(ent)} 
+          <ReadSummaryCell
+            ent={ent}
+            isFocused={
+              !props.isReviewMode() &&
+              props.focused()?.entityType === ent.entityType &&
+              props.focused()?.refID === ent.refID
+            }
+            isOpen={
+              props.isReviewMode() &&
+              openFloaters.some(
+                (e) => e.entityType === ent.entityType && e.refID === ent.refID
+              )
+            }
+            onSelect={() => props.onSelect(ent)}
           />
         )}
       </For>
@@ -123,6 +143,7 @@ const ReadGridSelect: Component<{
 const ReadBarSelect: Component<{
   items: MultEnt[];
   focused: () => MultEnt | null;
+  isReviewMode: () => boolean;
   onOpenGrid: () => void;
   onSelect: (ent: MultEnt) => void;
 }> = (props) => {
@@ -152,7 +173,7 @@ const ReadBarSelect: Component<{
 
     setTimeout(() => {
       const cur = props.focused();
-      if (cur) {
+      if (cur && !props.isReviewMode()) {
         const btn = document.getElementById(`read-ent-${cur.entityType}-${cur.refID}`);
         btn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
@@ -175,6 +196,7 @@ const ReadBarSelect: Component<{
       <button
         type="button"
         class="stream-btn-icon stream-btn-icon--scroll"
+        tabindex="-1"
         onClick={scrollLeft}
         title="Scroll Left"
         aria-label="Scroll items left"
@@ -184,14 +206,33 @@ const ReadBarSelect: Component<{
       <div class="stream-bar-scroll" ref={scrollRef} style={{ 'scroll-behavior': 'smooth' }}>
         <For each={props.items}>
           {(ent) => {
-            const isCur = () => props.focused()?.entityType === ent.entityType && props.focused()?.refID === ent.refID;
+            const isCur = () =>
+              !props.isReviewMode() &&
+              props.focused()?.entityType === ent.entityType &&
+              props.focused()?.refID === ent.refID;
+            const isOpen = () =>
+              props.isReviewMode() &&
+              openFloaters.some(
+                (e) => e.entityType === ent.entityType && e.refID === ent.refID
+              );
+
             return (
               <button
                 type="button"
                 id={`read-ent-${ent.entityType}-${ent.refID}`}
                 class="stream-bar-title"
-                classList={{ 'targeted-stream': isCur() }}
+                classList={{
+                  'targeted-stream': isCur(),
+                  'opened-stream-pill': isOpen(),
+                }}
                 onClick={() => props.onSelect(ent)}
+                title={
+                  props.isReviewMode()
+                    ? isOpen()
+                      ? 'Open in Review — click again to close'
+                      : 'Click to open in Review'
+                    : 'Click to Focus'
+                }
               >
                 {getEntityLabel(ent)}
               </button>
@@ -202,6 +243,7 @@ const ReadBarSelect: Component<{
       <button
         type="button"
         class="stream-btn-icon stream-btn-icon--scroll"
+        tabindex="-1"
         onClick={scrollRight}
         title="Scroll Right"
         aria-label="Scroll items right"
@@ -223,9 +265,26 @@ export const VSReadPicker: Component<VSReadPickerProps> = (props) => {
   const currentVSID = () => (props.id !== undefined && props.id !== null) ? props.id : activeViewSpaceID();
   const currentVS = () => viewSpaces.find(vs => vs.id === currentVSID());
   const items = createMemo(() => currentVS()?.tentsInSpace || []);
+  const isReviewMode = () => userMode() === 'Review';
 
   const handleSelect = (ent: MultEnt) => {
-    setFocusedEntity(ent);
+    if (isReviewMode()) {
+      const alreadyOpen = openFloaters.some(
+        (e) => e.entityType === ent.entityType && e.refID === ent.refID
+      );
+      if (!alreadyOpen) {
+        setOpenFloaters((prev) => [...prev, { entityType: ent.entityType, refID: ent.refID }]);
+      } else {
+        setOpenFloaters((prev) =>
+          prev.filter((e) => !(e.entityType === ent.entityType && e.refID === ent.refID))
+        );
+      }
+    } else {
+      batch(() => {
+        setFocusedStreamID(ent.entityType === 'stream' ? ent.refID : 0);
+        setFocusedEntity({ entityType: ent.entityType, refID: ent.refID });
+      });
+    }
   };
 
   onMount(() => {
@@ -250,6 +309,7 @@ export const VSReadPicker: Component<VSReadPickerProps> = (props) => {
       <ReadBarSelect
         items={items()}
         focused={focusedEntity}
+        isReviewMode={isReviewMode}
         onOpenGrid={() => setDisplayMode((prev) => (prev === 'grid' ? 'bar' : 'grid'))}
         onSelect={handleSelect}
       />
@@ -257,6 +317,7 @@ export const VSReadPicker: Component<VSReadPickerProps> = (props) => {
         <ReadGridSelect
           items={items()}
           focused={focusedEntity}
+          isReviewMode={isReviewMode}
           onSelect={(ent) => {
             handleSelect(ent);
             setDisplayMode('bar');

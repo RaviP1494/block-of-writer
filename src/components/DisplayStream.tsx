@@ -6,6 +6,8 @@ import {
   deleteStream,
   replaceInOpenFloaters,
   setFocusedStreamID,
+  setWriteOpenItem,
+  setWriterTargetID,
   viewSpaces,
   getStreamTSpan,
   hoverEnt,
@@ -48,8 +50,10 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
     ?.title;
 
   const handleMinimize = () => {
-    if (props.innerClickMode === 'multi') {
-      // Minimizing a stream does NOT clear it as writerTargetID
+    if (props.innerClickMode === 'write') {
+      // Minimizing reference stream in Write mode does NOT clear writerTargetID
+      setWriteOpenItem(null);
+    } else if (props.innerClickMode === 'multi') {
       replaceInOpenFloaters({ entityType: 'stream', refID: props.id }, null);
     } else if (props.innerClickMode === 'focus') {
       setFocusedStreamID(0);
@@ -59,7 +63,11 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
   const handleDelete = () => {
     const id = props.id;
     batch(() => {
-      replaceInOpenFloaters({ entityType: 'stream', refID: id }, null);
+      if (props.innerClickMode === 'write') {
+        setWriteOpenItem(null);
+      } else {
+        replaceInOpenFloaters({ entityType: 'stream', refID: id }, null);
+      }
       if (props.innerClickMode === 'focus') {
         setFocusedStreamID(0);
         setFocusedEntity(null);
@@ -97,17 +105,35 @@ export const DisplayStream: Component<DisplayStreamProps> = (props) => {
             classList={{ 'display-top-box--confirming': deleteClicked() }}
           >
             <div class="stream-header__actions-left">
+              <Show when={props.innerClickMode !== 'write'}>
+                <button
+                  type="button"
+                  class="stream-action-pill"
+                  disabled={isActiveTimer()}
+                  onClick={() => {
+                    batch(() => {
+                      setWriterTargetID(stream()!.id);
+                      setUserMode('Write');
+                    });
+                  }}
+                  title="Write into this Stream"
+                >
+                  Write
+                </button>
+              </Show>
               <Show when={props.innerClickMode !== 'focus'}>
                 <button
                   type="button"
                   class="stream-action-pill"
                   disabled={isActiveTimer()}
                   onClick={() => {
-                    setFocusedStreamID(stream()!.id);
-                    setFocusedEntity({ entityType: 'stream', refID: stream()!.id });
-                    setUserMode('Read');
+                    batch(() => {
+                      setFocusedStreamID(stream()!.id);
+                      setFocusedEntity({ entityType: 'stream', refID: stream()!.id });
+                      setUserMode('Focus');
+                    });
                   }}
-                  title="Focus Stream in Reader Mode"
+                  title="Open Stream in Focus Mode"
                 >
                   Focus
                 </button>
